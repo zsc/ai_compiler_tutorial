@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="./">
+    <title>第 11 章：多维 Stride DMA 利用</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="assets/highlight.css">
+    <script src="assets/script.js" defer></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']],
+                processEscapes: false,
+                packages: {'[+]': ['noerrors', 'ams']}
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            loader: {
+                load: ['[tex]/noerrors', '[tex]/ams']
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3>目录</h3>
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+            <div class="sidebar-search">
+                <input type="text" id="sidebar-search-input" placeholder="搜索..." autocomplete="off">
+            </div>
+            <div id="tree-container">
+                <nav class="tree-nav" role="tree">
+                    <div class="tree-item " >
+                        <a href="index.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">AI 编译器教程：从理论到 200T 规模实践</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter1.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 1 章：AI 编译器概述</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter2.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 2 章：中间表示（IR）设计</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter3.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 3 章：计算图表示与分析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter4.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 4 章：统一缓冲区设计</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter5.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 5 章：内存规划与分配</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter6.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 6 章：数据布局优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter7.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 7 章：算子融合</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter8.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 8 章：自动微分与梯度优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter9.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 9 章：并行化策略</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item active" >
+                        <a href="chapter11.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 11 章：多维 Stride DMA 利用</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter12.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 12 章：JIT 编译技术</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter13.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 13 章：GPU 编译优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter14.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 14 章：移动端与边缘设备优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter15.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 15 章：NUMA 架构优化（一）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter16.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 16 章：NUMA 架构优化（二）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter17.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 17 章：动态 Shape 编译（一）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter18.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 18 章：动态 Shape 编译（二）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter19.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 19 章：稀疏与变长数据支持</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter20.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 20 章：JIT 编译技术</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter21.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 21 章：高维张量别名分析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter22.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 22 章：投机执行支持</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter23.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 23 章：自动驾驶场景优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter24.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 24 章：具身智能编译挑战</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter25.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 25 章：200T 模型编译实践</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="CLAUDE.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">Untitled</span>
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </nav>
+        
+        <main class="content">
+            <article>
+                <h1 id="11-stride-dma">第 11 章：多维 Stride DMA 利用</h1>
+<p>本章深入探讨 AI 编译器如何高效利用现代硬件的多维 DMA（Direct Memory Access）能力，实现张量数据的高效传输。我们将分析 stride 访问模式、多维描述符设计、以及如何将高层张量操作映射到底层 DMA 指令。这些技术对于优化内存带宽利用率和减少数据传输开销至关重要，特别是在处理大规模神经网络和实时推理场景中。</p>
+<h2 id="111-dma">11.1 多维 DMA 描述符设计</h2>
+<h3 id="1111-dma">11.1.1 传统 DMA 的局限性</h3>
+<p>传统的一维 DMA 只能处理连续内存块的传输，对于多维张量操作存在严重限制：</p>
+<div class="codehilite"><pre><span></span><code>传统 DMA 传输模式：
+Source: [A0, A1, A2, ..., An-1]  →  Dest: [B0, B1, B2, ..., Bn-1]
+</code></pre></div>
+
+<p>当需要传输张量的子块或进行维度变换时，需要多次 DMA 操作：</p>
+<div class="codehilite"><pre><span></span><code><span class="mf">2</span><span class="n">D</span><span class="w"> </span><span class="n">张量子块传输</span><span class="err">（</span><span class="n">使用</span><span class="w"> </span><span class="mf">1</span><span class="n">D</span><span class="w"> </span><span class="n">DMA</span><span class="err">）：</span>
+<span class="n">Tensor</span><span class="w"> </span><span class="n">A</span><span class="w"> </span><span class="p">(</span><span class="mf">4</span><span class="err">×</span><span class="mf">6</span><span class="p">):</span><span class="w">          </span><span class="n">提取</span><span class="w"> </span><span class="mf">2</span><span class="err">×</span><span class="mf">3</span><span class="w"> </span><span class="n">子块</span><span class="err">：</span>
+<span class="err">[</span><span class="n">a00</span><span class="w"> </span><span class="n">a01</span><span class="w"> </span><span class="n">a02</span><span class="w"> </span><span class="n">a03</span><span class="w"> </span><span class="n">a04</span><span class="w"> </span><span class="n">a05</span><span class="err">]</span><span class="w">   </span><span class="n">需要</span><span class="w"> </span><span class="mf">2</span><span class="w"> </span><span class="n">次</span><span class="w"> </span><span class="n">DMA</span><span class="err">：</span>
+<span class="err">[</span><span class="n">a10</span><span class="w"> </span><span class="n">a11</span><span class="w"> </span><span class="n">a12</span><span class="w"> </span><span class="n">a13</span><span class="w"> </span><span class="n">a14</span><span class="w"> </span><span class="n">a15</span><span class="err">]</span><span class="w">   </span><span class="mf">1.</span><span class="w"> </span><span class="n">传输</span><span class="w"> </span><span class="err">[</span><span class="n">a11</span><span class="w"> </span><span class="n">a12</span><span class="w"> </span><span class="n">a13</span><span class="err">]</span>
+<span class="err">[</span><span class="n">a20</span><span class="w"> </span><span class="n">a21</span><span class="w"> </span><span class="n">a22</span><span class="w"> </span><span class="n">a23</span><span class="w"> </span><span class="n">a24</span><span class="w"> </span><span class="n">a25</span><span class="err">]</span><span class="w">   </span><span class="mf">2.</span><span class="w"> </span><span class="n">传输</span><span class="w"> </span><span class="err">[</span><span class="n">a21</span><span class="w"> </span><span class="n">a22</span><span class="w"> </span><span class="n">a23</span><span class="err">]</span>
+<span class="err">[</span><span class="n">a30</span><span class="w"> </span><span class="n">a31</span><span class="w"> </span><span class="n">a32</span><span class="w"> </span><span class="n">a33</span><span class="w"> </span><span class="n">a34</span><span class="w"> </span><span class="n">a35</span><span class="err">]</span>
+</code></pre></div>
+
+<h3 id="1112-dma">11.1.2 多维 DMA 描述符结构</h3>
+<p>现代 AI 加速器的多维 DMA 描述符包含以下关键字段：</p>
+<p>$$
+\text{DMA}_{\text{desc}} = \{
+\begin{aligned}
+&amp;\text{src_addr}, \text{dst_addr}, \\
+&amp;\text{dim_count}, \\
+&amp;\text{size}[d], \text{src_stride}[d], \text{dst_stride}[d] \quad \forall d \in [0, \text{dim_count})
+\end{aligned}
+\}
+$$</p>
+<p>其中：</p>
+<ul>
+<li>$\text{size}[d]$：第 $d$ 维的元素数量</li>
+<li>$\text{src_stride}[d]$：源地址第 $d$ 维的步长（字节）</li>
+<li>$\text{dst_stride}[d]$：目标地址第 $d$ 维的步长（字节）</li>
+</ul>
+<h3 id="1113">11.1.3 地址计算公式</h3>
+<p>对于 $n$ 维 DMA，源地址和目标地址的计算公式为：</p>
+<p>$$
+\text{addr}_{\text{src}}(i_0, i_1, ..., i_{n-1}) = \text{src_base} + \sum_{d=0}^{n-1} i_d \cdot \text{src_stride}[d]
+$$</p>
+<p>$$
+\text{addr}_{\text{dst}}(i_0, i_1, ..., i_{n-1}) = \text{dst_base} + \sum_{d=0}^{n-1} i_d \cdot \text{dst_stride}[d]
+$$</p>
+<h3 id="1114">11.1.4 描述符优化策略</h3>
+<p><strong>层次化描述符设计</strong>：</p>
+<div class="codehilite"><pre><span></span><code><span class="mf">3</span><span class="n">D</span><span class="w"> </span><span class="n">DMA</span><span class="w"> </span><span class="n">描述符层次</span><span class="err">：</span>
+<span class="n">Level</span><span class="w"> </span><span class="mf">2</span><span class="w"> </span><span class="p">(</span><span class="n">Batch</span><span class="p">):</span><span class="w">  </span><span class="n">size</span><span class="o">=</span><span class="mf">2</span><span class="p">,</span><span class="w"> </span><span class="n">stride</span><span class="o">=</span><span class="mf">1024</span>
+<span class="w">  </span><span class="err">│</span>
+<span class="w">  </span><span class="err">├─</span><span class="w"> </span><span class="n">Level</span><span class="w"> </span><span class="mf">1</span><span class="w"> </span><span class="p">(</span><span class="n">Row</span><span class="p">):</span><span class="w"> </span><span class="n">size</span><span class="o">=</span><span class="mf">4</span><span class="p">,</span><span class="w"> </span><span class="n">stride</span><span class="o">=</span><span class="mf">128</span>
+<span class="w">  </span><span class="err">│</span><span class="w">     </span><span class="err">│</span>
+<span class="w">  </span><span class="err">│</span><span class="w">     </span><span class="err">└─</span><span class="w"> </span><span class="n">Level</span><span class="w"> </span><span class="mf">0</span><span class="w"> </span><span class="p">(</span><span class="n">Col</span><span class="p">):</span><span class="w"> </span><span class="n">size</span><span class="o">=</span><span class="mf">8</span><span class="p">,</span><span class="w"> </span><span class="n">stride</span><span class="o">=</span><span class="mf">4</span>
+</code></pre></div>
+
+<p><strong>描述符压缩</strong>：利用规则性减少存储开销：</p>
+<p>$$
+\text{Compressed_Desc} = \begin{cases}
+\text{Regular}: &amp; \text{base, size, stride} \\
+\text{Strided}: &amp; \text{base, size}[2], \text{stride}[2] \\
+\text{Irregular}: &amp; \text{full descriptor}
+\end{cases}
+$$</p>
+<h2 id="112-stride">11.2 Stride 访问模式分析</h2>
+<h3 id="1121-stride">11.2.1 常见 Stride 模式分类</h3>
+<p>AI 工作负载中的典型 stride 访问模式：</p>
+<ol>
+<li>
+<p><strong>单位步长（Unit Stride）</strong>：
+   $$\text{stride} = \text{element_size}$$</p>
+</li>
+<li>
+<p><strong>固定步长（Fixed Stride）</strong>：
+$$\text{stride} = k \cdot \text{element_size}, \quad k \in \mathbb{N}^+$$</p>
+</li>
+<li>
+<p><strong>分块步长（Block Stride）</strong>：
+$$\text{stride} = \text{block_size} \cdot \text{element_size}$$</p>
+</li>
+<li>
+<p><strong>嵌套步长（Nested Stride）</strong>：
+$$\text{stride}_{\text{outer}} = n \cdot \text{stride}_{\text{inner}}$$</p>
+</li>
+</ol>
+<h3 id="1122-stride">11.2.2 Stride 模式的性能影响</h3>
+<p>内存带宽利用率公式：
+$$
+\eta_{\text{bandwidth}} = \frac{\text{useful_data_transferred}}{\text{total_bus_transactions} \times \text{bus_width}}
+$$
+对于 stride 访问：
+$$
+\eta_{\text{stride}} = \frac{\text{element_size}}{\max(\text{element_size}, \lceil\frac{\text{stride}}{\text{cache_line_size}}\rceil \times \text{cache_line_size})}
+$$</p>
+<h3 id="1123-stride">11.2.3 Stride 冲突检测</h3>
+<p>检测不同 stride 模式间的冲突：
+$$
+\text{Conflict}(s_1, s_2, n) = \begin{cases}
+\text{True} &amp; \text{if } \gcd(s_1, s_2) &gt; n \\
+\text{False} &amp; \text{otherwise}
+\end{cases}
+$$
+其中 $n$ 是 bank 数量或缓存路数。</p>
+<h3 id="1124-stride">11.2.4 Stride 优化变换</h3>
+<p><strong>Stride 最小化变换</strong>：</p>
+<p>给定张量访问模式 $A[i \cdot s_1 + j \cdot s_2]$，寻找变换 $T$ 使得：
+$$
+\min_{T} \sum_{d} |s'_d - 1| \quad \text{where } s' = T(s)
+$$
+<strong>Stride 对齐优化</strong>：
+$$
+s_{\text{aligned}} = \lceil \frac{s}{\text{align_size}} \rceil \times \text{align_size}
+$$</p>
+<h2 id="113-dma">11.3 张量切片与 DMA 映射</h2>
+<h3 id="1131">11.3.1 张量切片表示</h3>
+<p>张量切片操作的数学表示：
+$$
+T_{\text{slice}} = T[i_0:j_0:s_0, i_1:j_1:s_1, ..., i_{n-1}:j_{n-1}:s_{n-1}]
+$$
+其中 $i_k$ 是起始索引，$j_k$ 是结束索引，$s_k$ 是步长。</p>
+<p>对应的 DMA 描述符生成：
+$$
+\text{DMA}_{\text{slice}} = \{
+\begin{aligned}
+&amp;\text{src_addr} = \text{base} + \sum_{k} i_k \cdot \prod_{l&gt;k} \text{dim}_l \cdot \text{elem_size} \\
+&amp;\text{size}[k] = \lceil \frac{j_k - i_k}{s_k} \rceil \\
+&amp;\text{stride}[k] = s_k \cdot \prod_{l&gt;k} \text{dim}_l \cdot \text{elem_size}
+\end{aligned}
+\}
+$$</p>
+<h3 id="1132">11.3.2 切片合并优化</h3>
+<p><strong>相邻切片检测</strong>：</p>
+<p>两个切片 $S_1$ 和 $S_2$ 可合并的条件：
+$$
+\text{Mergeable}(S_1, S_2) = \begin{cases}
+\text{True} &amp; \text{if } \exists d: S_1.\text{end}[d] = S_2.\text{start}[d] \land \\
+&amp; \quad \forall k \neq d: S_1[k] = S_2[k] \\
+\text{False} &amp; \text{otherwise}
+\end{cases}
+$$
+<strong>切片分解策略</strong>：</p>
+<p>将大切片分解为硬件友好的小切片：
+$$
+T_{\text{large}} = \bigcup_{i=0}^{n-1} T_{\text{tile}_i}
+$$
+其中每个 $T_{\text{tile}_i}$ 满足：
+$$
+\text{size}(T_{\text{tile}_i}) \leq \text{DMA_buffer_size}
+$$</p>
+<h3 id="1133-dma">11.3.3 张量重排与 DMA 映射</h3>
+<p><strong>转置操作的 DMA 实现</strong>：</p>
+<p>对于矩阵转置 $B = A^T$：</p>
+<div class="codehilite"><pre><span></span><code>源张量 A (M×N):           目标张量 B (N×M):
+stride_src[0] = N          stride_dst[0] = 1
+stride_src[1] = 1          stride_dst[1] = M
+</code></pre></div>
+
+<p>DMA 描述符：
+$$
+\text{DMA}_{\text{transpose}} = \{
+\begin{aligned}
+&amp;\text{size}[0] = M, \quad \text{size}[1] = N \\
+&amp;\text{src_stride}[0] = N \cdot \text{elem_size} \\
+&amp;\text{src_stride}[1] = \text{elem_size} \\
+&amp;\text{dst_stride}[0] = \text{elem_size} \\
+&amp;\text{dst_stride}[1] = M \cdot \text{elem_size}
+\end{aligned}
+\}
+$$</p>
+<h3 id="1134-padding">11.3.4 Padding 与边界处理</h3>
+<p>处理非对齐边界的 DMA 策略：
+$$
+\text{Padded_size}[d] = \lceil \frac{\text{original_size}[d]}{\text{tile_size}[d]} \rceil \times \text{tile_size}[d]
+$$
+边界条件检查：
+$$
+\text{Valid_transfer}(i, j) = \begin{cases}
+\text{Data} &amp; \text{if } i &lt; \text{height} \land j &lt; \text{width} \\
+\text{Padding_value} &amp; \text{otherwise}
+\end{cases}
+$$</p>
+<h2 id="114">11.4 非连续内存传输优化</h2>
+<h3 id="1141-gatherscatter">11.4.1 Gather/Scatter 操作</h3>
+<p><strong>Gather 操作</strong>（从非连续地址收集数据）：
+$$
+\text{dst}[i] = \text{src}[\text{index}[i]], \quad i \in [0, n)
+$$
+DMA 优化策略：</p>
+<ol>
+<li>索引排序以提高局部性</li>
+<li>批量传输相邻元素</li>
+<li>使用间接寻址 DMA 模式</li>
+</ol>
+<p><strong>Scatter 操作</strong>（分散写入非连续地址）：
+$$
+\text{dst}[\text{index}[i]] = \text{src}[i], \quad i \in [0, n)
+$$</p>
+<h3 id="1142">11.4.2 稀疏张量传输</h3>
+<p>CSR 格式稀疏矩阵的 DMA 传输：</p>
+<div class="codehilite"><pre><span></span><code>稀疏矩阵结构：
+values:   [v0, v1, v2, ...]
+col_idx:  [c0, c1, c2, ...]
+row_ptr:  [r0, r1, r2, ...]
+</code></pre></div>
+
+<p>DMA 传输策略：
+$$
+\text{DMA}_{\text{sparse}} = \{
+\begin{aligned}
+&amp;\text{Phase1}: \text{传输 row_ptr 数组} \\
+&amp;\text{Phase2}: \text{批量传输每行的 values 和 col_idx} \\
+&amp;\text{Phase3}: \text{重组为目标格式}
+\end{aligned}
+\}
+$$</p>
+<h3 id="1143">11.4.3 内存访问模式优化</h3>
+<p><strong>Bank 冲突避免</strong>：</p>
+<p>对于 $B$ 个 bank，stride $s$ 的访问，冲突概率：
+$$
+P_{\text{conflict}} = \begin{cases}
+0 &amp; \text{if } \gcd(s, B) = 1 \\
+\frac{1}{\gcd(s, B)} &amp; \text{otherwise}
+\end{cases}
+$$
+<strong>交错访问优化</strong>：
+$$
+\text{addr}_{\text{interleaved}}(i) = \text{base} + (i \bmod B) \cdot \text{chunk_size} + \lfloor \frac{i}{B} \rfloor
+$$</p>
+<h3 id="1144">11.4.4 预取与流水线</h3>
+<p>DMA 传输流水线深度优化：
+$$
+\text{Pipeline_depth} = \max\left(\lceil \frac{\text{compute_time}}{\text{transfer_time}} \rceil, 2\right)
+$$
+双缓冲策略的时间节省：
+$$
+T_{\text{saved}} = \min(\text{compute_time}, \text{transfer_time}) \times (n-1)
+$$
+其中 $n$ 是总传输次数。</p>
+<h2 id="115-2d3d-dma">11.5 2D/3D DMA 引擎编程模型</h2>
+<h3 id="1151-2d-dma">11.5.1 2D DMA 编程抽象</h3>
+<p>2D DMA 的基本编程模型将矩形数据块作为基本传输单元：</p>
+<div class="codehilite"><pre><span></span><code><span class="mf">2</span><span class="n">D</span><span class="w"> </span><span class="n">传输参数</span><span class="err">：</span>
+<span class="err">┌─────────────────────────┐</span>
+<span class="err">│</span><span class="w"> </span><span class="n">Width</span><span class="w"> </span><span class="p">(</span><span class="n">W</span><span class="p">)</span><span class="w"> </span><span class="err">×</span><span class="w"> </span><span class="n">Height</span><span class="w"> </span><span class="p">(</span><span class="n">H</span><span class="p">)</span><span class="w">  </span><span class="err">│</span>
+<span class="err">│</span><span class="w"> </span><span class="n">Src_pitch</span><span class="p">:</span><span class="w"> </span><span class="n">源行间距</span><span class="w">      </span><span class="err">│</span>
+<span class="err">│</span><span class="w"> </span><span class="n">Dst_pitch</span><span class="p">:</span><span class="w"> </span><span class="n">目标行间距</span><span class="w">    </span><span class="err">│</span>
+<span class="err">└─────────────────────────┘</span>
+</code></pre></div>
+
+<p>数学表示：
+$$
+\text{DMA}_{2D} = \{W, H, \text{src_pitch}, \text{dst_pitch}, \text{src_base}, \text{dst_base}\}
+$$
+地址生成公式：
+$$
+\text{addr}(x, y) = \text{base} + y \cdot \text{pitch} + x \cdot \text{elem_size}
+$$</p>
+<h3 id="1152-3d-dma">11.5.2 3D DMA 编程模型</h3>
+<p>3D DMA 扩展到立方体数据传输：</p>
+<div class="codehilite"><pre><span></span><code><span class="mf">3</span><span class="n">D</span><span class="w"> </span><span class="n">传输层次</span><span class="err">：</span>
+<span class="n">Depth</span><span class="w"> </span><span class="p">(</span><span class="n">D</span><span class="p">)</span><span class="w"> </span><span class="err">──┐</span>
+<span class="w">            </span><span class="err">├──</span><span class="w"> </span><span class="n">Height</span><span class="w"> </span><span class="p">(</span><span class="n">H</span><span class="p">)</span><span class="w"> </span><span class="err">──┐</span>
+<span class="w">                            </span><span class="err">├──</span><span class="w"> </span><span class="n">Width</span><span class="w"> </span><span class="p">(</span><span class="n">W</span><span class="p">)</span>
+</code></pre></div>
+
+<p>完整的 3D DMA 描述符：
+$$
+\text{DMA}_{3D} = \{
+\begin{aligned}
+&amp;\text{dim}: [W, H, D] \\
+&amp;\text{stride}: [\text{elem_size}, \text{row_pitch}, \text{slice_pitch}] \\
+&amp;\text{offset}: [\text{x_off}, \text{y_off}, \text{z_off}]
+\end{aligned}
+\}
+$$</p>
+<h3 id="1153-dma">11.5.3 卷积操作的 DMA 映射</h3>
+<p>将卷积的滑窗操作映射到 2D DMA：</p>
+<p>对于卷积核 $K$ 和输入 $I$：
+$$
+O[m,n] = \sum_{i=0}^{k_h-1} \sum_{j=0}^{k_w-1} K[i,j] \cdot I[m \cdot s + i, n \cdot s + j]
+$$
+DMA 传输策略：</p>
+<ol>
+<li><strong>Im2col 变换</strong>：将每个滑窗展开为列</li>
+<li><strong>Direct convolution</strong>：直接传输滑窗数据</li>
+</ol>
+<p>Im2col 的 DMA 描述：
+$$
+\text{DMA}_{\text{im2col}} = \{
+\begin{aligned}
+&amp;\text{window_size}: k_h \times k_w \\
+&amp;\text{stride}: s \\
+&amp;\text{num_windows}: \lceil \frac{H-k_h}{s} \rceil \times \lceil \frac{W-k_w}{s} \rceil
+\end{aligned}
+\}
+$$</p>
+<h3 id="1154-dma">11.5.4 分块矩阵乘法的 DMA 调度</h3>
+<p>对于矩阵乘法 $C = A \times B$，分块策略：
+$$
+C_{ij} = \sum_{k} A_{ik} \times B_{kj}
+$$
+DMA 调度序列：</p>
+<div class="codehilite"><pre><span></span><code>for i in range(0, M, tile_m):
+    for j in range(0, N, tile_n):
+        for k in range(0, K, tile_k):
+            DMA_2D(A[i:i+tile_m, k:k+tile_k] → Local_A)
+            DMA_2D(B[k:k+tile_k, j:j+tile_n] → Local_B)
+            Compute(Local_C += Local_A × Local_B)
+        DMA_2D(Local_C → C[i:i+tile_m, j:j+tile_n])
+</code></pre></div>
+
+<p>优化的双缓冲 DMA 时序：
+$$
+T_{\text{total}} = T_{\text{init}} + (n-1) \cdot \max(T_{\text{compute}}, T_{\text{DMA}}) + T_{\text{final}}
+$$</p>
+<h2 id="116-dma">11.6 DMA 链表与批处理</h2>
+<h3 id="1161-dma">11.6.1 DMA 链表结构</h3>
+<p>DMA 链表允许硬件自动执行一系列传输：</p>
+<div class="codehilite"><pre><span></span><code>DMA 链表节点结构：
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│ Descriptor 1 │────▶│ Descriptor 2 │────▶│ Descriptor 3 │
+│ Next_ptr ────┼─────│ Next_ptr ────┼─────│ Next_ptr=NULL│
+└──────────────┘     └──────────────┘     └──────────────┘
+</code></pre></div>
+
+<p>链表节点定义：
+$$
+\text{Node} = \{\text{desc}, \text{next_ptr}, \text{flags}, \text{interrupt_enable}\}
+$$</p>
+<h3 id="1162">11.6.2 批处理优化策略</h3>
+<p><strong>命令合并</strong>：将多个小传输合并为批次：
+$$
+\text{Batch_efficiency} = \frac{\sum_{i} \text{transfer_size}_i}{\text{num_commands} \cdot \text{command_overhead} + \sum_{i} \text{transfer_size}_i}
+$$
+<strong>依赖链管理</strong>：
+$$
+\text{DAG}_{\text{DMA}} = (V, E)
+$$
+其中 $V$ 是 DMA 操作集合，$E$ 是依赖边。</p>
+<p>拓扑排序生成执行序列：
+$$
+\text{Schedule} = \text{TopSort}(\text{DAG}_{\text{DMA}})
+$$</p>
+<h3 id="1163">11.6.3 优先级调度</h3>
+<p>多队列 DMA 的优先级调度：
+$$
+\text{Priority}(t) = w_1 \cdot \text{urgency}(t) + w_2 \cdot \text{size}(t) + w_3 \cdot \text{locality}(t)
+$$
+其中：</p>
+<ul>
+<li>$\text{urgency}(t)$：任务紧急度</li>
+<li>$\text{size}(t)$：传输大小的倒数（优先小传输）</li>
+<li>$\text{locality}(t)$：数据局部性得分</li>
+</ul>
+<h3 id="1164">11.6.4 错误处理与恢复</h3>
+<p>DMA 错误检测与恢复机制：</p>
+<p><strong>错误类型分类</strong>：</p>
+<ol>
+<li>地址越界：$\text{addr} \notin [\text{base}, \text{base} + \text{size})$</li>
+<li>对齐错误：$\text{addr} \bmod \text{align_requirement} \neq 0$</li>
+<li>权限错误：访问受保护内存区域</li>
+</ol>
+<p><strong>重试策略</strong>：
+$$
+\text{Retry_delay}(n) = \min(2^n \cdot \text{base_delay}, \text{max_delay})
+$$
+其中 $n$ 是重试次数。</p>
+<p><strong>检查点机制</strong>：
+$$
+\text{Checkpoint} = \{\text{completed_transfers}, \text{partial_state}, \text{timestamp}\}
+$$</p>
+<h2 id="_1">本章小结</h2>
+<p>本章系统介绍了 AI 编译器中多维 Stride DMA 的利用技术。主要内容包括：</p>
+<ol>
+<li><strong>多维 DMA 描述符设计</strong>：介绍了从传统一维 DMA 到多维 DMA 的演进，以及描述符的优化策略</li>
+<li><strong>Stride 访问模式分析</strong>：分析了不同 stride 模式对性能的影响，以及优化变换方法</li>
+<li><strong>张量切片与 DMA 映射</strong>：探讨了如何将高层张量操作高效映射到 DMA 指令</li>
+<li><strong>非连续内存传输优化</strong>：包括 gather/scatter、稀疏张量传输和内存访问模式优化</li>
+<li><strong>2D/3D DMA 编程模型</strong>：详细介绍了多维 DMA 的编程抽象和实际应用</li>
+<li><strong>DMA 链表与批处理</strong>：讨论了提高 DMA 效率的高级技术</li>
+</ol>
+<p>关键公式回顾：</p>
+<ul>
+<li>多维地址计算：$\text{addr}(i_0, ..., i_{n-1}) = \text{base} + \sum_{d=0}^{n-1} i_d \cdot \text{stride}[d]$</li>
+<li>带宽利用率：$\eta = \frac{\text{useful_data}}{\text{total_transactions} \times \text{bus_width}}$</li>
+<li>双缓冲收益：$T_{\text{saved}} = \min(T_{\text{compute}}, T_{\text{DMA}}) \times (n-1)$</li>
+</ul>
+<h2 id="_2">练习题</h2>
+<h3 id="_3">基础题</h3>
+<p><strong>练习 11.1</strong>：给定一个 4×6 的矩阵存储在行主序内存中，元素大小为 4 字节。设计一个 2D DMA 描述符来提取 2×3 的子矩阵，起始位置为 (1,2)。</p>
+<p><em>Hint</em>：计算源地址偏移和 stride 值。</p>
+<details>
+<summary>参考答案</summary>
+<p>源基地址偏移 = (1×6 + 2) × 4 = 32 字节
+DMA 描述符：</p>
+<ul>
+<li>size[0] = 3（列数）</li>
+<li>size[1] = 2（行数）</li>
+<li>src_stride[0] = 4 字节（元素间距）</li>
+<li>src_stride[1] = 24 字节（行间距 = 6×4）</li>
+<li>dst_stride[0] = 4 字节</li>
+<li>dst_stride[1] = 12 字节（目标行间距 = 3×4）</li>
+</ul>
+</details>
+<p><strong>练习 11.2</strong>：计算 stride 为 17 的访问模式在 16 个 bank 的内存系统中的冲突概率。</p>
+<p><em>Hint</em>：使用 gcd 公式计算冲突概率。</p>
+<details>
+<summary>参考答案</summary>
+<p>$P_{\text{conflict}} = \frac{1}{\gcd(17, 16)} = \frac{1}{1} = 1$</p>
+<p>由于 gcd(17, 16) = 1，所以没有 bank 冲突，冲突概率为 0。这是因为 17 和 16 互质，访问会均匀分布在所有 bank 上。</p>
+</details>
+<p><strong>练习 11.3</strong>：对于 im2col 操作，输入特征图大小为 32×32，卷积核大小为 3×3，stride=2。计算输出矩阵的维度和所需的 DMA 传输次数。</p>
+<p><em>Hint</em>：计算滑窗数量和每个滑窗的元素数。</p>
+<details>
+<summary>参考答案</summary>
+<p>输出特征图大小 = $\lceil \frac{32-3}{2} \rceil + 1 = 15 + 1 = 16$
+滑窗总数 = 16 × 16 = 256
+每个滑窗元素数 = 3 × 3 = 9
+输出矩阵维度 = 9 × 256</p>
+<p>如果使用 2D DMA，需要 256 次传输（每个滑窗一次）。
+如果优化为批处理，可以减少到更少的 DMA 操作。</p>
+</details>
+<h3 id="_4">挑战题</h3>
+<p><strong>练习 11.4</strong>：设计一个 DMA 调度算法，实现矩阵转置操作的最优内存访问模式。矩阵大小为 M×N，cache line 大小为 64 字节，元素大小为 4 字节。</p>
+<p><em>Hint</em>：考虑分块策略和 cache line 对齐。</p>
+<details>
+<summary>参考答案</summary>
+<p>最优策略是使用分块转置，块大小选择为 16×16（cache line 可容纳 16 个 float）：</p>
+<ol>
+<li>将矩阵划分为 $\lceil \frac{M}{16} \rceil \times \lceil \frac{N}{16} \rceil$ 个块</li>
+<li>对每个块内部进行转置（利用 cache 局部性）</li>
+<li>DMA 描述符设置：
+   - 2D DMA，每次传输 16×16 块
+   - src_stride[0] = 4, src_stride[1] = N×4
+   - dst_stride[0] = M×4, dst_stride[1] = 4</li>
+<li>使用双缓冲隐藏传输延迟</li>
+</ol>
+<p>这种方法最小化 cache miss，每个 cache line 的数据都被充分利用。</p>
+</details>
+<p><strong>练习 11.5</strong>：给定一个稀疏矩阵，非零元素占比 5%，设计一个 DMA 传输策略，比较 CSR 格式和 COO 格式的传输效率。</p>
+<p><em>Hint</em>：分析不同格式的内存占用和传输次数。</p>
+<details>
+<summary>参考答案</summary>
+<p>设矩阵大小 M×N，非零元素数 nnz = 0.05×M×N</p>
+<p>CSR 格式：</p>
+<ul>
+<li>values 数组：nnz × sizeof(float) = 0.05MN × 4 字节</li>
+<li>col_idx 数组：nnz × sizeof(int) = 0.05MN × 4 字节</li>
+<li>row_ptr 数组：(M+1) × sizeof(int) = (M+1) × 4 字节</li>
+<li>总传输量：0.1MN × 4 + (M+1) × 4 字节</li>
+<li>DMA 次数：3次（三个数组）</li>
+</ul>
+<p>COO 格式：</p>
+<ul>
+<li>values 数组：nnz × sizeof(float) = 0.05MN × 4 字节</li>
+<li>row_idx 数组：nnz × sizeof(int) = 0.05MN × 4 字节</li>
+<li>col_idx 数组：nnz × sizeof(int) = 0.05MN × 4 字节</li>
+<li>总传输量：0.15MN × 4 字节</li>
+<li>DMA 次数：3次（三个数组）</li>
+</ul>
+<p>结论：CSR 格式在 M &lt;&lt; N 时更高效，传输量少约 33%。但 COO 格式更灵活，适合动态稀疏模式。</p>
+</details>
+<p><strong>练习 11.6</strong>：分析双缓冲 DMA 在不同计算/传输时间比下的性能提升。设计一个自适应算法，根据运行时测量动态选择缓冲区数量。</p>
+<p><em>Hint</em>：建立性能模型，考虑缓冲区开销。</p>
+<details>
+<summary>参考答案</summary>
+<p>设 $r = \frac{T_{\text{compute}}}{T_{\text{DMA}}}$</p>
+<p>性能提升率：
+$$\text{Speedup} = \frac{T_{\text{sequential}}}{T_{\text{pipelined}}} = \frac{n(T_c + T_d)}{T_c + nT_d} \quad (r &lt; 1)$$</p>
+<p>$$\text{Speedup} = \frac{n(T_c + T_d)}{nT_c + T_d} \quad (r &gt; 1)$$</p>
+<p>自适应算法：</p>
+<ol>
+<li>初始使用双缓冲</li>
+<li>测量前 k 次迭代的 $T_c$ 和 $T_d$</li>
+<li>计算 $r = T_c / T_d$</li>
+<li>根据 r 值选择缓冲区数：
+   - r &lt; 0.5：单缓冲（传输占主导）
+   - 0.5 ≤ r ≤ 2：双缓冲（平衡）
+   - r &gt; 2：三缓冲（计算占主导）</li>
+<li>考虑内存约束：$n_{\text{buffers}} \times \text{buffer_size} \leq \text{available_memory}$</li>
+</ol>
+</details>
+<p><strong>练习 11.7</strong>（开放题）：设计一个编译器优化 pass，自动识别代码中的内存访问模式并生成优化的 DMA 指令。考虑如何处理动态 shape 和条件分支。</p>
+<p><em>Hint</em>：考虑静态分析、profile-guided optimization 和运行时特化。</p>
+<details>
+<summary>参考答案</summary>
+<p>优化 pass 设计：</p>
+<ol>
+<li>
+<p><strong>静态分析阶段</strong>：
+   - 识别循环嵌套中的数组访问模式
+   - 提取 stride 信息和访问范围
+   - 构建访问模式的符号表示</p>
+</li>
+<li>
+<p><strong>模式匹配</strong>：
+   - 连续访问 → 1D DMA
+   - 规则 stride → 2D DMA
+   - 嵌套循环 → 3D DMA
+   - 间接索引 → gather/scatter DMA</p>
+</li>
+<li>
+<p><strong>动态 shape 处理</strong>：
+   - 生成参数化 DMA 描述符模板
+   - 运行时根据实际 shape 实例化
+   - 使用符号执行推导 stride 表达式</p>
+</li>
+<li>
+<p><strong>条件分支处理</strong>：
+   - 预测分支概率（profile-guided）
+   - 为高概率路径生成 DMA
+   - 低概率路径使用标准加载/存储</p>
+</li>
+<li>
+<p><strong>代价模型</strong>：
+   - 估算 DMA 设置开销 vs 收益
+   - 只对超过阈值大小的传输使用 DMA
+   - 考虑对齐和 cache 影响</p>
+</li>
+<li>
+<p><strong>验证与回退</strong>：
+   - 生成运行时检查确保正确性
+   - 提供标准内存访问的回退路径</p>
+</li>
+</ol>
+</details>
+<h2 id="_5">常见陷阱与错误</h2>
+<ol>
+<li>
+<p><strong>Stride 计算错误</strong>
+   - 错误：混淆元素步长和字节步长
+   - 正确：始终明确单位，建议统一使用字节</p>
+</li>
+<li>
+<p><strong>边界处理不当</strong>
+   - 错误：假设数据总是对齐的
+   - 正确：添加边界检查和 padding 处理</p>
+</li>
+<li>
+<p><strong>忽略 Bank 冲突</strong>
+   - 错误：使用 2 的幂次 stride
+   - 正确：选择与 bank 数互质的 stride</p>
+</li>
+<li>
+<p><strong>DMA 链表循环引用</strong>
+   - 错误：链表节点错误指向形成环
+   - 正确：使用静态分析工具检测循环</p>
+</li>
+<li>
+<p><strong>缓冲区大小估算错误</strong>
+   - 错误：只考虑单个传输的大小
+   - 正确：考虑流水线深度和并发传输</p>
+</li>
+<li>
+<p><strong>同步机制缺失</strong>
+   - 错误：假设 DMA 立即完成
+   - 正确：使用 fence 和中断确保同步</p>
+</li>
+</ol>
+<h2 id="_6">最佳实践检查清单</h2>
+<h3 id="_7">设计阶段</h3>
+<ul>
+<li>[ ] 分析目标硬件的 DMA 能力（维度、对齐要求、最大传输大小）</li>
+<li>[ ] 识别应用中的主要数据传输模式</li>
+<li>[ ] 评估 DMA 设置开销 vs 传输收益</li>
+<li>[ ] 设计合适的数据布局以优化 DMA 效率</li>
+</ul>
+<h3 id="_8">实现阶段</h3>
+<ul>
+<li>[ ] 使用描述符池避免频繁分配</li>
+<li>[ ] 实现双缓冲或多缓冲机制</li>
+<li>[ ] 添加地址对齐和边界检查</li>
+<li>[ ] 处理 DMA 错误和异常情况</li>
+</ul>
+<h3 id="_9">优化阶段</h3>
+<ul>
+<li>[ ] 合并小传输减少开销</li>
+<li>[ ] 调整 stride 避免 bank 冲突</li>
+<li>[ ] 使用 DMA 链表批处理操作</li>
+<li>[ ] Profile 实际传输效率并调优</li>
+</ul>
+<h3 id="_10">验证阶段</h3>
+<ul>
+<li>[ ] 验证所有边界条件</li>
+<li>[ ] 测试不同数据大小和 stride 模式</li>
+<li>[ ] 检查内存一致性和同步</li>
+<li>[ ] 性能回归测试确保优化有效</li>
+</ul>
+            </article>
+            
+            <nav class="page-nav"><a href="chapter9.html" class="nav-link prev">← 第 9 章：并行化策略</a><a href="chapter12.html" class="nav-link next">第 12 章：JIT 编译技术 →</a></nav>
+        </main>
+    </div>
+</body>
+</html>

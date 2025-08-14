@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="./">
+    <title>第 5 章：内存规划与分配</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="assets/highlight.css">
+    <script src="assets/script.js" defer></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']],
+                processEscapes: false,
+                packages: {'[+]': ['noerrors', 'ams']}
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            loader: {
+                load: ['[tex]/noerrors', '[tex]/ams']
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3>目录</h3>
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+            <div class="sidebar-search">
+                <input type="text" id="sidebar-search-input" placeholder="搜索..." autocomplete="off">
+            </div>
+            <div id="tree-container">
+                <nav class="tree-nav" role="tree">
+                    <div class="tree-item " >
+                        <a href="index.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">AI 编译器教程：从理论到 200T 规模实践</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter1.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 1 章：AI 编译器概述</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter2.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 2 章：中间表示（IR）设计</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter3.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 3 章：计算图表示与分析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter4.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 4 章：统一缓冲区设计</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item active" >
+                        <a href="chapter5.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 5 章：内存规划与分配</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter6.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 6 章：数据布局优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter7.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 7 章：算子融合</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter8.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 8 章：自动微分与梯度优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter9.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 9 章：并行化策略</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter11.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 11 章：多维 Stride DMA 利用</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter12.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 12 章：JIT 编译技术</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter13.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 13 章：GPU 编译优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter14.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 14 章：移动端与边缘设备优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter15.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 15 章：NUMA 架构优化（一）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter16.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 16 章：NUMA 架构优化（二）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter17.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 17 章：动态 Shape 编译（一）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter18.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 18 章：动态 Shape 编译（二）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter19.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 19 章：稀疏与变长数据支持</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter20.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 20 章：JIT 编译技术</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter21.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 21 章：高维张量别名分析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter22.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 22 章：投机执行支持</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter23.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 23 章：自动驾驶场景优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter24.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 24 章：具身智能编译挑战</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter25.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 25 章：200T 模型编译实践</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="CLAUDE.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">Untitled</span>
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </nav>
+        
+        <main class="content">
+            <article>
+                <h1 id="5">第 5 章：内存规划与分配</h1>
+<h2 id="_1">大纲</h2>
+<h3 id="51">5.1 静态内存规划算法</h3>
+<ul>
+<li>5.1.1 贪心算法与最优化方法</li>
+<li>5.1.2 图着色算法</li>
+<li>5.1.3 线性规划方法</li>
+<li>5.1.4 启发式算法</li>
+</ul>
+<h3 id="52">5.2 张量生命周期分析</h3>
+<ul>
+<li>5.2.1 活性分析</li>
+<li>5.2.2 引用计数方法</li>
+<li>5.2.3 数据流分析</li>
+<li>5.2.4 跨算子生命周期</li>
+</ul>
+<h3 id="53">5.3 内存复用策略</h3>
+<ul>
+<li>5.3.1 内存池设计</li>
+<li>5.3.2 覆盖分析</li>
+<li>5.3.3 原地操作优化</li>
+<li>5.3.4 缓冲区共享</li>
+</ul>
+<h3 id="54">5.4 峰值内存优化</h3>
+<ul>
+<li>5.4.1 内存峰值建模</li>
+<li>5.4.2 调度与内存权衡</li>
+<li>5.4.3 重计算策略</li>
+<li>5.4.4 分块执行</li>
+</ul>
+<h3 id="55">5.5 本章小结</h3>
+<h3 id="56">5.6 练习题</h3>
+<h3 id="57">5.7 常见陷阱与错误</h3>
+<h3 id="58">5.8 最佳实践检查清单</h3>
+<hr />
+<h2 id="_2">开篇段落</h2>
+<p>内存管理是 AI 编译器的核心挑战之一，特别是在处理 200T 参数级别的大模型时。本章深入探讨内存规划与分配的各种技术，包括静态分析方法、动态优化策略以及针对自动驾驶和具身智能场景的特殊优化。我们将学习如何通过精确的生命周期分析和智能的复用策略，将模型的内存占用降低 30-50%，同时保持高效的执行性能。</p>
+<h2 id="51_1">5.1 静态内存规划算法</h2>
+<p>静态内存规划是在编译时确定所有张量的内存分配方案，这种方法可以完全消除运行时的内存分配开销，对于嵌入式设备和实时系统尤为重要。</p>
+<h3 id="511">5.1.1 贪心算法与最优化方法</h3>
+<p>最简单的内存分配策略是首次适应（First-Fit）和最佳适应（Best-Fit）算法。给定一组张量 $\{T_1, T_2, ..., T_n\}$，每个张量 $T_i$ 有其大小 $s_i$ 和生命周期 $[t_i^{start}, t_i^{end}]$。</p>
+<p><strong>首次适应算法</strong>的分配策略可以表示为：</p>
+<p>$$
+\text{offset}(T_i) = \min\{o \geq 0 : \forall T_j \in \text{Active}(t_i^{start}), \text{overlap}(T_i, T_j) = \emptyset\}
+$$</p>
+<p>其中 $\text{Active}(t)$ 表示在时刻 $t$ 活跃的张量集合。</p>
+<p><strong>最佳适应算法</strong>则寻找最小的合适空隙：</p>
+<p>$$
+\text{offset}(T_i) = \arg\min_{o \in \text{Feasible}(T_i)} \{\text{gap_size}(o) - s_i : \text{gap_size}(o) \geq s_i\}
+$$</p>
+<p>这些贪心算法的时间复杂度为 $\mathcal{O}(n^2)$，但不保证得到最优解。实际的内存利用率通常在最优解的 70-85% 范围内。</p>
+<h3 id="512">5.1.2 图着色算法</h3>
+<p>内存分配问题可以转化为图着色问题。构建冲突图 $G = (V, E)$，其中：</p>
+<ul>
+<li>每个节点 $v_i \in V$ 代表一个张量 $T_i$</li>
+<li>如果两个张量的生命周期重叠，则在对应节点间添加边：$(v_i, v_j) \in E \iff [t_i^{start}, t_i^{end}] \cap [t_j^{start}, t_j^{end}] \neq \emptyset$</li>
+</ul>
+<p>图着色的目标是最小化使用的颜色数，每种颜色代表一个内存池。色数的下界由最大团给出：</p>
+<p>$$
+\chi(G) \geq \omega(G) = \max_{t} |\text{Active}(t)|
+$$</p>
+<p>其中 $\omega(G)$ 是图的团数，表示同时活跃的最大张量数。</p>
+<p><strong>Chaitin 算法</strong>是一种常用的启发式图着色方法：</p>
+<ol>
+<li>计算每个节点的度数</li>
+<li>反复移除度数小于 $k$ 的节点（$k$ 为可用颜色数）</li>
+<li>如果所有节点度数都 $\geq k$，选择溢出节点</li>
+<li>按相反顺序为节点着色</li>
+</ol>
+<h3 id="513">5.1.3 线性规划方法</h3>
+<p>内存分配可以建模为整数线性规划（ILP）问题。定义决策变量：</p>
+<ul>
+<li>$x_{i,m}$：二进制变量，表示张量 $T_i$ 是否分配到内存块 $m$</li>
+<li>$y_m$：二进制变量，表示内存块 $m$ 是否被使用</li>
+</ul>
+<p>目标函数（最小化总内存使用）：</p>
+<p>$$
+\min \sum_{m} s_m \cdot y_m
+$$</p>
+<p>约束条件：</p>
+<ol>
+<li>
+<p>每个张量必须分配到某个内存块：
+   $$\sum_{m} x_{i,m} = 1, \quad \forall i$$</p>
+</li>
+<li>
+<p>生命周期重叠的张量不能分配到同一内存块：
+$$x_{i,m} + x_{j,m} \leq 1, \quad \forall (i,j) \in E, \forall m$$</p>
+</li>
+<li>
+<p>内存块大小约束：
+$$\sum_{i: x_{i,m}=1} s_i \leq s_m, \quad \forall m$$
+虽然 ILP 是 NP-困难的，但现代求解器（如 Gurobi、CPLEX）对于中等规模的问题（几千个张量）可以在合理时间内找到近似最优解。</p>
+</li>
+</ol>
+<h3 id="514">5.1.4 启发式算法</h3>
+<p>实际系统中常用的启发式算法结合了多种策略：</p>
+<p><strong>寿命感知分配（Lifetime-Aware Allocation）</strong>：
+优先分配生命周期长的张量，因为它们对内存布局的影响更大。定义张量的优先级：
+$$
+\text{priority}(T_i) = (t_i^{end} - t_i^{start}) \cdot s_i
+$$
+<strong>亲和性聚类（Affinity Clustering）</strong>：
+将经常一起使用的张量分配到相邻的内存位置，以提高缓存局部性。亲和性度量：
+$$
+\text{affinity}(T_i, T_j) = \sum_{op} \mathbb{1}[\text{uses}(op, T_i) \wedge \text{uses}(op, T_j)]
+$$
+<strong>分层分配（Hierarchical Allocation）</strong>：
+根据张量的访问模式和大小，将它们分配到不同的内存层级（如 L1/L2 缓存、片上 SRAM、HBM）。</p>
+<h2 id="52_1">5.2 张量生命周期分析</h2>
+<p>准确的生命周期分析是内存优化的基础。不同于传统编译器的标量变量分析，张量的生命周期涉及更复杂的依赖关系和使用模式。</p>
+<h3 id="521">5.2.1 活性分析</h3>
+<p>张量的活性（liveness）定义为从其产生到最后一次使用的时间区间。在数据流图 $\mathcal{G} = (V, E)$ 中，对于张量 $T$：</p>
+<p><strong>定义点（Definition Point）</strong>：
+$$\text{def}(T) = \{v \in V : v \text{ produces } T\}$$
+<strong>使用点（Use Points）</strong>：
+$$\text{use}(T) = \{v \in V : v \text{ consumes } T\}$$
+<strong>活性区间（Liveness Interval）</strong>：
+$$\text{live}(T) = [\min(\text{def}(T)), \max(\text{use}(T))]$$
+对于控制流图，需要考虑分支和循环：
+$$\text{live_in}(B) = \text{use}(B) \cup (\text{live_out}(B) - \text{def}(B))$$</p>
+<p>$$\text{live_out}(B) = \bigcup_{S \in \text{succ}(B)} \text{live_in}(S)$$
+其中 $B$ 是基本块，$\text{succ}(B)$ 是其后继块集合。</p>
+<p><strong>精确活性分析</strong>需要考虑：</p>
+<ol>
+<li><strong>部分使用</strong>：张量的某些元素可能在不同时间被访问</li>
+<li><strong>条件执行</strong>：分支中的张量可能只在某些路径上活跃</li>
+<li><strong>循环携带依赖</strong>：循环中的张量可能跨迭代存活</li>
+</ol>
+<h3 id="522">5.2.2 引用计数方法</h3>
+<p>引用计数是一种动态跟踪张量生命周期的方法。每个张量维护一个引用计数器：
+$$\text{refcount}(T) = |\{op : T \in \text{inputs}(op) \wedge op \text{ not executed}\}|$$
+当引用计数降为 0 时，张量可以被释放。这种方法的优势是：</p>
+<ul>
+<li>简单高效，$\mathcal{O}(1)$ 的更新开销</li>
+<li>支持动态图和控制流</li>
+<li>可以立即回收内存</li>
+</ul>
+<p>但也有局限性：</p>
+<ul>
+<li>无法处理循环引用</li>
+<li>难以进行全局优化</li>
+<li>不支持提前规划</li>
+</ul>
+<p><strong>增强的引用计数</strong>可以结合静态分析：
+$$\text{static_refcount}(T) = \sum_{op \in \text{consumers}(T)} \text{exec_count}(op)$$
+其中 $\text{exec_count}(op)$ 是通过静态分析或 profiling 得到的算子执行次数。</p>
+<h3 id="523">5.2.3 数据流分析</h3>
+<p>数据流分析提供了更精确的生命周期信息。定义数据流方程：</p>
+<p><strong>前向数据流（可达性分析）</strong>：
+$$\text{GEN}[n] = \{T : n \text{ defines } T\}$$
+$$\text{KILL}[n] = \{T : n \text{ redefines } T\}$$
+$$\text{OUT}[n] = \text{GEN}[n] \cup (\text{IN}[n] - \text{KILL}[n])$$
+$$\text{IN}[n] = \bigcup_{p \in \text{pred}(n)} \text{OUT}[p]$$
+<strong>后向数据流（活性分析）</strong>：
+$$\text{USE}[n] = \{T : n \text{ uses } T \text{ before any definition}\}$$
+$$\text{DEF}[n] = \{T : n \text{ defines } T\}$$
+$$\text{IN}[n] = \text{USE}[n] \cup (\text{OUT}[n] - \text{DEF}[n])$$
+$$\text{OUT}[n] = \bigcup_{s \in \text{succ}(n)} \text{IN}[s]$$
+迭代求解这些方程直到达到不动点，通常需要 $\mathcal{O}(n^2)$ 次迭代，其中 $n$ 是节点数。</p>
+<h3 id="524">5.2.4 跨算子生命周期</h3>
+<p>在深度学习模型中，某些张量可能跨越多个算子存活，特别是在以下场景：</p>
+<p><strong>残差连接</strong>：
+ResNet 类型的跳跃连接导致张量生命周期延长：
+$$T_{out} = f(T_{in}) + T_{in}$$
+这里 $T_{in}$ 需要在 $f$ 的所有中间计算完成后仍然保持活跃。</p>
+<p><strong>注意力机制</strong>：
+Transformer 中的 Q、K、V 矩阵在整个注意力计算过程中都需要保持：
+$$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
+<strong>梯度计算</strong>：
+反向传播需要保存前向传播的中间结果：
+$$\frac{\partial L}{\partial x} = \frac{\partial L}{\partial y} \cdot \frac{\partial y}{\partial x}$$
+其中 $\frac{\partial y}{\partial x}$ 的计算需要前向传播时的 $x$ 值。</p>
+<p><strong>跨算子优化策略</strong>：</p>
+<ol>
+<li><strong>延迟释放</strong>：推迟内存释放直到确认不再需要</li>
+<li><strong>提前分配</strong>：为即将使用的张量预先分配内存</li>
+<li><strong>生命周期扩展</strong>：人为延长某些张量的生命周期以实现更好的内存布局</li>
+</ol>
+<h2 id="53_1">5.3 内存复用策略</h2>
+<p>内存复用是减少总内存占用的关键技术。通过识别不同时间使用的内存区域，可以让多个张量共享同一块物理内存。</p>
+<h3 id="531">5.3.1 内存池设计</h3>
+<p>内存池是预分配的大块连续内存，用于服务多个张量的分配请求。设计高效的内存池需要考虑：</p>
+<p><strong>固定大小内存池</strong>：
+将内存划分为固定大小的块，适合处理大小相近的张量：
+$$\text{pool_size} = n \times \text{block_size}$$
+$$\text{internal_fragmentation} = \sum_{i} (\text{block_size} - s_i \mod \text{block_size})$$
+<strong>分级内存池</strong>：
+使用多个不同粒度的内存池，类似于 buddy system：
+$$\text{sizes} = \{2^k : k_{min} \leq k \leq k_{max}\}$$
+分配策略：选择最小的满足需求的块大小：
+$$\text{allocated_size}(s) = \min\{2^k : 2^k \geq s\}$$
+<strong>环形缓冲区</strong>：
+对于流式处理场景（如视频处理），使用环形缓冲区可以实现高效的内存复用：
+$$\text{write_ptr} = (\text{write_ptr} + \text{size}) \mod \text{buffer_size}$$
+$$\text{available} = (\text{read_ptr} - \text{write_ptr} - 1) \mod \text{buffer_size}$$
+<strong>内存池的性能指标</strong>：</p>
+<ul>
+<li>分配速度：$\mathcal{O}(1)$ 或 $\mathcal{O}(\log n)$</li>
+<li>碎片率：$\frac{\text{allocated} - \text{used}}{\text{allocated}}$</li>
+<li>利用率：$\frac{\text{peak_used}}{\text{total_pool_size}}$</li>
+</ul>
+<h3 id="532">5.3.2 覆盖分析</h3>
+<p>覆盖分析（Overlay Analysis）确定哪些张量可以安全地共享内存。两个张量 $T_i$ 和 $T_j$ 可以共享内存当且仅当：
+$$\text{can_share}(T_i, T_j) = ([t_i^{start}, t_i^{end}] \cap [t_j^{start}, t_j^{end}] = \emptyset)$$
+<strong>构建共享矩阵</strong>：
+$$S_{ij} = \begin{cases}
+1 &amp; \text{if can_share}(T_i, T_j) \\
+0 &amp; \text{otherwise}
+\end{cases}$$
+<strong>最大权重匹配</strong>：
+将内存共享问题转化为二分图的最大权重匹配，权重定义为节省的内存：
+$$w_{ij} = \min(s_i, s_j) \times S_{ij}$$
+使用 Hungarian 算法可以在 $\mathcal{O}(n^3)$ 时间内找到最优匹配。</p>
+<p><strong>传递性分析</strong>：
+如果 $T_1$ 可以与 $T_2$ 共享，$T_2$ 可以与 $T_3$ 共享，不一定意味着 $T_1$ 可以与 $T_3$ 共享：
+$$\text{transitive_closure}(S) = S^* = \bigcup_{k=1}^{n} S^k$$</p>
+<h3 id="533">5.3.3 原地操作优化</h3>
+<p>原地操作（In-place Operation）直接在输入张量上进行计算，避免额外的内存分配。</p>
+<p><strong>可原地化条件</strong>：
+算子 $op$ 可以原地执行的充要条件：</p>
+<ol>
+<li>输入输出形状相同：$\text{shape}(input) = \text{shape}(output)$</li>
+<li>输入在该操作后不再使用：$\text{refcount}(input) = 1$</li>
+<li>算子支持原地计算：$op \in \text{InplaceOps}$</li>
+</ol>
+<p><strong>常见的原地操作</strong>：</p>
+<ul>
+<li>逐元素操作：$y = f(x) \rightarrow x = f(x)$</li>
+<li>激活函数：$\text{ReLU}(x) = \max(0, x)$</li>
+<li>Dropout：$y = x \odot \text{mask}$</li>
+<li>BatchNorm（推理阶段）：$y = \gamma \frac{x - \mu}{\sigma} + \beta$</li>
+</ul>
+<p><strong>原地操作的收益分析</strong>：
+$$\text{memory_saved} = \sum_{op \in \text{inplace}} s_{output}(op)$$
+$$\text{bandwidth_saved} = \sum_{op \in \text{inplace}} s_{output}(op) \times \text{freq}(op)$$</p>
+<h3 id="534">5.3.4 缓冲区共享</h3>
+<p>缓冲区共享允许不同的操作复用临时工作空间。这在卷积、矩阵乘法等需要大量临时内存的操作中特别重要。</p>
+<p><strong>工作空间估算</strong>：
+对于卷积操作，im2col 变换需要的工作空间：
+$$W_{im2col} = H_{out} \times W_{out} \times C_{in} \times K_h \times K_w$$
+对于矩阵乘法的分块计算：
+$$W_{gemm} = \text{tile_m} \times \text{tile_n} \times \text{sizeof}(dtype)$$
+<strong>共享策略</strong>：</p>
+<ol>
+<li>
+<p><strong>全局工作空间</strong>：所有操作共享一个大的工作缓冲区
+$$W_{global} = \max_{op} W_{op}$$</p>
+</li>
+<li>
+<p><strong>分组共享</strong>：将操作分组，组内共享缓冲区
+$$W_{group_i} = \max_{op \in group_i} W_{op}$$
+   $$W_{total} = \sum_{i} W_{group_i}$$</p>
+</li>
+<li>
+<p><strong>动态调整</strong>：根据运行时信息动态调整缓冲区大小</p>
+</li>
+</ol>
+<p><strong>缓冲区对齐</strong>：
+为了优化内存访问性能，缓冲区通常需要对齐：
+$$\text{aligned_size} = \lceil \frac{size}{alignment} \rceil \times alignment$$
+常见的对齐要求：</p>
+<ul>
+<li>CPU SIMD：16 或 32 字节对齐</li>
+<li>GPU：128 或 256 字节对齐</li>
+<li>DMA：页面大小（4KB）对齐</li>
+</ul>
+<h2 id="54_1">5.4 峰值内存优化</h2>
+<p>峰值内存是限制模型规模和批处理大小的关键因素。通过优化执行顺序和引入重计算，可以显著降低峰值内存需求。</p>
+<h3 id="541">5.4.1 内存峰值建模</h3>
+<p>内存使用随时间变化的函数可以表示为：
+$$M(t) = \sum_{T_i : t \in [t_i^{start}, t_i^{end}]} s_i$$
+峰值内存定义为：
+$$M_{peak} = \max_t M(t)$$
+<strong>峰值分析的关键时刻</strong>：</p>
+<ol>
+<li><strong>算子边界</strong>：每个算子执行前后</li>
+<li><strong>并行分支</strong>：多个分支同时执行时</li>
+<li><strong>梯度累积</strong>：反向传播中间结果积累</li>
+</ol>
+<p><strong>内存使用曲线特征</strong>：</p>
+<ul>
+<li><strong>阶梯状增长</strong>：顺序执行导致的累积</li>
+<li><strong>尖峰</strong>：大型中间结果的临时存在</li>
+<li><strong>平台期</strong>：长生命周期张量的持续占用</li>
+</ul>
+<h3 id="542">5.4.2 调度与内存权衡</h3>
+<p>不同的执行顺序会产生不同的内存峰值。考虑计算图的拓扑排序，有效的调度策略包括：</p>
+<p><strong>最小活跃集调度（Min-Live Scheduling）</strong>：
+在每个调度点，选择使活跃张量集最小的操作：
+$$\text{next_op} = \arg\min_{op \in \text{ready}} |\text{live_after}(op)|$$
+<strong>最早释放调度（Earliest-Free Scheduling）</strong>：
+优先执行能够释放大内存的操作：
+$$\text{priority}(op) = \sum_{T \in \text{inputs}(op)} s_T \times \mathbb{1}[\text{last_use}(T) = op]$$
+<strong>关键路径感知调度</strong>：
+结合延迟和内存考虑：
+$$\text{cost}(op) = \alpha \cdot \text{latency}(op) + \beta \cdot \Delta M(op)$$
+其中 $\Delta M(op)$ 是执行 $op$ 后的内存变化。</p>
+<p><strong>调度空间探索</strong>：
+对于 $n$ 个独立操作，有 $n!$ 种可能的调度。使用启发式搜索：</p>
+<ol>
+<li>模拟退火</li>
+<li>遗传算法</li>
+<li>强化学习</li>
+</ol>
+<h3 id="543">5.4.3 重计算策略</h3>
+<p>重计算（Recomputation/Checkpointing）通过重新计算而非存储中间结果来减少内存使用。</p>
+<p><strong>基本重计算模型</strong>：
+设前向传播的计算成本为 $C_f$，内存占用为 $M_f$。使用 $k$ 个检查点时：</p>
+<ul>
+<li>内存需求：$M_{checkpoint} = \frac{M_f}{k} + M_{grad}$</li>
+<li>计算开销：$C_{checkpoint} = C_f + k \cdot \frac{C_f}{k} = 2C_f$</li>
+</ul>
+<p><strong>最优检查点放置</strong>：
+对于 $n$ 层的网络，放置 $k$ 个检查点的最优策略是均匀分布：
+$$\text{checkpoint_layers} = \{i \cdot \lfloor \frac{n}{k+1} \rfloor : i = 1, 2, ..., k\}$$
+这使得峰值内存从 $\mathcal{O}(n)$ 降低到 $\mathcal{O}(\sqrt{n})$。</p>
+<p><strong>选择性重计算</strong>：
+根据计算成本和内存收益选择重计算的操作：
+$$\text{recompute_score}(op) = \frac{M_{saved}(op)}{C_{recompute}(op)}$$
+优先重计算得分高的操作（内存收益大、计算成本低）。</p>
+<h3 id="544">5.4.4 分块执行</h3>
+<p>将大型操作分解为多个小块顺序执行，可以降低峰值内存需求。</p>
+<p><strong>矩阵乘法分块</strong>：
+对于 $C = A \times B$，其中 $A \in \mathbb{R}^{m \times k}$，$B \in \mathbb{R}^{k \times n}$：</p>
+<p>原始内存需求：$M_{original} = mk + kn + mn$</p>
+<p>分块后（块大小 $b$）：$M_{blocked} = bk + kb + b^2$</p>
+<p>内存节省比例：$\frac{M_{original}}{M_{blocked}} \approx \frac{mn}{b^2}$</p>
+<p><strong>卷积分块</strong>：
+将特征图在空间维度上分块：
+$$\text{tiles} = \lceil \frac{H}{tile_h} \rceil \times \lceil \frac{W}{tile_w} \rceil$$
+每个块的内存需求：
+$$M_{tile} = tile_h \times tile_w \times C_{in} + K_h \times K_w \times C_{in} \times C_{out}$$
+<strong>流水线并行分块</strong>：
+在批次维度上分块，实现微批次（micro-batch）处理：
+$$\text{batch} = \sum_{i=1}^{k} \text{micro_batch}_i$$</p>
+<p>峰值内存从 $M_{batch}$ 降低到 $M_{micro_batch} + (k-1) \times M_{gradient}$。</p>
+<p><strong>分块的性能影响</strong>：</p>
+<ul>
+<li>内存访问局部性：块内访问模式更规则</li>
+<li>缓存利用率：$\text{cache_hit_rate} = f(tile_size, cache_size)$</li>
+<li>并行度：多个块可以并行处理</li>
+</ul>
+<h2 id="55_1">5.5 本章小结</h2>
+<p>本章系统介绍了 AI 编译器中的内存规划与分配技术。关键要点包括：</p>
+<ol>
+<li>
+<p><strong>静态内存规划</strong>提供了多种算法选择，从简单的贪心算法到复杂的图着色和线性规划方法，各有其适用场景和性能特征。</p>
+</li>
+<li>
+<p><strong>生命周期分析</strong>是内存优化的基础，需要综合考虑数据流、控制流和跨算子依赖，精确的分析可以显著提升内存利用率。</p>
+</li>
+<li>
+<p><strong>内存复用策略</strong>通过内存池、覆盖分析、原地操作和缓冲区共享，可以将内存占用降低 30-50%。</p>
+</li>
+<li>
+<p><strong>峰值内存优化</strong>通过调度优化、重计算和分块执行，能够支持更大规模的模型训练和推理。</p>
+</li>
+</ol>
+<p>关键公式回顾：</p>
+<ul>
+<li>内存峰值：$M_{peak} = \max_t \sum_{T_i : t \in [t_i^{start}, t_i^{end}]} s_i$</li>
+<li>图着色下界：$\chi(G) \geq \omega(G) = \max_{t} |\text{Active}(t)|$</li>
+<li>重计算权衡：$M_{checkpoint} = \frac{M_f}{k} + M_{grad}$，$C_{checkpoint} = 2C_f$</li>
+<li>分块内存节省：$\frac{M_{original}}{M_{blocked}} \approx \frac{mn}{b^2}$</li>
+</ul>
+<h2 id="56_1">5.6 练习题</h2>
+<h3 id="_3">基础题</h3>
+<p><strong>练习 5.1</strong> 给定 5 个张量的生命周期：$T_1[0,3]$, $T_2[1,4]$, $T_3[2,5]$, $T_4[3,6]$, $T_5[4,7]$，大小分别为 100MB, 200MB, 150MB, 250MB, 180MB。使用首次适应算法计算所需的最小内存池大小。</p>
+<p><em>Hint: 按顺序分配，跟踪每个时刻的内存使用情况。</em></p>
+<details>
+<summary>答案</summary>
+<p>时刻 0: 分配 T1(100MB)，offset=0
+时刻 1: 分配 T2(200MB)，offset=100
+时刻 2: 分配 T3(150MB)，offset=300
+时刻 3: T1 释放，分配 T4(250MB)，由于空间不足，offset=450
+时刻 4: T2 释放，分配 T5(180MB)，offset=100
+最小内存池大小 = 450 + 250 = 700MB</p>
+</details>
+<p><strong>练习 5.2</strong> 构建上题中 5 个张量的冲突图，并计算其色数下界。</p>
+<p><em>Hint: 生命周期重叠的张量之间有边，找出最大团。</em></p>
+<details>
+<summary>答案</summary>
+<p>冲突图的边：</p>
+<ul>
+<li>T1-T2 (重叠[1,3])</li>
+<li>T1-T3 (重叠[2,3])</li>
+<li>T2-T3 (重叠[2,4])</li>
+<li>T2-T4 (重叠[3,4])</li>
+<li>T3-T4 (重叠[3,5])</li>
+<li>T3-T5 (重叠[4,5])</li>
+<li>T4-T5 (重叠[4,6])</li>
+</ul>
+<p>最大团：{T2, T3, T4} 在时刻 3 同时活跃
+色数下界 = 3
+理论最小内存 = 200 + 150 + 250 = 600MB</p>
+</details>
+<p><strong>练习 5.3</strong> 某卷积层输入尺寸为 [256, 56, 56, 128]（NHWC格式），卷积核为 3×3，输出通道 256。计算使用 im2col 变换所需的临时缓冲区大小（假设 float32）。</p>
+<p><em>Hint: im2col 将每个窗口展开为一列。</em></p>
+<details>
+<summary>答案</summary>
+<p>im2col 缓冲区形状：[256 × 56 × 56, 3 × 3 × 128]
+= [802816, 1152]
+缓冲区大小 = 802816 × 1152 × 4 bytes
+= 3,698,688,000 bytes ≈ 3.44 GB</p>
+</details>
+<h3 id="_4">挑战题</h3>
+<p><strong>练习 5.4</strong> 设计一个算法，给定 n 个张量的生命周期和大小，找出使峰值内存最小的执行顺序。分析算法的时间复杂度。</p>
+<p><em>Hint: 考虑动态规划或分支定界方法。</em></p>
+<details>
+<summary>答案</summary>
+<p>算法设计：</p>
+<ol>
+<li>构建依赖图，确定可行的拓扑排序</li>
+<li>使用分支定界搜索：
+   - 状态：已调度的操作集合
+   - 下界：当前内存使用 + 剩余操作的最小可能内存</li>
+<li>剪枝：如果下界超过已知最优解，剪掉该分支</li>
+<li>优先探索内存增量小的分支</li>
+</ol>
+<p>时间复杂度：</p>
+<ul>
+<li>最坏情况：O(n! × n)（遍历所有排列）</li>
+<li>实际情况：通过剪枝大幅减少搜索空间</li>
+<li>启发式近似：O(n² log n)</li>
+</ul>
+</details>
+<p><strong>练习 5.5</strong> 对于一个 100 层的神经网络，每层激活值占用 M 内存，梯度计算需要对应的激活值。如果使用平方根检查点策略（$\sqrt{n}$ 个检查点），计算：
+a) 峰值内存使用
+b) 额外的计算开销
+c) 最优检查点数量</p>
+<p><em>Hint: 考虑前向传播和反向传播的内存需求。</em></p>
+<details>
+<summary>答案</summary>
+<p>a) 峰值内存：</p>
+<ul>
+<li>检查点数：k = √100 = 10</li>
+<li>每段长度：100/10 = 10 层</li>
+<li>峰值内存 = 10M（检查点）+ 10M（当前段激活）+ M（梯度）= 21M</li>
+<li>相比无检查点（100M）节省 79%</li>
+</ul>
+<p>b) 计算开销：</p>
+<ul>
+<li>每段需要重计算一次</li>
+<li>总计算量 = 原始前向(100) + 重计算(90) = 190 层计算</li>
+<li>额外开销 = 90%</li>
+</ul>
+<p>c) 最优检查点数：</p>
+<ul>
+<li>内存-计算权衡：M(k) = k·M + (n/k)·M</li>
+<li>求导并令其为 0：dM/dk = M - nM/k² = 0</li>
+<li>最优 k = √n = 10</li>
+</ul>
+</details>
+<p><strong>练习 5.6</strong> 某 Transformer 模型的自注意力机制中，Q、K、V 矩阵各占 100MB，注意力计算的中间结果（QK^T）占 500MB。设计一个分块策略，将峰值内存从 800MB 降低到 300MB 以内。</p>
+<p><em>Hint: 在序列长度维度上分块。</em></p>
+<details>
+<summary>答案</summary>
+<p>分块策略：</p>
+<ol>
+<li>将序列长度 L 分成 b 块，每块长度 L/b</li>
+<li>每块的 QK^T 大小：500MB / b²</li>
+<li>约束条件：100(Q) + 100(K) + 100(V) + 500/b² ≤ 300</li>
+<li>求解：500/b² ≤ 0，无解</li>
+</ol>
+<p>改进策略：</p>
+<ol>
+<li>Q 分块加载：每次加载 Q 的 1/b</li>
+<li>内存需求：100/b(Q块) + 100(K) + 100(V) + 500/b(QK^T块)</li>
+<li>约束：100/b + 200 + 500/b ≤ 300</li>
+<li>600/b ≤ 100，b ≥ 6</li>
+<li>选择 b = 8，峰值内存 = 12.5 + 200 + 62.5 = 275MB</li>
+</ol>
+</details>
+<p><strong>练习 5.7</strong> 在自动驾驶场景中，需要处理多路传感器数据（相机、激光雷达、毫米波雷达）。每路数据的处理时间和内存需求不同。设计一个内存分配策略，满足 100ms 的实时性要求，同时最小化内存使用。</p>
+<p>数据：</p>
+<ul>
+<li>相机：处理时间 30ms，内存 200MB</li>
+<li>激光雷达：处理时间 50ms，内存 300MB  </li>
+<li>毫米波：处理时间 20ms，内存 100MB</li>
+</ul>
+<p><em>Hint: 考虑流水线并行和内存复用。</em></p>
+<details>
+<summary>答案</summary>
+<p>策略设计：</p>
+<ol>
+<li>
+<p>流水线调度（时间轴）：
+   - [0-20]: 毫米波
+   - [20-50]: 相机 + 激光雷达并行
+   - [50-70]: 激光雷达继续
+   - [70-100]: 融合处理</p>
+</li>
+<li>
+<p>内存分配：
+   - [0-20]: 100MB（毫米波）
+   - [20-50]: 200MB（相机）+ 300MB（激光雷达）= 500MB
+   - [50-70]: 300MB（激光雷达）+ 100MB（毫米波结果保留）
+   - [70-100]: 200MB（融合缓冲区）</p>
+</li>
+<li>
+<p>峰值内存：500MB</p>
+</li>
+<li>总延迟：70ms &lt; 100ms ✓</li>
+</ol>
+<p>优化：毫米波处理完后立即释放，其结果可以复用其内存空间。</p>
+</details>
+<p><strong>练习 5.8</strong> 实现一个简化的内存池分配器，支持 buddy system。给定 1024MB 的内存池，处理以下分配请求序列，计算内部碎片率。</p>
+<p>请求序列：alloc(150MB), alloc(200MB), free(150MB), alloc(100MB), alloc(300MB)</p>
+<p><em>Hint: Buddy system 使用 2 的幂次大小的块。</em></p>
+<details>
+<summary>答案</summary>
+<p>Buddy System 实现：
+初始：1024MB 块</p>
+<ol>
+<li>
+<p>alloc(150MB) → 分配 256MB 块
+   - 1024 → 512 + 512
+   - 512 → 256 + 256
+   - 分配第一个 256MB
+   - 内部碎片：256 - 150 = 106MB</p>
+</li>
+<li>
+<p>alloc(200MB) → 分配 256MB 块
+   - 使用第二个 256MB
+   - 内部碎片：256 - 200 = 56MB</p>
+</li>
+<li>
+<p>free(150MB)
+   - 释放第一个 256MB 块</p>
+</li>
+<li>
+<p>alloc(100MB) → 分配 128MB 块
+   - 256 → 128 + 128
+   - 分配 128MB
+   - 内部碎片：128 - 100 = 28MB</p>
+</li>
+<li>
+<p>alloc(300MB) → 分配 512MB 块
+   - 使用剩余的 512MB
+   - 内部碎片：512 - 300 = 212MB</p>
+</li>
+</ol>
+<p>总内部碎片：28 + 56 + 212 = 296MB
+已分配：128 + 256 + 512 = 896MB
+碎片率：296/896 = 33%</p>
+</details>
+<h2 id="57_1">5.7 常见陷阱与错误</h2>
+<h3 id="_5">内存对齐问题</h3>
+<ul>
+<li><strong>错误</strong>：忽略硬件对齐要求导致性能下降或错误</li>
+<li><strong>正确做法</strong>：始终按照目标硬件的对齐要求分配内存，宁可浪费少量空间</li>
+</ul>
+<h3 id="_6">生命周期分析不准确</h3>
+<ul>
+<li><strong>错误</strong>：过早释放仍在使用的内存</li>
+<li><strong>正确做法</strong>：保守估计生命周期，使用运行时验证</li>
+</ul>
+<h3 id="_7">内存泄漏</h3>
+<ul>
+<li><strong>错误</strong>：引用计数错误或循环引用</li>
+<li><strong>正确做法</strong>：使用静态分析工具，实现自动的生命周期管理</li>
+</ul>
+<h3 id="_8">碎片化严重</h3>
+<ul>
+<li><strong>错误</strong>：频繁的小内存分配导致碎片化</li>
+<li><strong>正确做法</strong>：使用内存池，批量分配，定期整理</li>
+</ul>
+<h3 id="_9">重计算过度</h3>
+<ul>
+<li><strong>错误</strong>：盲目使用重计算导致性能严重下降</li>
+<li><strong>正确做法</strong>：仔细分析计算/内存权衡，选择性重计算</li>
+</ul>
+<h3 id="numa">NUMA 感知不足</h3>
+<ul>
+<li><strong>错误</strong>：跨 NUMA 节点的内存访问导致性能下降</li>
+<li><strong>正确做法</strong>：将数据放置在计算节点的本地内存</li>
+</ul>
+<h3 id="_10">动态内存分配</h3>
+<ul>
+<li><strong>错误</strong>：在关键路径上进行动态内存分配</li>
+<li><strong>正确做法</strong>：预分配所有需要的内存，使用静态规划</li>
+</ul>
+<h2 id="58_1">5.8 最佳实践检查清单</h2>
+<h3 id="_11">设计阶段</h3>
+<ul>
+<li>[ ] 是否进行了完整的内存需求分析？</li>
+<li>[ ] 是否考虑了所有的内存层级（L1/L2/L3/DRAM/HBM）？</li>
+<li>[ ] 是否设计了内存池和复用策略？</li>
+<li>[ ] 是否考虑了 NUMA 架构的影响？</li>
+</ul>
+<h3 id="_12">实现阶段</h3>
+<ul>
+<li>[ ] 内存分配是否满足对齐要求？</li>
+<li>[ ] 是否实现了准确的生命周期跟踪？</li>
+<li>[ ] 是否启用了原地操作优化？</li>
+<li>[ ] 是否实现了工作空间共享？</li>
+</ul>
+<h3 id="_13">优化阶段</h3>
+<ul>
+<li>[ ] 是否分析了内存访问模式？</li>
+<li>[ ] 是否优化了数据布局以提高缓存命中率？</li>
+<li>[ ] 是否考虑了重计算与内存的权衡？</li>
+<li>[ ] 是否实现了分块执行策略？</li>
+</ul>
+<h3 id="_14">验证阶段</h3>
+<ul>
+<li>[ ] 是否测量了实际的峰值内存使用？</li>
+<li>[ ] 是否验证了内存复用的正确性？</li>
+<li>[ ] 是否检查了内存泄漏？</li>
+<li>[ ] 是否评估了碎片化程度？</li>
+</ul>
+<h3 id="_15">部署阶段</h3>
+<ul>
+<li>[ ] 是否针对目标硬件进行了调优？</li>
+<li>[ ] 是否设置了内存使用监控？</li>
+<li>[ ] 是否准备了内存不足的降级方案？</li>
+<li>[ ] 是否记录了内存配置参数？</li>
+</ul>
+            </article>
+            
+            <nav class="page-nav"><a href="chapter4.html" class="nav-link prev">← 第 4 章：统一缓冲区设计</a><a href="chapter6.html" class="nav-link next">第 6 章：数据布局优化 →</a></nav>
+        </main>
+    </div>
+</body>
+</html>

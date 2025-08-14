@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="./">
+    <title>AI 编译器教程：从理论到 200T 规模实践</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="assets/highlight.css">
+    <script src="assets/script.js" defer></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']],
+                processEscapes: false,
+                packages: {'[+]': ['noerrors', 'ams']}
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            loader: {
+                load: ['[tex]/noerrors', '[tex]/ams']
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3>目录</h3>
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+            <div class="sidebar-search">
+                <input type="text" id="sidebar-search-input" placeholder="搜索..." autocomplete="off">
+            </div>
+            <div id="tree-container">
+                <nav class="tree-nav" role="tree">
+                    <div class="tree-item active" >
+                        <a href="index.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">AI 编译器教程：从理论到 200T 规模实践</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter1.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 1 章：AI 编译器概述</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter2.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 2 章：中间表示（IR）设计</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter3.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 3 章：计算图表示与分析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter4.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 4 章：统一缓冲区设计</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter5.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 5 章：内存规划与分配</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter6.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 6 章：数据布局优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter7.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 7 章：算子融合</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter8.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 8 章：自动微分与梯度优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter9.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 9 章：并行化策略</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter11.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 11 章：多维 Stride DMA 利用</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter12.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 12 章：JIT 编译技术</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter13.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 13 章：GPU 编译优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter14.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 14 章：移动端与边缘设备优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter15.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 15 章：NUMA 架构优化（一）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter16.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 16 章：NUMA 架构优化（二）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter17.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 17 章：动态 Shape 编译（一）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter18.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 18 章：动态 Shape 编译（二）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter19.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 19 章：稀疏与变长数据支持</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter20.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 20 章：JIT 编译技术</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter21.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 21 章：高维张量别名分析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter22.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 22 章：投机执行支持</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter23.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 23 章：自动驾驶场景优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter24.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 24 章：具身智能编译挑战</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter25.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 25 章：200T 模型编译实践</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="CLAUDE.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">Untitled</span>
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </nav>
+        
+        <main class="content">
+            <article>
+                <h1 id="ai-200t">AI 编译器教程：从理论到 200T 规模实践</h1>
+<h2 id="_1">关于本教程</h2>
+<p>本教程面向资深程序员和 AI 科学家，系统介绍 AI 编译器的设计与实现，特别关注自动驾驶和具身智能场景下的 200T 参数级模型编译优化。教程采用理论与实践结合的方式，包含大量数学推导和工程实践案例。</p>
+<h2 id="_2">学习路径建议</h2>
+<h3 id="2-3">快速路径（2-3 周）</h3>
+<ul>
+<li>第 1-3 章：基础概念</li>
+<li>第 7-8 章：核心优化</li>
+<li>第 17 章：动态 shape</li>
+<li>第 23 章：案例研究</li>
+</ul>
+<h3 id="6-8">标准路径（6-8 周）</h3>
+<ul>
+<li>顺序学习第 1-17 章</li>
+<li>选择性学习第 18-22 章中感兴趣的专题</li>
+</ul>
+<h3 id="3-4">深度路径（3-4 个月）</h3>
+<ul>
+<li>完整学习所有章节</li>
+<li>完成所有练习题</li>
+<li>参与开源项目实践</li>
+</ul>
+<h2 id="_3">目录</h2>
+<h3 id="_4">第一部分：基础架构</h3>
+<h4 id="1-ai">第 1 章：AI 编译器概述</h4>
+<ul>
+<li>AI 编译器的定义与边界</li>
+<li>与传统编译器的区别</li>
+<li>编译器栈的层次结构</li>
+<li>主流框架生态系统</li>
+</ul>
+<h4 id="2-ir">第 2 章：中间表示（IR）设计</h4>
+<ul>
+<li>多层 IR 的必要性</li>
+<li>图 IR vs 指令 IR</li>
+<li>SSA 形式在 AI 编译器中的应用</li>
+<li>MLIR 方言设计原则</li>
+</ul>
+<h4 id="3">第 3 章：计算图表示与分析</h4>
+<ul>
+<li>数据流图构建</li>
+<li>控制流与数据依赖</li>
+<li>活性分析与生命周期</li>
+<li>别名分析基础</li>
+</ul>
+<h3 id="_5">第二部分：内存与数据管理</h3>
+<h4 id="4">第 4 章：统一缓冲区设计</h4>
+<ul>
+<li>统一内存模型架构</li>
+<li>零拷贝优化策略</li>
+<li>内存池管理</li>
+<li>碎片化问题与解决方案</li>
+</ul>
+<h4 id="5">第 5 章：内存规划与分配</h4>
+<ul>
+<li>静态内存规划算法</li>
+<li>张量生命周期分析</li>
+<li>内存复用策略</li>
+<li>峰值内存优化</li>
+</ul>
+<h4 id="6">第 6 章：数据布局优化</h4>
+<ul>
+<li>NCHW vs NHWC 选择策略</li>
+<li>布局转换最小化</li>
+<li>Padding 与对齐优化</li>
+<li>混合精度布局</li>
+</ul>
+<h3 id="_6">第三部分：核心优化技术</h3>
+<h4 id="7">第 7 章：算子融合</h4>
+<ul>
+<li>垂直融合与水平融合</li>
+<li>融合规则与模式匹配</li>
+<li>内存带宽优化</li>
+<li>融合的收益分析模型</li>
+</ul>
+<h4 id="8">第 8 章：自动微分与梯度优化</h4>
+<ul>
+<li>前向模式 vs 反向模式</li>
+<li>检查点策略</li>
+<li>梯度累积优化</li>
+<li>高阶导数支持</li>
+</ul>
+<h4 id="9">第 9 章：并行化策略</h4>
+<ul>
+<li>数据并行编译优化</li>
+<li>模型并行切分策略</li>
+<li>流水线并行调度</li>
+<li>混合并行模式</li>
+</ul>
+<h3 id="_7">第四部分：硬件适配层</h3>
+<h4 id="10">第 10 章：协处理器设计原则</h4>
+<ul>
+<li>主处理器与协处理器通信</li>
+<li>命令队列设计</li>
+<li>DMA 优化</li>
+<li>异步执行模型</li>
+</ul>
+<h4 id="11-stride-dma">第 11 章：多维 Stride DMA 利用</h4>
+<ul>
+<li>多维 DMA 描述符设计</li>
+<li>Stride 访问模式分析</li>
+<li>张量切片与 DMA 映射</li>
+<li>非连续内存传输优化</li>
+<li>2D/3D DMA 引擎编程模型</li>
+<li>DMA 链表与批处理</li>
+</ul>
+<h4 id="13-gpu">第 13 章：GPU 编译优化</h4>
+<ul>
+<li>CUDA 核函数生成</li>
+<li>Warp 调度优化</li>
+<li>共享内存使用</li>
+<li>Tensor Core 利用</li>
+</ul>
+<h4 id="14">第 14 章：移动端与边缘设备优化</h4>
+<ul>
+<li>Qualcomm Hexagon DSP 编译</li>
+<li>Apple Neural Engine 适配</li>
+<li>ARM NEON 优化</li>
+<li>功耗感知编译</li>
+</ul>
+<h3 id="_8">第五部分：高级专题</h3>
+<h4 id="15-numa">第 15 章：NUMA 架构优化（一）</h4>
+<ul>
+<li>NUMA 基础概念</li>
+<li>亲和性设置</li>
+<li>本地内存分配策略</li>
+<li>NUMA 感知的数据放置</li>
+</ul>
+<h4 id="16-numa">第 16 章：NUMA 架构优化（二）</h4>
+<ul>
+<li>跨 Socket 通信优化</li>
+<li>NUMA 平衡算法</li>
+<li>大规模 Transformer 的 NUMA 优化</li>
+<li>性能分析与调优</li>
+</ul>
+<h4 id="17-shape">第 17 章：动态 Shape 编译（一）</h4>
+<ul>
+<li>符号形状推导</li>
+<li>Shape 函数与约束</li>
+<li>动态内存管理</li>
+<li>桶化策略</li>
+</ul>
+<h4 id="18-shape">第 18 章：动态 Shape 编译（二）</h4>
+<ul>
+<li>运行时特化</li>
+<li>重编译触发机制</li>
+<li>Shape 缓存策略</li>
+<li>性能预测模型</li>
+</ul>
+<h4 id="19">第 19 章：稀疏与变长数据支持</h4>
+<ul>
+<li>稀疏张量表示（COO, CSR, CSC）</li>
+<li>稀疏算子实现</li>
+<li>变长序列批处理</li>
+<li>动态稀疏模式</li>
+</ul>
+<h4 id="20-jit">第 20 章：JIT 编译技术</h4>
+<ul>
+<li>JIT vs AOT 权衡</li>
+<li>热点检测与优化</li>
+<li>编译缓存管理</li>
+<li>分层编译策略</li>
+</ul>
+<h4 id="21">第 21 章：高维张量别名分析</h4>
+<ul>
+<li>Stride 张量的别名问题</li>
+<li>区间分析方法</li>
+<li>依赖性测试</li>
+<li>优化机会识别</li>
+</ul>
+<h4 id="22">第 22 章：投机执行支持</h4>
+<ul>
+<li>投机解码的编译支持</li>
+<li>分支预测优化</li>
+<li>回滚机制设计</li>
+<li>性能与正确性权衡</li>
+</ul>
+<h3 id="_9">第六部分：实战案例</h3>
+<h4 id="23">第 23 章：自动驾驶场景优化</h4>
+<ul>
+<li>实时性约束处理</li>
+<li>多模态融合优化</li>
+<li>安全关键路径识别</li>
+<li>确定性执行保证</li>
+</ul>
+<h4 id="24">第 24 章：具身智能编译挑战</h4>
+<ul>
+<li>感知-决策-控制循环优化</li>
+<li>异构计算资源调度</li>
+<li>低延迟推理优化</li>
+<li>能效优化策略</li>
+</ul>
+<h4 id="25-200t">第 25 章：200T 模型编译实践</h4>
+<ul>
+<li>模型分片策略</li>
+<li>通信优化</li>
+<li>内存层级管理</li>
+<li>检查点与恢复</li>
+</ul>
+<h2 id="_10">主流框架对比</h2>
+<p>| 框架 | IR 设计 | 硬件支持 | 动态 Shape | JIT 支持 | 主要应用场景 |</p>
+<table>
+<thead>
+<tr>
+<th>框架</th>
+<th>IR 设计</th>
+<th>硬件支持</th>
+<th>动态 Shape</th>
+<th>JIT 支持</th>
+<th>主要应用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>XLA</td>
+<td>HLO</td>
+<td>NVIDIA, TPU, CPU</td>
+<td>有限</td>
+<td>是</td>
+<td>TensorFlow/JAX</td>
+</tr>
+<tr>
+<td>TVM</td>
+<td>Relay/TIR</td>
+<td>全平台</td>
+<td>是</td>
+<td>是</td>
+<td>端到端优化</td>
+</tr>
+<tr>
+<td>Triton</td>
+<td>Triton IR</td>
+<td>NVIDIA</td>
+<td>有限</td>
+<td>是</td>
+<td>核函数开发</td>
+</tr>
+<tr>
+<td>MLIR</td>
+<td>多方言</td>
+<td>可扩展</td>
+<td>是</td>
+<td>是</td>
+<td>编译器基础设施</td>
+</tr>
+<tr>
+<td>TorchScript</td>
+<td>Graph IR</td>
+<td>多平台</td>
+<td>是</td>
+<td>是</td>
+<td>PyTorch 部署</td>
+</tr>
+<tr>
+<td>CoreML</td>
+<td>MIL</td>
+<td>Apple</td>
+<td>是</td>
+<td>否</td>
+<td>iOS/macOS</td>
+</tr>
+<tr>
+<td>ONNX Runtime</td>
+<td>ONNX</td>
+<td>全平台</td>
+<td>是</td>
+<td>部分</td>
+<td>跨框架部署</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_11">硬件平台覆盖</h2>
+<p>| 硬件类型 | 代表产品 | 关键特性 | 编译重点 |</p>
+<table>
+<thead>
+<tr>
+<th>硬件类型</th>
+<th>代表产品</th>
+<th>关键特性</th>
+<th>编译重点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>数据中心 GPU</td>
+<td>NVIDIA H100/H200</td>
+<td>HBM3, Tensor Core</td>
+<td>大批量并行, 混合精度</td>
+</tr>
+<tr>
+<td></td>
+<td>AMD MI300X</td>
+<td>HBM3, Matrix Core</td>
+<td>ROCm 优化</td>
+</tr>
+<tr>
+<td>AI 专用芯片</td>
+<td>Google TPU v5</td>
+<td>超大片上内存</td>
+<td>XLA 优化</td>
+</tr>
+<tr>
+<td></td>
+<td>Tesla Dojo</td>
+<td>自定义互联</td>
+<td>分布式编译</td>
+</tr>
+<tr>
+<td>移动端</td>
+<td>Qualcomm Snapdragon</td>
+<td>Hexagon DSP</td>
+<td>功耗优化</td>
+</tr>
+<tr>
+<td></td>
+<td>Apple M系列</td>
+<td>Neural Engine</td>
+<td>CoreML 适配</td>
+</tr>
+<tr>
+<td></td>
+<td>MediaTek Dimensity</td>
+<td>APU</td>
+<td>异构调度</td>
+</tr>
+<tr>
+<td>边缘设备</td>
+<td>NVIDIA Jetson</td>
+<td>CUDA + DLA</td>
+<td>实时性优化</td>
+</tr>
+<tr>
+<td></td>
+<td>Intel Movidius</td>
+<td>VPU</td>
+<td>视觉任务优化</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_12">数学符号约定</h2>
+<ul>
+<li>$\mathcal{G} = (V, E)$：计算图，其中 $V$ 为节点集，$E$ 为边集</li>
+<li>$\mathcal{T}$：张量空间</li>
+<li>$\phi: \mathcal{T} \rightarrow \mathcal{T}$：算子变换</li>
+<li>$M(\cdot)$：内存占用函数</li>
+<li>$L(\cdot)$：延迟函数</li>
+<li>$\mathcal{O}(\cdot)$：计算复杂度</li>
+<li>$\nabla$：梯度算子</li>
+<li>$\odot$：逐元素乘法</li>
+<li>$\otimes$：张量积</li>
+</ul>
+<h2 id="_13">代码约定</h2>
+<p>本教程不包含具体代码实现，所有算法以伪代码或数学形式呈现。实际实现请参考各框架官方文档。</p>
+<h2 id="_14">前置知识</h2>
+<p>建议读者具备以下基础：</p>
+<ul>
+<li>编译原理基础（词法分析、语法分析、优化）</li>
+<li>深度学习基础（反向传播、优化器、常见模型）</li>
+<li>并行计算基础（CUDA/OpenCL 编程经验）</li>
+<li>计算机体系结构（缓存、流水线、SIMD）</li>
+</ul>
+<h2 id="_15">如何使用本教程</h2>
+<ol>
+<li><strong>循序渐进</strong>：建议按章节顺序学习，每章都建立在前序知识基础上</li>
+<li><strong>动手实践</strong>：完成每章练习题，巩固理解</li>
+<li><strong>查阅对照</strong>：对照实际框架源码加深理解</li>
+<li><strong>参与讨论</strong>：加入社区讨论，分享学习心得</li>
+</ol>
+<h2 id="_16">版权与致谢</h2>
+<p>本教程采用 CC BY-SA 4.0 协议发布。感谢 AI 编译器社区的持续贡献。</p>
+<hr />
+<p><em>开始学习：<a href="chapter1.html">第 1 章：AI 编译器概述</a></em></p>
+            </article>
+            
+            <nav class="page-nav"><a href="chapter1.html" class="nav-link next">第 1 章：AI 编译器概述 →</a></nav>
+        </main>
+    </div>
+</body>
+</html>

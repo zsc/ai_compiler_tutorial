@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="./">
+    <title>第 13 章：GPU 编译优化</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="assets/highlight.css">
+    <script src="assets/script.js" defer></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']],
+                processEscapes: false,
+                packages: {'[+]': ['noerrors', 'ams']}
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            loader: {
+                load: ['[tex]/noerrors', '[tex]/ams']
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3>目录</h3>
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+            <div class="sidebar-search">
+                <input type="text" id="sidebar-search-input" placeholder="搜索..." autocomplete="off">
+            </div>
+            <div id="tree-container">
+                <nav class="tree-nav" role="tree">
+                    <div class="tree-item " >
+                        <a href="index.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">AI 编译器教程：从理论到 200T 规模实践</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter1.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 1 章：AI 编译器概述</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter2.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 2 章：中间表示（IR）设计</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter3.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 3 章：计算图表示与分析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter4.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 4 章：统一缓冲区设计</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter5.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 5 章：内存规划与分配</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter6.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 6 章：数据布局优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter7.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 7 章：算子融合</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter8.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 8 章：自动微分与梯度优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter9.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 9 章：并行化策略</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter11.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 11 章：多维 Stride DMA 利用</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter12.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 12 章：JIT 编译技术</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item active" >
+                        <a href="chapter13.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 13 章：GPU 编译优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter14.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 14 章：移动端与边缘设备优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter15.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 15 章：NUMA 架构优化（一）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter16.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 16 章：NUMA 架构优化（二）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter17.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 17 章：动态 Shape 编译（一）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter18.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 18 章：动态 Shape 编译（二）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter19.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 19 章：稀疏与变长数据支持</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter20.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 20 章：JIT 编译技术</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter21.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 21 章：高维张量别名分析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter22.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 22 章：投机执行支持</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter23.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 23 章：自动驾驶场景优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter24.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 24 章：具身智能编译挑战</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter25.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 25 章：200T 模型编译实践</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="CLAUDE.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">Untitled</span>
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </nav>
+        
+        <main class="content">
+            <article>
+                <h1 id="13-gpu">第 13 章：GPU 编译优化</h1>
+<p>GPU编译优化是AI编译器实现高性能推理和训练的核心技术。本章深入探讨GPU架构特性、CUDA核函数生成策略、Warp调度机制以及Tensor Core等专用计算单元的高效利用。通过系统化的编译优化技术，我们能够充分发挥现代GPU在AI工作负载下的计算潜力，实现接近硬件理论峰值的性能。</p>
+<h2 id="131-gpu">13.1 GPU编译优化概述</h2>
+<h3 id="gpu">GPU架构基础</h3>
+<p>现代GPU采用大规模并行架构，以NVIDIA Ampere/Hopper架构为例，其计算层级包括：</p>
+<ol>
+<li><strong>流多处理器（SM）</strong>：独立的计算单元，包含多个处理核心</li>
+<li><strong>Warp调度器</strong>：每个SM包含多个warp调度器，负责线程调度</li>
+<li><strong>计算核心</strong>：包括CUDA Core、Tensor Core、RT Core等专用单元</li>
+<li><strong>存储层级</strong>：寄存器、共享内存、L1/L2缓存、全局内存</li>
+</ol>
+<p>GPU的执行模型基于SIMT（Single Instruction Multiple Thread）范式：</p>
+<p>$$\text{Throughput} = \frac{\text{Active Warps} \times \text{Instructions per Warp}}{\text{Execution Cycles}}$$
+其中，保持高占用率（occupancy）是优化的关键：
+$$\text{Occupancy} = \frac{\text{Active Warps per SM}}{\text{Maximum Warps per SM}}$$</p>
+<h3 id="_1">编译优化目标</h3>
+<p>GPU编译优化需要在多个目标之间取得平衡：</p>
+<ol>
+<li>
+<p><strong>计算吞吐量最大化</strong>
+   - 算术强度优化：$AI = \frac{\text{FLOPs}}{\text{Memory Bytes}}$
+   - 指令级并行（ILP）提升
+   - 寄存器压力管理</p>
+</li>
+<li>
+<p><strong>内存带宽优化</strong>
+   - 合并内存访问（coalesced access）
+   - 缓存利用率提升
+   - 内存访问模式优化</p>
+</li>
+<li>
+<p><strong>延迟隐藏</strong>
+   - 通过增加活跃warp数隐藏内存延迟
+   - 指令调度优化
+   - 异步操作重叠</p>
+</li>
+</ol>
+<h3 id="_2">性能瓶颈分析</h3>
+<p>Roofline模型提供了性能分析的理论框架：
+$$P = \min(P_{\text{peak}}, AI \times BW_{\text{peak}})$$
+其中：</p>
+<ul>
+<li>$P$ 是实际性能（FLOPS）</li>
+<li>$P_{\text{peak}}$ 是峰值计算性能</li>
+<li>$AI$ 是算术强度</li>
+<li>$BW_{\text{peak}}$ 是峰值内存带宽</li>
+</ul>
+<p>根据算子的算术强度，可以判断其是计算受限还是内存受限：</p>
+<div class="codehilite"><pre><span></span><code>        Performance
+            ^
+            |     计算受限区域
+   P_peak   |________________
+            |               /
+            |             /  
+            |           /    内存受限区域
+            |         /
+            |       /
+            |     /
+            |___/________________&gt; Arithmetic Intensity
+                AI_critical
+</code></pre></div>
+
+<p>关键转折点：$AI_{\text{critical}} = \frac{P_{\text{peak}}}{BW_{\text{peak}}}$</p>
+<p>对于典型的GPU：</p>
+<ul>
+<li>NVIDIA A100：AI_critical ≈ 74 (FP16)</li>
+<li>NVIDIA H100：AI_critical ≈ 132 (FP16)</li>
+</ul>
+<h2 id="132-cuda">13.2 CUDA核函数生成</h2>
+<h3 id="_3">核函数设计原则</h3>
+<p>核函数生成需要考虑以下设计原则：</p>
+<ol>
+<li><strong>线程粒度选择</strong></li>
+</ol>
+<p>细粒度并行（元素级）vs 粗粒度并行（块级）的权衡：
+$$\text{Thread Efficiency} = \frac{\text{Useful Work per Thread}}{\text{Total Work per Thread}}$$</p>
+<ol start="2">
+<li><strong>工作分配策略</strong></li>
+</ol>
+<p>对于二维张量操作，常见的线程块配置：
+$$\text{Grid} = \left\lceil \frac{M}{\text{TILE}_M} \right\rceil \times \left\lceil \frac{N}{\text{TILE}_N} \right\rceil$$</p>
+<p>$$\text{Block} = \text{THREADS}_X \times \text{THREADS}_Y$$</p>
+<ol start="3">
+<li><strong>数据重用模式</strong></li>
+</ol>
+<p>通过共享内存实现数据重用，重用度计算：
+$$R = \frac{\text{Total Memory Accesses}}{\text{Unique Memory Locations}}$$</p>
+<h3 id="_4">线程块与网格配置</h3>
+<p>最优配置需要考虑硬件约束和算子特性：</p>
+<p><strong>硬件约束</strong>：</p>
+<ul>
+<li>最大线程块大小：1024（大多数现代GPU）</li>
+<li>每个SM的最大线程块数：16-32</li>
+<li>每个SM的最大线程数：1536-2048</li>
+</ul>
+<p><strong>配置策略</strong>：</p>
+<ol>
+<li><strong>规则形状张量</strong>：</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>对于 M×N 矩阵操作：
+Block Size = (TX, TY) 其中 TX × TY ≤ 1024
+Grid Size = (⌈M/TX⌉, ⌈N/TY⌉)
+</code></pre></div>
+
+<ol start="2">
+<li><strong>不规则形状处理</strong>：</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>使用一维线程块处理：
+Block Size = min(1024, total_elements)
+Grid Size = ⌈total_elements / Block Size⌉
+</code></pre></div>
+
+<ol start="3">
+<li><strong>动态配置选择</strong>：</li>
+</ol>
+<p>根据问题规模动态调整：
+$$\text{Block Size} = \begin{cases}
+   256 &amp; \text{if } N &lt; 10^4 \\
+   512 &amp; \text{if } 10^4 \leq N &lt; 10^6 \\
+   1024 &amp; \text{if } N \geq 10^6
+   \end{cases}$$</p>
+<h3 id="_5">内存访问模式优化</h3>
+<p>合并内存访问是GPU性能优化的关键：</p>
+<p><strong>合并访问条件</strong>：</p>
+<ol>
+<li>线程访问连续的内存地址</li>
+<li>访问起始地址对齐到缓存行（128字节）</li>
+<li>访问大小为4、8或16字节</li>
+</ol>
+<p><strong>访问模式分析</strong>：</p>
+<p>对于线程索引为 <code>tid</code>，全局内存访问地址为：
+$$\text{addr}[tid] = \text{base} + tid \times \text{stride}$$
+合并效率：
+$$\eta_{\text{coalesce}} = \frac{\text{Requested Bytes}}{\text{Transferred Bytes}}$$
+理想情况下 $\eta_{\text{coalesce}} = 1$，但存在以下情况会降低效率：</p>
+<ol>
+<li>
+<p><strong>跨步访问</strong>（stride &gt; 1）：
+$$\eta = \frac{1}{\text{stride}}$$</p>
+</li>
+<li>
+<p><strong>非对齐访问</strong>：
+   额外的缓存行传输，效率下降25-50%</p>
+</li>
+<li>
+<p><strong>随机访问</strong>：
+   最坏情况下每个线程触发独立的内存事务</p>
+</li>
+</ol>
+<p><strong>优化策略</strong>：</p>
+<ol>
+<li>
+<p><strong>数据布局转换</strong>：
+   将AoS（Array of Structures）转换为SoA（Structure of Arrays）</p>
+</li>
+<li>
+<p><strong>内存访问重排</strong>：
+   通过共享内存实现访问模式转换</p>
+</li>
+<li>
+<p><strong>向量化访问</strong>：
+   使用float4、int4等向量类型减少内存事务</p>
+</li>
+</ol>
+<h2 id="133-warp">13.3 Warp调度优化与共享内存</h2>
+<h3 id="warp">Warp执行模型</h3>
+<p>Warp是GPU执行的基本单位，包含32个线程（NVIDIA架构）：</p>
+<p><strong>执行特性</strong>：</p>
+<ol>
+<li>SIMT执行：所有线程执行相同指令</li>
+<li>锁步执行：线程同步前进</li>
+<li>独立数据路径：每个线程操作不同数据</li>
+</ol>
+<p><strong>调度机制</strong>：</p>
+<p>每个SM的warp调度器数量决定了指令发射能力：
+$$\text{IPC}_{\text{max}} = \text{Schedulers} \times \text{Issue Width}$$
+例如，Ampere架构：4个调度器，每个可发射1条指令，理论IPC=4</p>
+<p><strong>占用率计算</strong>：</p>
+<p>占用率受多个因素限制：
+$$\text{Occupancy} = \min\left(\frac{W_{\text{reg}}}{W_{\text{max}}}, \frac{W_{\text{smem}}}{W_{\text{max}}}, \frac{W_{\text{blocks}}}{W_{\text{max}}}\right)$$
+其中：</p>
+<ul>
+<li>$W_{\text{reg}}$：寄存器限制的warp数</li>
+<li>$W_{\text{smem}}$：共享内存限制的warp数  </li>
+<li>$W_{\text{blocks}}$：线程块限制的warp数</li>
+</ul>
+<h3 id="_6">分支发散处理</h3>
+<p>分支发散严重影响GPU性能：</p>
+<p><strong>发散度量</strong>：
+$$\text{Divergence} = 1 - \frac{\text{Active Threads}}{\text{Total Threads in Warp}}$$
+<strong>优化策略</strong>：</p>
+<ol>
+<li>
+<p><strong>谓词执行</strong>：
+   将短分支转换为谓词指令，避免真正的分支</p>
+</li>
+<li>
+<p><strong>分支重组</strong>：
+   重新组织数据布局，使相同分支的线程聚集</p>
+</li>
+<li>
+<p><strong>循环展开</strong>：
+   消除循环内的分支判断</p>
+</li>
+</ol>
+<p><strong>编译器优化示例</strong>：</p>
+<p>原始分支：</p>
+<div class="codehilite"><pre><span></span><code>if (condition) {
+    result = compute_a();
+} else {
+    result = compute_b();
+}
+</code></pre></div>
+
+<p>谓词优化后：</p>
+<div class="codehilite"><pre><span></span><code>result_a = compute_a();
+result_b = compute_b();
+result = condition ? result_a : result_b;
+</code></pre></div>
+
+<p>性能影响：
+$$T_{\text{diverged}} = T_{\text{then}} + T_{\text{else}}$$
+$$T_{\text{predicated}} = \max(T_{\text{then}}, T_{\text{else}}) + T_{\text{select}}$$</p>
+<h3 id="bank">共享内存bank冲突</h3>
+<p>共享内存组织为32个bank，宽度4字节：</p>
+<p><strong>Bank计算</strong>：
+$$\text{Bank ID} = \left\lfloor\frac{\text{Address}}{4}\right\rfloor \bmod 32$$
+<strong>冲突类型</strong>：</p>
+<ol>
+<li><strong>无冲突</strong>：每个线程访问不同bank</li>
+<li><strong>广播</strong>：所有线程访问同一地址（无冲突）</li>
+<li><strong>n-way冲突</strong>：n个线程访问同一bank</li>
+</ol>
+<p><strong>冲突影响</strong>：
+$$T_{\text{access}} = T_{\text{base}} \times \text{Conflict Degree}$$
+<strong>优化技术</strong>：</p>
+<ol>
+<li>
+<p><strong>Padding</strong>：
+   添加额外列避免2的幂次stride：
+$$\text{Padded Width} = \text{Original Width} + 1$$</p>
+</li>
+<li>
+<p><strong>置换访问</strong>：
+   使用异或操作打散bank访问：
+$$\text{Index}_{\text{permuted}} = \text{Index} \oplus (\text{Index} &gt;&gt; 5)$$</p>
+</li>
+<li>
+<p><strong>向量化访问</strong>：
+   使用float2/float4减少访问次数</p>
+</li>
+</ol>
+<h2 id="134-tensor-core">13.4 Tensor Core利用</h2>
+<h3 id="tensor-core">Tensor Core架构</h3>
+<p>Tensor Core是专门用于矩阵运算的硬件单元：</p>
+<p><strong>计算能力</strong>（以A100为例）：</p>
+<ul>
+<li>FP16/BF16：312 TFLOPS</li>
+<li>TF32：156 TFLOPS</li>
+<li>FP64：19.5 TFLOPS</li>
+<li>INT8：624 TOPS</li>
+</ul>
+<p><strong>矩阵片段大小</strong>：
+基本操作为矩阵乘累加（MMA）：
+$$D = A \times B + C$$
+支持的片段大小：</p>
+<ul>
+<li>m16n8k16（Ampere）</li>
+<li>m16n8k8（Turing）</li>
+<li>m8n8k4（Volta）</li>
+</ul>
+<h3 id="wmma">WMMA编程模型</h3>
+<p>Warp Matrix Multiply Accumulate (WMMA) API提供了Tensor Core编程接口：</p>
+<p><strong>基本操作流程</strong>：</p>
+<ol>
+<li>
+<p><strong>加载矩阵片段</strong>：
+$$T_{\text{load}} = \frac{\text{Fragment Size}}{\text{Memory Bandwidth}}$$</p>
+</li>
+<li>
+<p><strong>执行MMA操作</strong>：
+$$T_{\text{compute}} = \frac{\text{Fragment FLOPs}}{\text{Tensor Core Throughput}}$$</p>
+</li>
+<li>
+<p><strong>存储结果</strong>：
+$$T_{\text{store}} = \frac{\text{Result Size}}{\text{Memory Bandwidth}}$$
+<strong>性能模型</strong>：
+$$\text{Efficiency} = \frac{T_{\text{compute}}}{T_{\text{load}} + T_{\text{compute}} + T_{\text{store}}}$$
+要达到高效率，需要：
+$$\frac{T_{\text{compute}}}{T_{\text{memory}}} &gt; 10$$
+这要求算术强度：
+$$AI &gt; \frac{10 \times \text{Memory Bandwidth}}{\text{Tensor Core FLOPS}}$$</p>
+</li>
+</ol>
+<h3 id="_7">混合精度优化</h3>
+<p>混合精度计算结合了高精度累加和低精度存储：</p>
+<p><strong>精度策略</strong>：</p>
+<ol>
+<li>
+<p><strong>计算精度选择</strong>：
+   - 前向传播：FP16/BF16
+   - 反向传播：FP16/BF16 + FP32累加
+   - 参数更新：FP32</p>
+</li>
+<li>
+<p><strong>动态范围管理</strong>：</p>
+</li>
+</ol>
+<p>损失缩放因子：
+$$L_{\text{scaled}} = L \times S$$
+梯度恢复：
+$$\nabla_{\text{true}} = \frac{\nabla_{\text{scaled}}}{S}$$</p>
+<ol start="3">
+<li><strong>数值稳定性</strong>：</li>
+</ol>
+<p>Kahan求和算法减少累积误差：
+$$\begin{align}
+   y &amp;= x_i - c \\
+   t &amp;= \text{sum} + y \\
+   c &amp;= (t - \text{sum}) - y \\
+   \text{sum} &amp;= t
+   \end{align}$$
+<strong>自动混合精度（AMP）编译策略</strong>：</p>
+<ol>
+<li>
+<p><strong>算子白名单/黑名单</strong>：
+   - 白名单：GEMM、卷积等计算密集型
+   - 黑名单：Loss、Softmax等精度敏感
+   - 灰名单：根据上下文决定</p>
+</li>
+<li>
+<p><strong>插入类型转换</strong>：
+   最小化转换开销的图优化问题：
+$$\min \sum_{e \in E} w_e \times \text{cast}(e)$$
+约束条件：算子精度要求必须满足</p>
+</li>
+<li>
+<p><strong>梯度缩放插入</strong>：
+   在反向传播起点插入scale操作，终点插入unscale</p>
+</li>
+</ol>
+<p><strong>性能收益分析</strong>：</p>
+<p>混合精度带来的加速比：
+$$\text{Speedup} = \frac{T_{\text{FP32}}}{T_{\text{Mixed}}} = \frac{1}{r + (1-r) \times \frac{\text{Perf}_{\text{FP16}}}{\text{Perf}_{\text{FP32}}}}$$
+其中 $r$ 是必须使用FP32的操作比例。</p>
+<p>典型情况下：</p>
+<ul>
+<li>计算加速：2-4×</li>
+<li>内存节省：50%</li>
+<li>端到端训练加速：1.5-3×</li>
+</ul>
+<h2 id="_8">本章小结</h2>
+<p>本章系统介绍了GPU编译优化的核心技术：</p>
+<p><strong>关键概念</strong>：</p>
+<ol>
+<li>GPU架构的SIMT执行模型和多级存储层次</li>
+<li>Roofline模型指导的性能瓶颈分析</li>
+<li>Warp调度机制和占用率优化</li>
+<li>Tensor Core的高效利用策略</li>
+</ol>
+<p><strong>核心公式</strong>：</p>
+<ul>
+<li>占用率：$\text{Occupancy} = \frac{\text{Active Warps}}{\text{Max Warps}}$</li>
+<li>算术强度：$AI = \frac{\text{FLOPs}}{\text{Memory Bytes}}$</li>
+<li>Roofline性能：$P = \min(P_{\text{peak}}, AI \times BW_{\text{peak}})$</li>
+<li>Bank冲突：$\text{Bank ID} = \lfloor\text{Addr}/4\rfloor \bmod 32$</li>
+<li>混合精度加速：$\text{Speedup} = \frac{1}{r + (1-r) \times \text{Ratio}}$</li>
+</ul>
+<p><strong>优化要点</strong>：</p>
+<ol>
+<li>通过合理的线程块配置最大化占用率</li>
+<li>优化内存访问模式实现合并访问</li>
+<li>最小化分支发散和bank冲突</li>
+<li>充分利用Tensor Core进行矩阵运算</li>
+<li>采用混合精度在保证精度的前提下提升性能</li>
+</ol>
+<h2 id="_9">练习题</h2>
+<h3 id="_10">基础题</h3>
+<p><strong>练习 13.1</strong>：计算占用率
+某GPU的SM具有65536个32位寄存器，最多支持2048个线程和48KB共享内存。若某kernel每个线程使用40个寄存器，线程块大小为256，每个线程块使用8KB共享内存，计算该kernel的理论占用率。</p>
+<details>
+<summary>答案</summary>
+<p>寄存器限制：</p>
+<ul>
+<li>每个线程40个寄存器</li>
+<li>每个线程块：256 × 40 = 10240个寄存器</li>
+<li>最大线程块数：65536 / 10240 = 6.4 → 6个</li>
+</ul>
+<p>共享内存限制：</p>
+<ul>
+<li>每个线程块8KB</li>
+<li>最大线程块数：48 / 8 = 6个</li>
+</ul>
+<p>线程数限制：</p>
+<ul>
+<li>每个线程块256个线程</li>
+<li>最大线程块数：2048 / 256 = 8个</li>
+</ul>
+<p>实际线程块数 = min(6, 6, 8) = 6
+活跃线程数 = 6 × 256 = 1536
+占用率 = 1536 / 2048 = 75%</p>
+</details>
+<p><strong>练习 13.2</strong>：算术强度分析
+对于矩阵乘法 C = A × B，其中 A 为 M×K 矩阵，B 为 K×N 矩阵，假设使用分块算法，块大小为 T×T。计算该算法的算术强度。</p>
+<details>
+<summary>答案</summary>
+<p>对于每个 T×T 的输出块：</p>
+<ul>
+<li>计算量：2 × T × T × K FLOPs（乘加）</li>
+<li>内存读取：T × K × 4（A块）+ K × T × 4（B块）= 8TK 字节（FP32）</li>
+<li>内存写入：T × T × 4 字节</li>
+</ul>
+<p>算术强度：
+$$AI = \frac{2T^2K}{8TK + 4T^2} = \frac{2T^2K}{4T(2K + T)}$$
+当 K &gt;&gt; T 时：
+$$AI \approx \frac{T}{4}$$</p>
+<p>因此增大块大小T可以提高算术强度。</p>
+</details>
+<p><strong>练习 13.3</strong>：Bank冲突判断
+32个线程访问共享内存，线程i访问地址为 <code>base + i * stride * 4</code> 字节。判断以下stride值是否会造成bank冲突：
+(a) stride = 1
+(b) stride = 16<br />
+(c) stride = 32
+(d) stride = 33</p>
+<details>
+<summary>答案</summary>
+<p>Bank ID = (Address / 4) mod 32</p>
+<p>(a) stride = 1：无冲突
+   线程i访问bank i，每个线程访问不同bank</p>
+<p>(b) stride = 16：16-way冲突
+   线程0和16访问bank 0，线程1和17访问bank 1，等等</p>
+<p>(c) stride = 32：32-way冲突
+   所有线程访问bank 0</p>
+<p>(d) stride = 33：无冲突
+   线程i访问bank (33i) mod 32，由于gcd(33,32)=1，访问分散到所有bank</p>
+</details>
+<h3 id="_11">挑战题</h3>
+<p><strong>练习 13.4</strong>：Roofline模型应用
+某GPU峰值性能为10 TFLOPS（FP32），内存带宽为900 GB/s。现有三个算子：</p>
+<ul>
+<li>GEMM：AI = 50</li>
+<li>Convolution：AI = 20  </li>
+<li>Element-wise Add：AI = 0.125</li>
+</ul>
+<p>计算每个算子的理论性能上限，并分析优化方向。</p>
+<p>Hint：先计算critical AI，判断算子是计算受限还是内存受限。</p>
+<details>
+<summary>答案</summary>
+<p>Critical AI = 10000 / 900 = 11.1</p>
+<p>GEMM (AI = 50 &gt; 11.1)：</p>
+<ul>
+<li>计算受限</li>
+<li>理论性能 = 10 TFLOPS</li>
+<li>优化方向：提高指令吞吐量，减少寄存器压力</li>
+</ul>
+<p>Convolution (AI = 20 &gt; 11.1)：</p>
+<ul>
+<li>计算受限</li>
+<li>理论性能 = 10 TFLOPS</li>
+<li>优化方向：类似GEMM</li>
+</ul>
+<p>Element-wise Add (AI = 0.125 &lt; 11.1)：</p>
+<ul>
+<li>内存受限</li>
+<li>理论性能 = 0.125 × 900 = 112.5 GFLOPS</li>
+<li>优化方向：算子融合，减少内存访问</li>
+</ul>
+</details>
+<p><strong>练习 13.5</strong>：混合精度收益分析
+某模型训练中，70%的计算是GEMM（可用FP16），20%是Softmax（需要FP32），10%是其他FP32操作。假设FP16性能是FP32的3倍，计算混合精度的理论加速比。如果要达到2倍加速，FP16操作的比例至少需要多少？</p>
+<p>Hint：使用混合精度加速公式。</p>
+<details>
+<summary>答案</summary>
+<p>第一问：
+r = 0.3（FP32操作比例）
+Ratio = 3（FP16/FP32性能比）</p>
+<p>Speedup = 1 / (0.3 + 0.7/3) = 1 / 0.533 = 1.88×</p>
+<p>第二问：
+要求Speedup ≥ 2，设FP16比例为x：
+2 ≤ 1 / ((1-x) + x/3)
+2(1-x) + 2x/3 ≤ 1
+2 - 2x + 2x/3 ≤ 1
+2 - 4x/3 ≤ 1
+4x/3 ≥ 1
+x ≥ 0.75</p>
+<p>因此FP16操作比例至少需要75%。</p>
+</details>
+<p><strong>练习 13.6</strong>：线程块配置优化
+处理一个1000×1000的矩阵，每个元素需要独立处理。设计三种不同的线程块配置方案，分析各自的优缺点，并给出选择建议。假设GPU支持最大1024线程/块，最大grid维度为65535。</p>
+<p>Hint：考虑负载均衡、占用率、内存访问模式。</p>
+<details>
+<summary>答案</summary>
+<p>方案1：32×32线程块</p>
+<ul>
+<li>Grid: 32×32（覆盖1024×1024，有浪费）</li>
+<li>优点：方形块利于2D数据局部性</li>
+<li>缺点：24%的线程空闲（1000×1000 vs 1024×1024）</li>
+</ul>
+<p>方案2：16×16线程块</p>
+<ul>
+<li>Grid: 63×63（覆盖1008×1008）</li>
+<li>优点：浪费更少（0.8%）</li>
+<li>缺点：更多的块调度开销</li>
+</ul>
+<p>方案3：256×1线程块（一维）</p>
+<ul>
+<li>Grid: 4×1000</li>
+<li>优点：无线程浪费，简单的索引计算</li>
+<li>缺点：可能的内存访问不连续</li>
+</ul>
+<p>选择建议：</p>
+<ul>
+<li>如果算子是内存受限：选方案3，保证合并访问</li>
+<li>如果算子需要共享内存协作：选方案1或2</li>
+<li>如果要最大化占用率：需根据寄存器使用情况具体分析</li>
+</ul>
+</details>
+<p><strong>练习 13.7</strong>：Tensor Core利用率分析
+使用Tensor Core进行M=512, N=512, K=2048的矩阵乘法。Tensor Core的片段大小为m16n8k16，理论峰值为312 TFLOPS。如果实测性能为200 TFLOPS，分析可能的性能瓶颈。</p>
+<p>Hint：考虑片段利用率、内存带宽、指令调度。</p>
+<details>
+<summary>答案</summary>
+<ol>
+<li>
+<p>片段利用率分析：
+   - M方向：512/16 = 32（完美对齐）
+   - N方向：512/8 = 64（完美对齐）
+   - K方向：2048/16 = 128（完美对齐）
+   - 片段利用率：100%</p>
+</li>
+<li>
+<p>算术强度：
+   - FLOPs: 2 × 512 × 512 × 2048 = 1.07 GFLOPs
+   - 内存: (512×2048 + 2048×512 + 512×512) × 2 = 4.5 MB（FP16）
+   - AI = 1073/4.5 = 238</p>
+</li>
+<li>
+<p>内存带宽检查：
+   - 需要带宽：4.5 MB / (1.07G / 312T) = 1.31 TB/s
+   - A100带宽：1.6 TB/s（足够）</p>
+</li>
+<li>
+<p>性能瓶颈分析：
+   - 利用率：200/312 = 64%
+   - 可能原因：
+     a) 寄存器压力导致占用率不足
+     b) 指令调度延迟
+     c) L2缓存未命中
+     d) 未充分隐藏内存延迟</p>
+</li>
+</ol>
+<p>优化建议：</p>
+<ul>
+<li>增加线程块数量提高占用率</li>
+<li>使用异步拷贝重叠计算和内存访问</li>
+<li>优化数据预取策略</li>
+</ul>
+</details>
+<p><strong>练习 13.8</strong>：分支发散优化
+某kernel中有如下模式：线程根据其ID执行不同长度的循环。线程i执行 <code>(i % 4) + 1</code> 次迭代。分析32个线程的warp中的分支发散情况，并提出优化方案。</p>
+<p>Hint：计算每个warp的总执行时间，考虑线程重组。</p>
+<details>
+<summary>答案</summary>
+<p>原始执行分析：</p>
+<ul>
+<li>线程0,4,8,12,16,20,24,28：1次迭代</li>
+<li>线程1,5,9,13,17,21,25,29：2次迭代</li>
+<li>线程2,6,10,14,18,22,26,30：3次迭代</li>
+<li>线程3,7,11,15,19,23,27,31：4次迭代</li>
+</ul>
+<p>Warp执行时间 = max(1,2,3,4) = 4个迭代周期
+效率 = (8×1 + 8×2 + 8×3 + 8×4) / (32×4) = 80/128 = 62.5%</p>
+<p>优化方案1：线程重组
+将相同迭代次数的线程分组到同一warp：</p>
+<ul>
+<li>Warp 0：32个1次迭代的线程</li>
+<li>Warp 1：32个2次迭代的线程</li>
+<li>等等</li>
+</ul>
+<p>优化方案2：循环展开+谓词执行</p>
+<div class="codehilite"><pre><span></span><code><span class="k">for</span><span class="w"> </span><span class="ss">(</span><span class="nv">int</span><span class="w"> </span><span class="nv">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="c1">; i &lt; 4; i++) {</span>
+<span class="w">    </span><span class="nv">bool</span><span class="w"> </span><span class="nv">active</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ss">(</span><span class="nv">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="ss">((</span><span class="nv">tid</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">4</span><span class="ss">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="ss">))</span><span class="c1">;</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="ss">(</span><span class="nv">active</span><span class="ss">)</span><span class="w"> </span>{
+<span class="w">        </span><span class="o">//</span><span class="w"> </span>执行工作
+<span class="w">    </span>}
+}
+</code></pre></div>
+
+<p>优化方案3：动态并行
+父kernel根据工作量启动不同配置的子kernel</p>
+<p>效果：重组后效率接近100%，但需要额外的数据重排开销。</p>
+</details>
+<h2 id="gotchas">常见陷阱与错误 (Gotchas)</h2>
+<ol>
+<li>
+<p><strong>占用率陷阱</strong>
+   - 错误：盲目追求100%占用率
+   - 正确：平衡占用率与每线程资源使用</p>
+</li>
+<li>
+<p><strong>共享内存滥用</strong>
+   - 错误：所有数据都放入共享内存
+   - 正确：只缓存重复访问的数据</p>
+</li>
+<li>
+<p><strong>Tensor Core对齐</strong>
+   - 错误：忽略维度对齐要求
+   - 正确：padding到片段大小的倍数</p>
+</li>
+<li>
+<p><strong>分支处理误区</strong>
+   - 错误：完全避免所有分支
+   - 正确：短分支可用谓词，长分支需重组</p>
+</li>
+<li>
+<p><strong>混合精度数值问题</strong>
+   - 错误：直接转换所有操作为FP16
+   - 正确：关键路径保持FP32，使用损失缩放</p>
+</li>
+<li>
+<p><strong>内存合并误判</strong>
+   - 错误：假设连续索引就是合并访问
+   - 正确：考虑warp内的访问模式</p>
+</li>
+<li>
+<p><strong>Grid配置错误</strong>
+   - 错误：使用固定的块大小
+   - 正确：根据问题规模动态调整</p>
+</li>
+<li>
+<p><strong>同步开销忽视</strong>
+   - 错误：频繁使用__syncthreads()
+   - 正确：最小化同步点，使用warp级原语</p>
+</li>
+</ol>
+<h2 id="_12">最佳实践检查清单</h2>
+<h3 id="_13">设计阶段</h3>
+<ul>
+<li>[ ] 使用Roofline模型分析算子特性</li>
+<li>[ ] 确定是计算受限还是内存受限</li>
+<li>[ ] 评估Tensor Core适用性</li>
+<li>[ ] 设计数据布局优化内存访问</li>
+<li>[ ] 规划算子融合机会</li>
+</ul>
+<h3 id="_14">实现阶段</h3>
+<ul>
+<li>[ ] 选择合适的线程块大小（通常256或512）</li>
+<li>[ ] 确保内存访问对齐和合并</li>
+<li>[ ] 最小化bank冲突（使用padding或置换）</li>
+<li>[ ] 优化寄存器使用提高占用率</li>
+<li>[ ] 实现混合精度并验证数值稳定性</li>
+</ul>
+<h3 id="_15">优化阶段</h3>
+<ul>
+<li>[ ] Profile确认实际瓶颈</li>
+<li>[ ] 调整grid/block配置</li>
+<li>[ ] 优化共享内存使用模式</li>
+<li>[ ] 减少分支发散影响</li>
+<li>[ ] 使用异步操作重叠计算和通信</li>
+</ul>
+<h3 id="_16">验证阶段</h3>
+<ul>
+<li>[ ] 对比理论性能上限</li>
+<li>[ ] 检查资源利用率指标</li>
+<li>[ ] 验证数值精度要求</li>
+<li>[ ] 测试不同输入规模的性能</li>
+<li>[ ] 确认在目标硬件上的可移植性</li>
+</ul>
+            </article>
+            
+            <nav class="page-nav"><a href="chapter12.html" class="nav-link prev">← 第 12 章：JIT 编译技术</a><a href="chapter14.html" class="nav-link next">第 14 章：移动端与边缘设备优化 →</a></nav>
+        </main>
+    </div>
+</body>
+</html>

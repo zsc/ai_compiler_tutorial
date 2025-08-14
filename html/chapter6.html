@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="./">
+    <title>第 6 章：数据布局优化</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="assets/highlight.css">
+    <script src="assets/script.js" defer></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']],
+                processEscapes: false,
+                packages: {'[+]': ['noerrors', 'ams']}
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            loader: {
+                load: ['[tex]/noerrors', '[tex]/ams']
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3>目录</h3>
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+            <div class="sidebar-search">
+                <input type="text" id="sidebar-search-input" placeholder="搜索..." autocomplete="off">
+            </div>
+            <div id="tree-container">
+                <nav class="tree-nav" role="tree">
+                    <div class="tree-item " >
+                        <a href="index.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">AI 编译器教程：从理论到 200T 规模实践</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter1.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 1 章：AI 编译器概述</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter2.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 2 章：中间表示（IR）设计</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter3.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 3 章：计算图表示与分析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter4.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 4 章：统一缓冲区设计</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter5.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 5 章：内存规划与分配</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item active" >
+                        <a href="chapter6.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 6 章：数据布局优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter7.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 7 章：算子融合</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter8.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 8 章：自动微分与梯度优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter9.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 9 章：并行化策略</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter11.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 11 章：多维 Stride DMA 利用</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter12.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 12 章：JIT 编译技术</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter13.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 13 章：GPU 编译优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter14.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 14 章：移动端与边缘设备优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter15.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 15 章：NUMA 架构优化（一）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter16.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 16 章：NUMA 架构优化（二）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter17.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 17 章：动态 Shape 编译（一）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter18.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 18 章：动态 Shape 编译（二）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter19.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 19 章：稀疏与变长数据支持</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter20.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 20 章：JIT 编译技术</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter21.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 21 章：高维张量别名分析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter22.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 22 章：投机执行支持</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter23.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 23 章：自动驾驶场景优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter24.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 24 章：具身智能编译挑战</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter25.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 25 章：200T 模型编译实践</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="CLAUDE.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">Untitled</span>
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </nav>
+        
+        <main class="content">
+            <article>
+                <h1 id="6">第 6 章：数据布局优化</h1>
+<p>本章深入探讨 AI 编译器中的数据布局优化技术。数据布局直接影响内存访问模式、缓存利用率和硬件加速器效率，是实现高性能推理和训练的关键。我们将学习如何根据硬件特性选择最优布局、最小化布局转换开销、优化内存对齐，以及在混合精度计算中管理不同精度的数据布局。</p>
+<p><strong>学习目标：</strong></p>
+<ul>
+<li>理解不同数据布局对性能的影响机制</li>
+<li>掌握布局选择的定量分析方法</li>
+<li>学会设计布局转换最小化算法</li>
+<li>理解硬件对齐要求与优化策略</li>
+<li>掌握混合精度场景下的布局管理</li>
+</ul>
+<h2 id="61-nchw-vs-nhwc">6.1 NCHW vs NHWC 选择策略</h2>
+<h3 id="611">6.1.1 布局定义与内存访问模式</h3>
+<p>在深度学习中，四维张量的两种主要布局方式为：</p>
+<ul>
+<li><strong>NCHW</strong>（批次-通道-高度-宽度）：也称为通道优先布局</li>
+<li><strong>NHWC</strong>（批次-高度-宽度-通道）：也称为通道最后布局</li>
+</ul>
+<p>对于张量 $T \in \mathbb{R}^{N \times C \times H \times W}$，内存地址计算公式为：</p>
+<p>NCHW布局：
+$$\text{addr}(n,c,h,w) = \text{base} + \text{sizeof}(T) \cdot (n \cdot CHW + c \cdot HW + h \cdot W + w)$$
+NHWC布局：
+$$\text{addr}(n,h,w,c) = \text{base} + \text{sizeof}(T) \cdot (n \cdot HWC + h \cdot WC + w \cdot C + c)$$</p>
+<h3 id="612">6.1.2 硬件特性分析</h3>
+<p>不同硬件架构对布局有不同的偏好：</p>
+<p><strong>GPU（NVIDIA）特性：</strong></p>
+<ul>
+<li>Tensor Core 要求特定的内存布局和对齐</li>
+<li>Warp 级别的合并访存偏好连续的通道数据</li>
+<li>cuDNN 大部分算子针对 NCHW 优化</li>
+</ul>
+<p><strong>CPU（x86/ARM）特性：</strong></p>
+<ul>
+<li>SIMD 指令（AVX-512, NEON）更适合处理连续的小块数据</li>
+<li>缓存行大小（通常 64 字节）影响最优布局选择</li>
+<li>NHWC 在小通道数时缓存友好</li>
+</ul>
+<p><strong>移动端 NPU 特性：</strong></p>
+<ul>
+<li>通常偏好 NHWC 布局（如 TensorFlow Lite 默认）</li>
+<li>硬件设计针对逐像素处理优化</li>
+</ul>
+<h3 id="613">6.1.3 性能建模与决策</h3>
+<p>定义布局选择的代价函数：
+$$C_{\text{layout}} = \alpha \cdot C_{\text{compute}} + \beta \cdot C_{\text{memory}} + \gamma \cdot C_{\text{transform}}$$
+其中：</p>
+<ul>
+<li>$C_{\text{compute}}$：计算效率损失</li>
+<li>$C_{\text{memory}}$：内存访问代价</li>
+<li>$C_{\text{transform}}$：布局转换开销</li>
+<li>$\alpha, \beta, \gamma$：权重系数（硬件相关）</li>
+</ul>
+<p><strong>卷积操作的内存访问分析：</strong></p>
+<p>对于卷积核 $K \in \mathbb{R}^{C_{\text{out}} \times C_{\text{in}} \times K_h \times K_w}$：</p>
+<p>NCHW 布局下的缓存未命中率：
+$$M_{\text{NCHW}} = 1 - \frac{\min(L_1, C_{\text{in}} \cdot K_h \cdot K_w \cdot \text{sizeof}(T))}{C_{\text{in}} \cdot K_h \cdot K_w \cdot \text{sizeof}(T)}$$
+NHWC 布局下的缓存未命中率：
+$$M_{\text{NHWC}} = 1 - \frac{\min(L_1, W \cdot C_{\text{in}} \cdot \text{sizeof}(T))}{W \cdot C_{\text{in}} \cdot \text{sizeof}(T)}$$
+其中 $L_1$ 为 L1 缓存大小。</p>
+<h3 id="614">6.1.4 启发式选择算法</h3>
+<div class="codehilite"><pre><span></span><code>算法 6.1：数据布局选择
+输入：计算图 G，硬件规格 H
+输出：每个张量的布局 L
+
+1. 初始化所有张量为硬件偏好布局
+2. for 每个算子 op in G:
+3.     计算 op 在不同布局下的性能 P_NCHW, P_NHWC
+4.     if P_NCHW / P_NHWC &gt; threshold:
+5.         标记 op 的输入输出为 NCHW
+6.     else if P_NHWC / P_NCHW &gt; threshold:
+7.         标记 op 的输入输出为 NHWC
+8. 运行布局传播算法解决冲突
+9. return 最终布局分配 L
+</code></pre></div>
+
+<h2 id="62">6.2 布局转换最小化</h2>
+<h3 id="621">6.2.1 转换代价模型</h3>
+<p>布局转换（transpose）的代价包括：</p>
+<ol>
+<li>
+<p><strong>内存带宽消耗</strong>：
+$$B_{\text{transpose}} = 2 \times \text{TensorSize} \times \text{sizeof}(T)$$</p>
+</li>
+<li>
+<p><strong>缓存污染</strong>：
+$$C_{\text{pollution}} = \frac{\text{TensorSize}}{\text{CacheSize}} \times P_{\text{reuse}}$$</p>
+</li>
+<li>
+<p><strong>计算开销</strong>：
+$$T_{\text{compute}} = \frac{\text{TensorSize}}{\text{Bandwidth}} + \text{LatencyOverhead}$$</p>
+</li>
+</ol>
+<h3 id="622">6.2.2 图级优化算法</h3>
+<p>将布局优化建模为图着色问题：</p>
+<p>定义增广图 $G' = (V', E')$：</p>
+<ul>
+<li>节点 $V'$：原图中的张量</li>
+<li>边 $E'$：张量间的数据依赖</li>
+<li>边权重：转换代价</li>
+</ul>
+<p>目标函数：
+$$\min \sum_{e \in E'} w_e \cdot \mathbb{1}[\text{layout}(v_i) \neq \text{layout}(v_j)]$$
+这是一个 NP-hard 问题，使用近似算法求解。</p>
+<h3 id="623">6.2.3 动态规划解法</h3>
+<p>对于链式结构的计算图，可使用动态规划：
+$$dp[i][l] = \min_{l' \in \{NCHW, NHWC\}} \{dp[i-1][l'] + C_{\text{op}}(i, l) + C_{\text{trans}}(l', l)\}$$
+其中：</p>
+<ul>
+<li>$dp[i][l]$：前 $i$ 个算子，第 $i$ 个算子使用布局 $l$ 的最小代价</li>
+<li>$C_{\text{op}}(i, l)$：算子 $i$ 在布局 $l$ 下的计算代价</li>
+<li>$C_{\text{trans}}(l', l)$：从布局 $l'$ 转换到 $l$ 的代价</li>
+</ul>
+<h3 id="624">6.2.4 贪心插入策略</h3>
+<div class="codehilite"><pre><span></span><code>算法<span class="w"> </span><span class="mi">6</span>.<span class="mi">2</span>：贪心转换插入
+输入：计算图<span class="w"> </span><span class="nv">G</span>，初始布局<span class="w"> </span><span class="nv">L</span>
+输出：带转换的计算图<span class="w"> </span><span class="nv">G</span><span class="err">&#39;</span>
+
+<span class="err">1. 计算每条边的布局不匹配代价</span>
+<span class="err">2. 按代价降序排序边集合</span>
+<span class="err">3. for 每条高代价边 e = (u, v):</span>
+<span class="err">4.     计算插入转换的收益 R</span>
+<span class="err">5.     if R &gt; 0:</span>
+<span class="err">6.         在边 e 上插入转换节点</span>
+<span class="err">7.         更新相关边的代价</span>
+<span class="mi">8</span>.<span class="w"> </span><span class="k">return</span><span class="w"> </span>修改后的图<span class="w"> </span><span class="nv">G</span><span class="err">&#39;</span>
+</code></pre></div>
+
+<h2 id="63-padding">6.3 Padding 与对齐优化</h2>
+<h3 id="631">6.3.1 硬件对齐要求</h3>
+<p>不同硬件的对齐要求：</p>
+<p>| 硬件类型 | 对齐要求 | 原因 |</p>
+<table>
+<thead>
+<tr>
+<th>硬件类型</th>
+<th>对齐要求</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NVIDIA GPU</td>
+<td>128/256 字节</td>
+<td>内存事务粒度</td>
+</tr>
+<tr>
+<td>x86 CPU AVX-512</td>
+<td>64 字节</td>
+<td>SIMD 寄存器宽度</td>
+</tr>
+<tr>
+<td>ARM NEON</td>
+<td>16 字节</td>
+<td>SIMD 指令要求</td>
+</tr>
+<tr>
+<td>TPU</td>
+<td>128/256 元素</td>
+<td>矩阵乘法单元</td>
+</tr>
+</tbody>
+</table>
+<h3 id="632-padding">6.3.2 Padding 策略</h3>
+<p><strong>最小 Padding 算法：</strong></p>
+<p>给定原始维度 $d$ 和对齐要求 $a$：
+$$d_{\text{padded}} = \lceil \frac{d}{a} \rceil \times a$$
+Padding 开销：
+$$\text{Overhead} = \frac{d_{\text{padded}} - d}{d} \times 100\%$$
+<strong>多维 Padding 优化：</strong></p>
+<p>对于张量 $T \in \mathbb{R}^{N \times C \times H \times W}$，需要考虑：</p>
+<ol>
+<li>
+<p><strong>最内层维度优先</strong>：
+   - NCHW：优先 pad W 维度
+   - NHWC：优先 pad C 维度</p>
+</li>
+<li>
+<p><strong>访存模式匹配</strong>：</p>
+</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>if (硬件支持向量化):
+    align_size = vector_width
+else:
+    align_size = cache_line_size
+</code></pre></div>
+
+<h3 id="633-padding">6.3.3 动态 Padding 决策</h3>
+<p>考虑计算与内存的权衡：
+$$\text{PaddingBenefit} = T_{\text{saved}} - M_{\text{wasted}}$$
+其中：</p>
+<ul>
+<li>$T_{\text{saved}}$：对齐带来的计算时间节省</li>
+<li>$M_{\text{wasted}}$：额外内存开销的代价</li>
+</ul>
+<p><strong>自适应 Padding 算法：</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="nt">算法</span><span class="w"> </span><span class="nt">6</span><span class="p">.</span><span class="nc">3</span><span class="err">：</span><span class="nt">自适应</span><span class="w"> </span><span class="nt">Padding</span>
+<span class="nt">输入</span><span class="err">：</span><span class="nt">张量维度</span><span class="w"> </span><span class="nt">D</span><span class="err">，</span><span class="nt">硬件规格</span><span class="w"> </span><span class="nt">H</span>
+<span class="nt">输出</span><span class="err">：</span><span class="nt">padded</span><span class="w"> </span><span class="nt">维度</span><span class="w"> </span><span class="nt">D</span><span class="s1">&#39;</span>
+
+<span class="s1">1. for 每个维度 d in D:</span>
+<span class="s1">2.     候选集 = {d, align_ceil(d, 16), align_ceil(d, 32), ...}</span>
+<span class="s1">3.     for 每个候选 c in 候选集:</span>
+<span class="s1">4.         计算性能收益 perf_gain(c)</span>
+<span class="s1">5.         计算内存开销 mem_cost(c)</span>
+<span class="s1">6.     选择最优 padding: d&#39;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nt">argmax</span><span class="o">(</span><span class="nt">perf_gain</span><span class="w"> </span><span class="nt">-</span><span class="w"> </span><span class="nt">λ</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nt">mem_cost</span><span class="o">)</span>
+<span class="nt">7</span><span class="o">.</span><span class="w"> </span><span class="nt">return</span><span class="w"> </span><span class="nt">D</span><span class="err">&#39;</span>
+</code></pre></div>
+
+<h3 id="634-padding">6.3.4 卷积的隐式 Padding</h3>
+<p>对于卷积操作，padding 还涉及边界处理：
+$$\text{output_size} = \lfloor \frac{\text{input_size} + 2 \times \text{pad} - \text{kernel_size}}{\text{stride}} \rfloor + 1$$
+优化目标：</p>
+<ol>
+<li>保持输出尺寸为硬件友好值</li>
+<li>最小化边界填充的计算开销</li>
+<li>考虑感受野的对称性</li>
+</ol>
+<h2 id="64">6.4 混合精度布局</h2>
+<h3 id="641">6.4.1 精度类型与存储格式</h3>
+<p>常见精度类型的存储特性：</p>
+<p>| 类型 | 位宽 | 指数位 | 尾数位 | 范围 | 硬件支持 |</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>位宽</th>
+<th>指数位</th>
+<th>尾数位</th>
+<th>范围</th>
+<th>硬件支持</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FP32</td>
+<td>32</td>
+<td>8</td>
+<td>23</td>
+<td>±3.4e38</td>
+<td>通用</td>
+</tr>
+<tr>
+<td>FP16</td>
+<td>16</td>
+<td>5</td>
+<td>10</td>
+<td>±65504</td>
+<td>GPU/NPU</td>
+</tr>
+<tr>
+<td>BF16</td>
+<td>16</td>
+<td>8</td>
+<td>7</td>
+<td>±3.4e38</td>
+<td>TPU/新GPU</td>
+</tr>
+<tr>
+<td>INT8</td>
+<td>8</td>
+<td>-</td>
+<td>-</td>
+<td>±127</td>
+<td>所有</td>
+</tr>
+<tr>
+<td>INT4</td>
+<td>4</td>
+<td>-</td>
+<td>-</td>
+<td>±7</td>
+<td>部分NPU</td>
+</tr>
+</tbody>
+</table>
+<p><strong>内存布局影响：</strong></p>
+<p>对于混合精度张量，内存地址计算需要考虑不同精度的对齐：
+$$\text{addr}_{\text{mixed}}(i) = \text{base} + \sum_{j=0}^{i-1} \text{align}(\text{sizeof}(T_j), a)$$
+其中 $T_j$ 为第 $j$ 个元素的类型，$a$ 为硬件对齐要求。</p>
+<h3 id="642">6.4.2 精度转换策略</h3>
+<p><strong>量化感知布局：</strong></p>
+<p>对于量化操作 $Q: \mathbb{R} \rightarrow \mathbb{Z}$：
+$$Q(x) = \text{round}\left(\frac{x - z}{s}\right)$$
+其中 $s$ 为缩放因子，$z$ 为零点。</p>
+<p>布局选择影响量化效率：</p>
+<ul>
+<li><strong>通道量化</strong>：NCHW 布局下按 C 维度量化更高效</li>
+<li><strong>逐层量化</strong>：NHWC 布局下全局量化访存连续</li>
+</ul>
+<h3 id="643">6.4.3 混合精度图优化</h3>
+<p>定义精度分配问题：</p>
+<p>给定计算图 $G = (V, E)$，为每个节点 $v \in V$ 分配精度 $p_v \in \{FP32, FP16, INT8\}$，优化目标：
+$$\min \sum_{v \in V} T_v(p_v) + \sum_{(u,v) \in E} C_{uv}(p_u, p_v)$$
+其中：</p>
+<ul>
+<li>$T_v(p_v)$：节点 $v$ 在精度 $p_v$ 下的计算时间</li>
+<li>$C_{uv}(p_u, p_v)$：精度转换代价</li>
+</ul>
+<p><strong>动态规划求解：</strong>
+$$dp[v][p] = T_v(p) + \min_{p' \in P} \{dp[\text{pred}(v)][p'] + C(p', p)\}$$</p>
+<h3 id="644">6.4.4 存储格式优化</h3>
+<p><strong>打包存储（Packed Storage）：</strong></p>
+<p>对于 INT4 等亚字节类型，需要打包存储：</p>
+<div class="codehilite"><pre><span></span><code><span class="n">原始布局</span><span class="err">：</span><span class="o">[</span><span class="n">a0</span><span class="o">][</span><span class="n">a1</span><span class="o">][</span><span class="n">a2</span><span class="o">][</span><span class="n">a3</span><span class="o">][</span><span class="n">a4</span><span class="o">][</span><span class="n">a5</span><span class="o">][</span><span class="n">a6</span><span class="o">][</span><span class="n">a7</span><span class="o">]</span><span class="err">（</span><span class="n">每个4位</span><span class="err">）</span>
+<span class="n">打包布局</span><span class="err">：</span><span class="o">[</span><span class="n">a0|a1</span><span class="o">][</span><span class="n">a2|a3</span><span class="o">][</span><span class="n">a4|a5</span><span class="o">][</span><span class="n">a6|a7</span><span class="o">]</span><span class="err">（</span><span class="n">每个字节</span><span class="err">）</span>
+</code></pre></div>
+
+<p>访问公式：
+$$\text{packed_addr}(i) = \text{base} + \lfloor i / k \rfloor$$
+$$\text{offset}(i) = (i \bmod k) \times \text{bits_per_elem}$$</p>
+<p>其中 $k$ 为每个存储单元的元素数。</p>
+<p><strong>混合精度分块：</strong></p>
+<div class="codehilite"><pre><span></span><code>算法 6.4：混合精度分块布局
+输入：张量 T，精度映射 P
+输出：优化后的内存布局 L
+
+1. 将张量按精度类型分组
+2. for 每个精度组 g:
+3.     计算最优块大小 b = hardware_preferred_size(g.precision)
+4.     将 g 划分为大小为 b 的块
+5.     for 每个块 block:
+6.         应用硬件特定的布局（如 tensor core 布局）
+7. 按访问模式排列各精度块
+8. return 分块布局 L
+</code></pre></div>
+
+<h3 id="645">6.4.5 自动驾驶场景的精度布局</h3>
+<p>在自动驾驶场景中，不同任务对精度要求不同：</p>
+<p>| 任务类型 | 推荐精度 | 布局偏好 | 原因 |</p>
+<table>
+<thead>
+<tr>
+<th>任务类型</th>
+<th>推荐精度</th>
+<th>布局偏好</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>目标检测</td>
+<td>INT8/FP16</td>
+<td>NHWC</td>
+<td>实时性要求</td>
+</tr>
+<tr>
+<td>语义分割</td>
+<td>FP16</td>
+<td>NCHW</td>
+<td>精度与速度平衡</td>
+</tr>
+<tr>
+<td>深度估计</td>
+<td>FP16/FP32</td>
+<td>NCHW</td>
+<td>高精度要求</td>
+</tr>
+<tr>
+<td>轨迹预测</td>
+<td>FP32</td>
+<td>灵活</td>
+<td>数值稳定性</td>
+</tr>
+</tbody>
+</table>
+<p><strong>多模态融合的布局策略：</strong></p>
+<p>摄像头 + LiDAR + Radar 融合时：</p>
+<ol>
+<li>统一坐标系后的点云：FP32 + 稀疏格式</li>
+<li>图像特征：INT8/FP16 + NHWC</li>
+<li>融合特征：FP16 + 自定义打包格式</li>
+</ol>
+<h2 id="_1">本章小结</h2>
+<p>数据布局优化是 AI 编译器实现高性能的关键技术。本章介绍了：</p>
+<ol>
+<li><strong>布局选择</strong>：基于硬件特性和访存模式的 NCHW/NHWC 选择策略</li>
+<li><strong>转换最小化</strong>：通过图优化算法减少布局转换开销</li>
+<li><strong>对齐优化</strong>：平衡硬件对齐要求与内存开销</li>
+<li><strong>混合精度</strong>：不同精度类型的布局管理和优化</li>
+</ol>
+<p>关键公式回顾：</p>
+<ul>
+<li>布局选择代价：$C_{\text{layout}} = \alpha \cdot C_{\text{compute}} + \beta \cdot C_{\text{memory}} + \gamma \cdot C_{\text{transform}}$</li>
+<li>Padding 计算：$d_{\text{padded}} = \lceil \frac{d}{a} \rceil \times a$</li>
+<li>混合精度优化：$\min \sum_{v \in V} T_v(p_v) + \sum_{(u,v) \in E} C_{uv}(p_u, p_v)$</li>
+</ul>
+<h2 id="_2">练习题</h2>
+<h3 id="61">练习 6.1（基础）：布局转换开销计算</h3>
+<p>给定张量 $T \in \mathbb{R}^{32 \times 256 \times 56 \times 56}$，数据类型为 FP16，内存带宽为 900 GB/s。计算从 NCHW 转换到 NHWC 布局的理论时间下界。</p>
+<p><strong>提示</strong>：考虑读写各一次的内存访问量。</p>
+<details>
+<summary>参考答案</summary>
+<p>张量大小：$32 \times 256 \times 56 \times 56 = 25,690,112$ 个元素</p>
+<p>FP16 每个元素 2 字节，总大小：$25,690,112 \times 2 = 51,380,224$ 字节 ≈ 49 MB</p>
+<p>转换需要读写各一次：总传输量 = $2 \times 49$ MB = 98 MB</p>
+<p>理论时间下界：$\frac{98 \times 10^6}{900 \times 10^9} = 0.109$ ms</p>
+<p>实际时间会更长，因为：</p>
+<ol>
+<li>非连续访存导致带宽利用率降低</li>
+<li>缓存未命中增加延迟</li>
+<li>CPU/GPU 计算开销</li>
+</ol>
+</details>
+<h3 id="62_1">练习 6.2（基础）：对齐计算</h3>
+<p>某 NPU 要求所有维度都对齐到 16 的倍数。给定输入张量维度 [7, 129, 55, 31]，计算：</p>
+<ol>
+<li>Padded 后的维度</li>
+<li>内存浪费比例</li>
+</ol>
+<p><strong>提示</strong>：使用向上取整公式。</p>
+<details>
+<summary>参考答案</summary>
+<ol>
+<li>Padded 维度计算：
+   - $\lceil 7/16 \rceil \times 16 = 16$
+   - $\lceil 129/16 \rceil \times 16 = 144$
+   - $\lceil 55/16 \rceil \times 16 = 64$
+   - $\lceil 31/16 \rceil \times 16 = 32$</li>
+</ol>
+<p>Padded 维度：[16, 144, 64, 32]</p>
+<ol start="2">
+<li>内存浪费比例：
+   - 原始大小：$7 \times 129 \times 55 \times 31 = 1,539,615$
+   - Padded 大小：$16 \times 144 \times 64 \times 32 = 4,718,592$
+   - 浪费比例：$\frac{4,718,592 - 1,539,615}{4,718,592} \times 100\% = 67.4\%$</li>
+</ol>
+</details>
+<h3 id="63">练习 6.3（基础）：缓存命中率分析</h3>
+<p>在 L1 缓存为 48KB 的 GPU 上执行 3×3 卷积，输入通道数为 512，批次大小为 1。比较 NCHW 和 NHWC 布局下，计算一个输出像素时的缓存命中率。假设数据类型为 FP16。</p>
+<p><strong>提示</strong>：计算卷积窗口的数据量是否能装入 L1 缓存。</p>
+<details>
+<summary>参考答案</summary>
+<p><strong>NCHW 布局：</strong></p>
+<ul>
+<li>计算一个输出像素需要：$3 \times 3 \times 512$ 个输入元素</li>
+<li>数据量：$3 \times 3 \times 512 \times 2$ 字节 = 9,216 字节 ≈ 9 KB</li>
+<li>缓存命中率：100%（完全装入 48KB L1 缓存）</li>
+</ul>
+<p><strong>NHWC 布局：</strong></p>
+<ul>
+<li>需要访问 3×3 个空间位置，每个位置 512 个通道</li>
+<li>如果输入宽度 &gt; 24（48KB / (512×2字节)），中间行会被驱逐</li>
+<li>缓存命中率：约 33%（只有当前处理的行在缓存中）</li>
+</ul>
+<p>结论：对于大通道数的卷积，NCHW 布局缓存效率更高。</p>
+</details>
+<h3 id="64_1">练习 6.4（挑战）：布局传播算法</h3>
+<p>给定如下计算图，每个算子在不同布局下的计算时间（ms）和转换代价为 2ms。使用动态规划求解最优布局分配。</p>
+<div class="codehilite"><pre><span></span><code>输入 → Conv1 → ReLU → Conv2 → 输出
+</code></pre></div>
+
+<p>| 算子 | NCHW | NHWC |</p>
+<table>
+<thead>
+<tr>
+<th>算子</th>
+<th>NCHW</th>
+<th>NHWC</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Conv1</td>
+<td>5</td>
+<td>8</td>
+</tr>
+<tr>
+<td>ReLU</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Conv2</td>
+<td>6</td>
+<td>4</td>
+</tr>
+</tbody>
+</table>
+<p><strong>提示</strong>：构建状态转移方程。</p>
+<details>
+<summary>参考答案</summary>
+<p>定义 $dp[i][l]$ 为前 $i$ 个算子，第 $i$ 个使用布局 $l$ 的最小代价。</p>
+<p>初始状态（输入可以是任意布局）：</p>
+<ul>
+<li>$dp[0][NCHW] = 0$</li>
+<li>$dp[0][NHWC] = 0$</li>
+</ul>
+<p>Conv1：</p>
+<ul>
+<li>$dp[1][NCHW] = \min(dp[0][NCHW] + 5, dp[0][NHWC] + 2 + 5) = 5$</li>
+<li>$dp[1][NHWC] = \min(dp[0][NCHW] + 2 + 8, dp[0][NHWC] + 8) = 8$</li>
+</ul>
+<p>ReLU：</p>
+<ul>
+<li>$dp[2][NCHW] = \min(dp[1][NCHW] + 1, dp[1][NHWC] + 2 + 1) = 6$</li>
+<li>$dp[2][NHWC] = \min(dp[1][NCHW] + 2 + 1, dp[1][NHWC] + 1) = 8$</li>
+</ul>
+<p>Conv2：</p>
+<ul>
+<li>$dp[3][NCHW] = \min(dp[2][NCHW] + 6, dp[2][NHWC] + 2 + 6) = 12$</li>
+<li>$dp[3][NHWC] = \min(dp[2][NCHW] + 2 + 4, dp[2][NHWC] + 4) = 12$</li>
+</ul>
+<p>最优方案：总代价 12ms</p>
+<ul>
+<li>路径1：NCHW → NCHW → NCHW → NCHW（5+1+6=12）</li>
+<li>路径2：多种组合都可达到 12ms</li>
+</ul>
+</details>
+<h3 id="65">练习 6.5（挑战）：混合精度优化</h3>
+<p>某模型包含三个连续的矩阵乘法：$Y = ABC$，其中 $A \in \mathbb{R}^{1024 \times 512}$，$B \in \mathbb{R}^{512 \times 256}$，$C \in \mathbb{R}^{256 \times 128}$。不同精度下的计算时间（ms）和转换时间如下：</p>
+<p>| 操作 | FP32 | FP16 | INT8 |</p>
+<table>
+<thead>
+<tr>
+<th>操作</th>
+<th>FP32</th>
+<th>FP16</th>
+<th>INT8</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$AB$</td>
+<td>8</td>
+<td>4</td>
+<td>2</td>
+</tr>
+<tr>
+<td>$BC$</td>
+<td>4</td>
+<td>2</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+<p>转换时间：FP32↔FP16: 1ms，FP16↔INT8: 2ms，FP32↔INT8: 3ms</p>
+<p>求最优精度分配方案。</p>
+<p><strong>提示</strong>：枚举所有可能的精度组合。</p>
+<details>
+<summary>参考答案</summary>
+<p>枚举所有精度组合（第一个乘法精度，第二个乘法精度）：</p>
+<ol>
+<li>(FP32, FP32)：8 + 4 = 12ms</li>
+<li>(FP32, FP16)：8 + 1 + 2 = 11ms</li>
+<li>(FP32, INT8)：8 + 3 + 1 = 12ms</li>
+<li>(FP16, FP32)：4 + 1 + 4 = 9ms</li>
+<li>(FP16, FP16)：4 + 2 = 6ms ✓</li>
+<li>(FP16, INT8)：4 + 2 + 1 = 7ms</li>
+<li>(INT8, FP32)：2 + 3 + 4 = 9ms</li>
+<li>(INT8, FP16)：2 + 2 + 2 = 6ms ✓</li>
+<li>(INT8, INT8)：2 + 1 = 3ms（但可能精度损失过大）</li>
+</ol>
+<p>最优方案（考虑精度）：</p>
+<ul>
+<li>纯性能最优：全 INT8（3ms）</li>
+<li>精度-性能平衡：全 FP16（6ms）或 INT8→FP16（6ms）</li>
+</ul>
+</details>
+<h3 id="66">练习 6.6（挑战）：稀疏数据布局</h3>
+<p>设计一个数据结构存储稀疏率为 90% 的 $1000 \times 1000$ 矩阵，要求：</p>
+<ol>
+<li>支持高效的行访问</li>
+<li>支持高效的列访问</li>
+<li>最小化存储开销</li>
+</ol>
+<p>分析你的设计在不同访问模式下的时间复杂度。</p>
+<p><strong>提示</strong>：考虑 CSR 和 CSC 的混合方案。</p>
+<details>
+<summary>参考答案</summary>
+<p><strong>混合存储方案：</strong></p>
+<p>同时维护 CSR 和 CSC 格式：</p>
+<div class="codehilite"><pre><span></span><code>CSR格式：
+
+<span class="k">-</span> values[]: 非零值数组（100,000 个元素）
+<span class="k">-</span> col_indices[]: 列索引（100,000 个元素）
+<span class="k">-</span> row_ptr[]: 行指针（1,001 个元素）
+
+CSC格式：
+
+<span class="k">-</span> values[]: 共享 CSR 的值数组
+<span class="k">-</span> row_indices[]: 行索引（100,000 个元素）
+<span class="k">-</span> col_ptr[]: 列指针（1,001 个元素）
+</code></pre></div>
+
+<p><strong>存储开销分析：</strong></p>
+<ul>
+<li>非零值：100,000 × 4 字节 = 400 KB</li>
+<li>索引：(100,000 × 2 + 1,001 × 2) × 4 字节 ≈ 808 KB</li>
+<li>总计：约 1.2 MB（vs 密集存储 4 MB）</li>
+</ul>
+<p><strong>时间复杂度：</strong></p>
+<ul>
+<li>行访问：O(行中非零元素数) ≈ O(100)</li>
+<li>列访问：O(列中非零元素数) ≈ O(100)</li>
+<li>单元素访问：O(log(行/列非零数)) 使用二分查找</li>
+</ul>
+<p><strong>优化变体：</strong>
+分块混合格式，将矩阵分成 100×100 的块，每块根据稀疏率选择存储格式。</p>
+</details>
+<h3 id="67">练习 6.7（开放）：自动驾驶多传感器布局</h3>
+<p>设计一个统一的内存布局方案，处理自动驾驶中的多模态数据：</p>
+<ul>
+<li>6 个摄像头图像（1920×1080×3，30 FPS）</li>
+<li>1 个 LiDAR 点云（~100,000 点/帧，10 FPS）</li>
+<li>5 个毫米波雷达（~1,000 点/帧，20 FPS）</li>
+</ul>
+<p>要求最小化数据搬移，支持时间同步。</p>
+<p><strong>提示</strong>：考虑环形缓冲区和时间戳对齐。</p>
+<details>
+<summary>参考答案</summary>
+<p><strong>统一时间轴环形缓冲设计：</strong></p>
+<ol>
+<li>
+<p><strong>时间同步层：</strong>
+   - 基准时钟：100Hz（10ms 粒度）
+   - 每个传感器数据带时间戳
+   - 插值对齐到最近的 10ms 边界</p>
+</li>
+<li>
+<p><strong>分层存储结构：</strong></p>
+</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>Level 1（高频）：摄像头环形缓冲区
+
+- 6 × 1920×1080×3 × 2字节(FP16) = 74.6 MB/帧
+- 缓存 100ms（3帧）= 224 MB
+- 布局：NHWC（便于 CNN 处理）
+
+Level 2（中频）：雷达环形缓冲区
+
+- 5 × 1000 × 16字节 = 80 KB/帧
+- 缓存 200ms（4帧）= 320 KB
+- 布局：结构体数组（x,y,z,velocity,intensity）
+
+Level 3（低频）：LiDAR 环形缓冲区
+
+- 100,000 × 16字节 = 1.6 MB/帧
+- 缓存 300ms（3帧）= 4.8 MB
+- 布局：八叉树 + 原始点云
+</code></pre></div>
+
+<ol start="3">
+<li>
+<p><strong>融合缓冲区：</strong>
+- 统一坐标系（车体坐标）
+- 体素化表示：256×256×32 格子
+- 每个体素存储多模态特征向量</p>
+</li>
+<li>
+<p><strong>优化策略：</strong>
+- 零拷贝：DMA 直接写入环形缓冲
+- 预取：基于车速预测下一帧数据位置
+- 压缩：点云使用增量编码</p>
+</li>
+</ol>
+<p>时空复杂度：</p>
+<ul>
+<li>空间：~250 MB 常驻内存</li>
+<li>延迟：&lt;10ms 数据可用</li>
+</ul>
+</details>
+<h2 id="gotchas">常见陷阱与错误（Gotchas）</h2>
+<h3 id="1">1. 布局转换的隐式开销</h3>
+<p><strong>陷阱</strong>：只考虑单个算子的最优布局，忽略全局转换开销。</p>
+<p><strong>案例</strong>：ResNet 中，虽然深度可分离卷积在 NHWC 下更快，但频繁的布局转换反而降低整体性能。</p>
+<p><strong>解决方案</strong>：使用全图优化，设置转换代价阈值。</p>
+<h3 id="2">2. 对齐导致的内存爆炸</h3>
+<p><strong>陷阱</strong>：盲目对齐所有张量到硬件要求的最大值。</p>
+<p><strong>案例</strong>：将所有维度对齐到 256，小张量内存使用增加 100 倍。</p>
+<p><strong>解决方案</strong>：</p>
+<ul>
+<li>分级对齐策略</li>
+<li>只对性能关键路径应用严格对齐</li>
+</ul>
+<h3 id="3">3. 混合精度的数值不稳定</h3>
+<p><strong>陷阱</strong>：在梯度累积时使用 FP16，导致下溢。</p>
+<p><strong>案例</strong>：大模型训练中，梯度值 &lt; 1e-7 在 FP16 下变为 0。</p>
+<p><strong>解决方案</strong>：</p>
+<ul>
+<li>梯度使用 FP32 累积</li>
+<li>动态损失缩放</li>
+</ul>
+<h3 id="4">4. 稀疏格式选择不当</h3>
+<p><strong>陷阱</strong>：对所有稀疏矩阵使用同一格式。</p>
+<p><strong>案例</strong>：对行稀疏矩阵使用 CSC 格式，性能下降 10 倍。</p>
+<p><strong>解决方案</strong>：根据访问模式和稀疏模式选择格式。</p>
+<h3 id="5">5. 缓存行冲突</h3>
+<p><strong>陷阱</strong>：Padding 大小恰好是缓存大小的倍数。</p>
+<p><strong>案例</strong>：每行 padding 到 2048 字节，在 32KB 8-way 缓存上产生冲突。</p>
+<p><strong>解决方案</strong>：使用素数大小的 padding 或添加随机偏移。</p>
+<h2 id="_3">最佳实践检查清单</h2>
+<h3 id="_4">设计阶段</h3>
+<ul>
+<li>[ ] 分析目标硬件的内存层次结构</li>
+<li>[ ] 确定主要算子的访存模式</li>
+<li>[ ] 评估不同布局的理论性能上界</li>
+<li>[ ] 考虑多精度训练/推理需求</li>
+</ul>
+<h3 id="_5">实现阶段</h3>
+<ul>
+<li>[ ] 实现布局无关的算子接口</li>
+<li>[ ] 添加布局转换的 profiling 代码</li>
+<li>[ ] 支持运行时布局选择</li>
+<li>[ ] 实现内存池避免频繁分配</li>
+</ul>
+<h3 id="_6">优化阶段</h3>
+<ul>
+<li>[ ] 使用真实硬件测试不同布局</li>
+<li>[ ] 分析缓存命中率和带宽利用率</li>
+<li>[ ] 识别并消除不必要的转换</li>
+<li>[ ] 平衡内存使用和计算效率</li>
+</ul>
+<h3 id="_7">验证阶段</h3>
+<ul>
+<li>[ ] 对比优化前后的端到端性能</li>
+<li>[ ] 检查内存使用峰值</li>
+<li>[ ] 验证数值精度（特别是混合精度）</li>
+<li>[ ] 测试边界情况（很小/很大的张量）</li>
+</ul>
+<h3 id="_8">部署阶段</h3>
+<ul>
+<li>[ ] 根据部署硬件微调布局策略</li>
+<li>[ ] 添加布局选择的配置选项</li>
+<li>[ ] 文档化布局决策原理</li>
+<li>[ ] 提供性能调优指南</li>
+</ul>
+            </article>
+            
+            <nav class="page-nav"><a href="chapter5.html" class="nav-link prev">← 第 5 章：内存规划与分配</a><a href="chapter7.html" class="nav-link next">第 7 章：算子融合 →</a></nav>
+        </main>
+    </div>
+</body>
+</html>

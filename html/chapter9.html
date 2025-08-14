@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="./">
+    <title>第 9 章：并行化策略</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="assets/highlight.css">
+    <script src="assets/script.js" defer></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']],
+                processEscapes: false,
+                packages: {'[+]': ['noerrors', 'ams']}
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            loader: {
+                load: ['[tex]/noerrors', '[tex]/ams']
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3>目录</h3>
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+            <div class="sidebar-search">
+                <input type="text" id="sidebar-search-input" placeholder="搜索..." autocomplete="off">
+            </div>
+            <div id="tree-container">
+                <nav class="tree-nav" role="tree">
+                    <div class="tree-item " >
+                        <a href="index.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">AI 编译器教程：从理论到 200T 规模实践</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter1.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 1 章：AI 编译器概述</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter2.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 2 章：中间表示（IR）设计</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter3.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 3 章：计算图表示与分析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter4.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 4 章：统一缓冲区设计</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter5.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 5 章：内存规划与分配</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter6.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 6 章：数据布局优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter7.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 7 章：算子融合</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter8.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 8 章：自动微分与梯度优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item active" >
+                        <a href="chapter9.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 9 章：并行化策略</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter11.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 11 章：多维 Stride DMA 利用</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter12.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 12 章：JIT 编译技术</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter13.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 13 章：GPU 编译优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter14.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 14 章：移动端与边缘设备优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter15.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 15 章：NUMA 架构优化（一）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter16.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 16 章：NUMA 架构优化（二）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter17.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 17 章：动态 Shape 编译（一）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter18.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 18 章：动态 Shape 编译（二）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter19.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 19 章：稀疏与变长数据支持</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter20.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 20 章：JIT 编译技术</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter21.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 21 章：高维张量别名分析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter22.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 22 章：投机执行支持</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter23.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 23 章：自动驾驶场景优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter24.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 24 章：具身智能编译挑战</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter25.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 25 章：200T 模型编译实践</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="CLAUDE.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">Untitled</span>
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </nav>
+        
+        <main class="content">
+            <article>
+                <h1 id="9">第 9 章：并行化策略</h1>
+<p>在 200T 参数规模的 AI 模型时代，单一设备已无法容纳整个模型，更遑论高效训练和推理。并行化不再是可选的优化手段，而是必需的基础能力。本章深入探讨 AI 编译器如何通过智能的并行化策略，将超大规模模型高效地映射到分布式硬件集群上，实现训练吞吐量和推理延迟的最优化。我们将从数据并行、模型并行、流水线并行三个基础维度出发，逐步构建起混合并行的完整图景，并重点关注自动驾驶和具身智能场景下的实时性要求。</p>
+<h2 id="_1">学习目标</h2>
+<p>通过本章学习，你将能够：</p>
+<ul>
+<li>理解并行化的数学基础和通信复杂度分析</li>
+<li>掌握数据并行中的梯度同步优化技术</li>
+<li>设计高效的模型并行切分策略</li>
+<li>实现流水线并行的最优调度算法</li>
+<li>构建 3D 混合并行系统并进行性能建模</li>
+<li>为特定硬件拓扑选择最优并行策略</li>
+</ul>
+<h2 id="91">9.1 数据并行编译优化</h2>
+<p>数据并行是最直观的并行化方式：将训练数据划分到多个设备，每个设备持有完整模型副本，独立计算前向和反向传播，然后同步梯度。看似简单的策略，在编译器层面却蕴含着丰富的优化空间。</p>
+<h3 id="911">9.1.1 通信原语选择与优化</h3>
+<p>数据并行的核心在于梯度同步。对于 $N$ 个设备，每个设备计算得到局部梯度 $g_i$，需要计算全局平均梯度：</p>
+<p>$$\bar{g} = \frac{1}{N}\sum_{i=1}^{N} g_i$$
+编译器需要根据硬件拓扑选择最优的通信原语：</p>
+<p><strong>Ring AllReduce</strong>：适用于带宽受限场景，通信复杂度为 $O(2(N-1)M/N)$，其中 $M$ 为模型参数量。</p>
+<div class="codehilite"><pre><span></span><code>设备排列成环：0 → 1 → 2 → ... → N-1 → 0
+Reduce-scatter 阶段：N-1 步，每步传输 M/N 数据
+All-gather 阶段：N-1 步，每步传输 M/N 数据
+总传输量：2(N-1)M/N ≈ 2M（与设备数无关！）
+</code></pre></div>
+
+<p><strong>Tree AllReduce</strong>：适用于延迟敏感场景，通信复杂度为 $O(\log N \cdot M)$。</p>
+<div class="codehilite"><pre><span></span><code>构建二叉树拓扑：
+     0
+   /   \
+  1     2
+ / \   / \
+3   4 5   6
+
+上行 Reduce：log N 步
+下行 Broadcast：log N 步
+延迟：O(2 log N)
+</code></pre></div>
+
+<p><strong>Hierarchical AllReduce</strong>：适用于多级网络拓扑（如 DGX SuperPOD）。</p>
+<h3 id="912">9.1.2 梯度压缩与量化</h3>
+<p>为减少通信开销，编译器可自动插入梯度压缩：</p>
+<p><strong>Top-K 稀疏化</strong>：只传输最大的 $k$ 个梯度分量。设原始梯度 $g \in \mathbb{R}^d$，稀疏化后：
+$$g_{sparse} = \text{TopK}(g, k) = \{g_i : |g_i| \geq \tau_k\}$$
+其中 $\tau_k$ 是第 $k$ 大的绝对值。压缩率为 $k/d$。</p>
+<p><strong>随机量化</strong>：将 32-bit 浮点数量化为低精度表示。例如 1-bit 量化：
+$$Q(g_i) = \begin{cases}
+|g|_2 &amp; \text{with probability } \frac{|g_i|}{|g|_1} \\
+-|g|_2 &amp; \text{otherwise}
+\end{cases}$$
+保证 $\mathbb{E}[Q(g_i)] = g_i$（无偏估计）。</p>
+<h3 id="913">9.1.3 通信与计算重叠</h3>
+<p>编译器通过依赖分析，将模型分层并流水线化梯度同步：</p>
+<div class="codehilite"><pre><span></span><code>层级划分：L₁, L₂, ..., Lₙ
+前向传播：L₁ → L₂ → ... → Lₙ
+反向传播与通信重叠：
+  计算 ∇Lₙ → AllReduce(∇Lₙ) 同时 计算 ∇Lₙ₋₁
+  等待 ∇Lₙ 完成 → AllReduce(∇Lₙ₋₁) 同时 计算 ∇Lₙ₋₂
+  ...
+</code></pre></div>
+
+<p>理想情况下，通信时间完全被计算掩盖：
+$$T_{total} = \max(T_{compute}, T_{comm}) \text{ 而非 } T_{compute} + T_{comm}$$</p>
+<h3 id="914">9.1.4 局部梯度累积策略</h3>
+<p>当 GPU 内存受限时，编译器可自动实施梯度累积：</p>
+<p>设批量大小 $B = K \times B_{micro}$，其中 $K$ 为累积步数：
+$$g_{accumulated} = \sum_{k=1}^{K} g^{(k)}_{micro}$$
+编译器需要处理的关键问题：</p>
+<ol>
+<li><strong>数值稳定性</strong>：使用 Kahan 求和算法减少浮点误差累积</li>
+<li><strong>内存管理</strong>：梯度缓冲区复用，避免 OOM</li>
+<li><strong>同步时机</strong>：每 $K$ 步触发一次 AllReduce</li>
+</ol>
+<h2 id="92">9.2 模型并行切分策略</h2>
+<p>当模型参数量超过单设备内存容量时，模型并行成为必然选择。编译器需要自动识别最优切分点，最小化通信开销同时保持负载均衡。</p>
+<h3 id="921-tensor-parallelism">9.2.1 张量并行（Tensor Parallelism）</h3>
+<p>将单个算子的计算分布到多个设备。以矩阵乘法 $Y = XW$ 为例，其中 $X \in \mathbb{R}^{B \times M}$，$W \in \mathbb{R}^{M \times N}$：</p>
+<p><strong>列并行切分</strong>：
+$$W = [W_1 | W_2 | ... | W_P], \quad W_i \in \mathbb{R}^{M \times N/P}$$
+$$Y_i = XW_i \text{ 在设备 } i \text{ 上计算}$$
+$$Y = [Y_1 | Y_2 | ... | Y_P] \text{ （无需通信）}$$
+<strong>行并行切分</strong>：
+$$W = \begin{bmatrix} W_1 \\ W_2 \\ \vdots \\ W_P \end{bmatrix}, \quad W_i \in \mathbb{R}^{M/P \times N}$$
+需要先切分输入：$X_i = X[:, i \cdot M/P : (i+1) \cdot M/P]$
+$$Y = \sum_{i=1}^{P} X_i W_i \text{ （需要 AllReduce）}$$</p>
+<h3 id="922-inter-layer-parallelism">9.2.2 层间并行（Inter-layer Parallelism）</h3>
+<p>将模型的不同层分配到不同设备：</p>
+<div class="codehilite"><pre><span></span><code>设备分配策略：
+<span class="nv">Transformer</span><span class="w"> </span><span class="nv">Block</span><span class="w"> </span><span class="nv">i</span><span class="w"> </span>→<span class="w"> </span>设备<span class="w"> </span><span class="ss">(</span><span class="nv">i</span><span class="w"> </span><span class="nv">mod</span><span class="w"> </span><span class="nv">P</span><span class="ss">)</span>
+
+前向传播通信模式：
+设备<span class="w"> </span><span class="mi">0</span>:<span class="w"> </span><span class="nv">Layer</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span>→<span class="w"> </span><span class="k">send</span><span class="ss">(</span><span class="nv">x</span>₁<span class="ss">)</span><span class="w"> </span><span class="nv">to</span><span class="w"> </span>设备<span class="w"> </span><span class="mi">1</span>
+设备<span class="w"> </span><span class="mi">1</span>:<span class="w"> </span><span class="nv">recv</span><span class="ss">(</span><span class="nv">x</span>₁<span class="ss">)</span><span class="w"> </span>→<span class="w"> </span><span class="nv">Layer</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span>→<span class="w"> </span><span class="k">send</span><span class="ss">(</span><span class="nv">x</span>₂<span class="ss">)</span><span class="w"> </span><span class="nv">to</span><span class="w"> </span>设备<span class="w"> </span><span class="mi">2</span>
+...
+</code></pre></div>
+
+<p>关键优化：<strong>激活值重计算</strong> vs <strong>激活值传输</strong></p>
+<p>内存-通信权衡分析：</p>
+<ul>
+<li>存储激活值：内存开销 $O(B \times L \times H)$</li>
+<li>重计算激活值：计算开销增加 33%（前向重算）</li>
+<li>编译器根据 $\frac{Memory_{available}}{Bandwidth_{interconnect}}$ 比值自动选择</li>
+</ul>
+<h3 id="923">9.2.3 算子内细粒度并行</h3>
+<p>对于超大算子（如 200T 模型的注意力层），需要更细粒度的并行：</p>
+<p><strong>Attention 并行化</strong>（以 Multi-Head Attention 为例）：</p>
+<p>设注意力计算 $\text{Attention}(Q,K,V) = \text{softmax}(\frac{QK^T}{\sqrt{d_k}})V$</p>
+<ol>
+<li><strong>头并行</strong>：$H$ 个注意力头分配到 $P$ 个设备，设备 $i$ 处理 $H/P$ 个头</li>
+<li><strong>序列并行</strong>：将序列长度 $S$ 切分，每个设备处理 $S/P$ 长度</li>
+<li><strong>混合并行</strong>：同时切分头和序列维度</li>
+</ol>
+<p>通信复杂度分析：</p>
+<ul>
+<li>头并行：$O(B \times S \times d_{model})$</li>
+<li>序列并行：$O(B \times S \times d_{model}/P)$（需要 AllGather）</li>
+</ul>
+<h3 id="924">9.2.4 自动切分点选择</h3>
+<p>编译器通过建模选择最优切分策略：</p>
+<p><strong>代价模型</strong>：
+$$C_{total} = \alpha \cdot C_{compute} + \beta \cdot C_{memory} + \gamma \cdot C_{comm}$$
+其中：</p>
+<ul>
+<li>$C_{compute}$：计算负载不均衡度</li>
+<li>$C_{memory}$：峰值内存使用</li>
+<li>$C_{comm}$：通信量（考虑拓扑）</li>
+</ul>
+<p><strong>动态规划算法</strong>：</p>
+<div class="codehilite"><pre><span></span><code><span class="n">状态定义</span><span class="err">：</span><span class="n">dp</span><span class="o">[</span><span class="n">i</span><span class="o">][</span><span class="n">j</span><span class="o">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">将前</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="n">层分配到前</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="n">个设备的最小代价</span>
+<span class="n">转移方程</span><span class="err">：</span><span class="n">dp</span><span class="o">[</span><span class="n">i</span><span class="o">][</span><span class="n">j</span><span class="o">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">min</span><span class="err">{</span><span class="n">dp</span><span class="o">[</span><span class="n">k</span><span class="o">][</span><span class="n">j-1</span><span class="o">]</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">cost</span><span class="p">(</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="n">device_j</span><span class="p">)</span><span class="err">}</span>
+<span class="n">复杂度</span><span class="err">：</span><span class="n">O</span><span class="p">(</span><span class="n">L²</span><span class="w"> </span><span class="err">×</span><span class="w"> </span><span class="n">P</span><span class="p">)</span><span class="err">，</span><span class="n">其中</span><span class="w"> </span><span class="n">L</span><span class="w"> </span><span class="n">为层数</span><span class="err">，</span><span class="n">P</span><span class="w"> </span><span class="n">为设备数</span>
+</code></pre></div>
+
+<h2 id="93">9.3 流水线并行调度</h2>
+<p>流水线并行将模型垂直切分成多个阶段（stage），通过微批次（micro-batch）技术提高设备利用率。编译器的核心挑战是设计高效的调度策略，最小化流水线气泡（bubble）。</p>
+<h3 id="931">9.3.1 基础流水线调度</h3>
+<p><strong>GPipe 调度策略</strong>：</p>
+<p>设总批次大小 $B$，切分为 $M$ 个微批次，$P$ 个流水线阶段：</p>
+<div class="codehilite"><pre><span></span><code>前向传播阶段（时间步 1 到 M+P-1）：
+Stage 0: F₀¹ F₀² F₀³ ... F₀ᴹ
+Stage 1:    F₁¹ F₁² ... F₁ᴹ
+Stage 2:       F₂¹ ... F₂ᴹ
+...
+Stage P-1:           Fₚ₋₁ᴹ
+
+反向传播阶段（时间步 M+P 到 2M+P-2）：
+Stage P-1: Bₚ₋₁ᴹ Bₚ₋₁ᴹ⁻¹ ... Bₚ₋₁¹
+Stage P-2:    Bₚ₋₂ᴹ ... Bₚ₋₂¹
+...
+Stage 0:              B₀¹
+</code></pre></div>
+
+<p>气泡时间分析：
+$$T_{bubble} = \frac{P-1}{M+P-1} \times T_{total}$$
+当 $M &gt;&gt; P$ 时，气泡比例约为 $O(P/M)$。</p>
+<h3 id="932-1f1b">9.3.2 1F1B 调度优化</h3>
+<p><strong>1F1B（One Forward One Backward）策略</strong>：</p>
+<p>交替执行前向和反向，减少峰值内存：</p>
+<div class="codehilite"><pre><span></span><code>Stage 0: F₀¹ F₀² F₀³ F₀⁴ B₀¹ F₀⁵ B₀² F₀⁶ B₀³ ...
+Stage 1:    F₁¹ F₁² F₁³ B₁¹ F₁⁴ B₁² F₁⁵ B₁³ ...
+Stage 2:       F₂¹ F₂² B₂¹ F₂³ B₂² F₂⁴ B₂³ ...
+Stage 3:          F₃¹ B₃¹ F₃² B₃² F₃³ B₃³ ...
+</code></pre></div>
+
+<p>内存优化效果：</p>
+<ul>
+<li>GPipe：峰值内存 $O(M \times P \times A)$，其中 $A$ 为激活值大小</li>
+<li>1F1B：峰值内存 $O(P \times A)$（与微批次数无关！）</li>
+</ul>
+<h3 id="933-interleaved-pipeline">9.3.3 交错流水线（Interleaved Pipeline）</h3>
+<p>将每个设备负责多个非连续的 stage，增加并行机会：</p>
+<div class="codehilite"><pre><span></span><code>设备分配（以 8 层模型、4 设备为例）：
+设备 0: Layer 0, Layer 4
+设备 1: Layer 1, Layer 5
+设备 2: Layer 2, Layer 6
+设备 3: Layer 3, Layer 7
+
+通信模式：
+前向：0→1→2→3→0→1→2→3
+反向：3→2→1→0→3→2→1→0
+</code></pre></div>
+
+<p>优势：</p>
+<ul>
+<li>减少气泡：从 $O(P)$ 降至 $O(P/V)$，$V$ 为虚拟阶段数</li>
+<li>更好的负载均衡</li>
+<li>代价：通信量增加 $V$ 倍</li>
+</ul>
+<h3 id="934">9.3.4 自适应微批次大小</h3>
+<p>编译器可根据运行时状态动态调整微批次大小：</p>
+<p><strong>内存约束下的最优微批次数</strong>：
+$$M^* = \arg\max_{M} \left\{ \frac{M}{M+P-1} \mid M \times S_{micro} \leq Memory_{available} \right\}$$
+其中 $S_{micro}$ 为单个微批次的内存占用。</p>
+<p><strong>带宽约束下的调整</strong>：
+$$M_{effective} = \min\left(M^*, \left\lfloor \frac{Bandwidth \times T_{compute}}{S_{activation}} \right\rfloor\right)$$
+确保通信不成为瓶颈。</p>
+<h2 id="94">9.4 混合并行模式</h2>
+<p>现代 AI 系统通常结合多种并行策略，形成多维混合并行。编译器需要在庞大的策略空间中搜索最优组合。</p>
+<h3 id="941-3d">9.4.1 3D 并行架构</h3>
+<p><strong>三维并行分解</strong>：</p>
+<p>设总设备数 $N = N_d \times N_m \times N_p$，其中：</p>
+<ul>
+<li>$N_d$：数据并行度</li>
+<li>$N_m$：模型（张量）并行度  </li>
+<li>$N_p$：流水线并行度</li>
+</ul>
+<div class="codehilite"><pre><span></span><code>设备组织结构：
+Pipeline Stage 0: [DP₀,MP₀] [DP₀,MP₁] ... [DP₀,MPₘ₋₁]
+                  [DP₁,MP₀] [DP₁,MP₁] ... [DP₁,MPₘ₋₁]
+                  ...
+                  [DPₐ₋₁,MP₀] ...         [DPₐ₋₁,MPₘ₋₁]
+
+Pipeline Stage 1: [相同结构]
+...
+Pipeline Stage P-1: [相同结构]
+</code></pre></div>
+
+<p><strong>通信模式分析</strong>：</p>
+<ol>
+<li>
+<p>数据并行通信：同一 MP 组内的 DP 维度 AllReduce
+   - 频率：每个 batch
+   - 数据量：$O(Model_{size}/N_m/N_p)$</p>
+</li>
+<li>
+<p>模型并行通信：同一 DP 组内的 MP 维度 AllGather/ReduceScatter
+   - 频率：每个算子
+   - 数据量：$O(Activation_{size})$</p>
+</li>
+<li>
+<p>流水线并行通信：相邻 stage 间的 P2P
+   - 频率：每个微批次
+   - 数据量：$O(B_{micro} \times Hidden_{size})$</p>
+</li>
+</ol>
+<h3 id="942-zero">9.4.2 ZeRO 优化策略</h3>
+<p>ZeRO（Zero Redundancy Optimizer）通过分片优化器状态、梯度和参数，大幅减少内存占用：</p>
+<p><strong>ZeRO-1（优化器状态分片）</strong>：</p>
+<ul>
+<li>每个设备只存储 $1/N_d$ 的优化器状态</li>
+<li>内存节省：$4 \times Model_{size} \times (1 - 1/N_d)$ 字节（FP32 Adam）</li>
+</ul>
+<p><strong>ZeRO-2（梯度分片）</strong>：</p>
+<ul>
+<li>梯度计算后立即 Reduce-Scatter</li>
+<li>每个设备只保留 $1/N_d$ 的梯度</li>
+<li>额外通信：与数据并行相同</li>
+</ul>
+<p><strong>ZeRO-3（参数分片）</strong>：</p>
+<ul>
+<li>参数也分片存储</li>
+<li>前向/反向时通过 AllGather 获取完整参数</li>
+<li>内存效率最高，通信开销最大</li>
+</ul>
+<p>内存-通信权衡模型：
+$$Memory_{per_device} = \frac{Model_{size} \times (16 + K)}{N_d \times S}$$
+其中 $K$ 为优化器状态倍数，$S$ 为分片级别（1-3）。</p>
+<h3 id="943">9.4.3 自动并行策略搜索</h3>
+<p><strong>搜索空间定义</strong>：</p>
+<p>对于 $L$ 层模型，$N$ 个设备，策略空间大小为：
+$$|\mathcal{S}| = \prod_{i=1}^{L} C_{parallel}^{(i)} \times P_{device}^{(i)}$$
+其中 $C_{parallel}^{(i)}$ 为层 $i$ 的并行方式选择，$P_{device}^{(i)}$ 为设备分配方案。</p>
+<p><strong>代价模型构建</strong>：
+$$Cost = T_{compute} + T_{comm} + \lambda \cdot Memory_{peak}$$
+细化为：
+$$T_{compute} = \max_{d \in Devices} \sum_{op \in d} t_{op}$$
+$$T_{comm} = \sum_{e \in Edges} \frac{Size_e}{Bandwidth_{e}}$$</p>
+<p><strong>搜索算法</strong>：</p>
+<ol>
+<li><strong>网格搜索</strong>：适用于小规模（&lt;100 设备）</li>
+<li><strong>动态规划</strong>：利用问题的最优子结构</li>
+<li><strong>强化学习</strong>：使用 PPO/A3C 学习策略</li>
+<li><strong>进化算法</strong>：NSGA-II 多目标优化</li>
+</ol>
+<h3 id="944">9.4.4 自动驾驶场景的实时并行优化</h3>
+<p>针对自动驾驶的低延迟要求（&lt;100ms），编译器需要特殊优化：</p>
+<p><strong>优先级调度</strong>：</p>
+<div class="codehilite"><pre><span></span><code>关键路径识别：
+感知 → 预测 → 规划 → 控制
+优先级：控制 &gt; 规划 &gt; 预测 &gt; 感知
+
+资源分配：
+控制模块：独占 GPU 0
+规划模块：GPU 1 主，可借用 GPU 2
+预测模块：GPU 2-3 轮询
+感知模块：剩余资源
+</code></pre></div>
+
+<p><strong>确定性执行保证</strong>：</p>
+<ul>
+<li>禁用动态 shape</li>
+<li>固定内存分配</li>
+<li>关闭自适应优化</li>
+<li>预编译所有kernel</li>
+</ul>
+<h2 id="_2">本章小结</h2>
+<p>并行化策略是 AI 编译器应对超大规模模型的核心武器。本章系统介绍了从数据并行、模型并行到流水线并行的各种技术，以及它们的混合使用模式。关键要点包括：</p>
+<ol>
+<li><strong>数据并行优化</strong>：通过智能的通信原语选择、梯度压缩和通信-计算重叠，最大化训练吞吐量</li>
+<li><strong>模型并行切分</strong>：在张量、层间和算子内多个粒度进行切分，平衡内存使用和通信开销</li>
+<li><strong>流水线调度</strong>：通过微批次和 1F1B 等策略减少气泡时间，提高设备利用率</li>
+<li><strong>混合并行</strong>：3D 并行和 ZeRO 优化实现了内存效率和计算效率的最佳平衡</li>
+<li><strong>自动策略搜索</strong>：通过建模和搜索算法，自动发现针对特定硬件的最优并行策略</li>
+</ol>
+<p>核心数学模型：</p>
+<ul>
+<li>通信复杂度：$O(2M)$（Ring AllReduce）vs $O(\log N \cdot M)$（Tree AllReduce）</li>
+<li>气泡时间：$T_{bubble} = \frac{P-1}{M+P-1} \times T_{total}$</li>
+<li>内存优化：ZeRO-3 可将内存降至 $\frac{Model_{size}}{N_d}$</li>
+<li>搜索空间：$|\mathcal{S}| = O(C^L \times N^L)$</li>
+</ul>
+<h2 id="_3">练习题</h2>
+<h3 id="_4">基础题</h3>
+<p><strong>练习 9.1</strong>：给定 8 个 GPU 组成的环形拓扑，每个 GPU 间带宽为 100 GB/s，模型参数量为 175B（FP16），计算 Ring AllReduce 的理论通信时间。</p>
+<details>
+<summary>提示</summary>
+<p>Ring AllReduce 总传输量约为 2M，与设备数无关。注意 FP16 每个参数占 2 字节。</p>
+</details>
+<details>
+<summary>答案</summary>
+<p>参数大小：175B × 2 bytes = 350 GB
+Ring AllReduce 传输量：2 × 350 GB = 700 GB
+通信时间：700 GB / 100 GB/s = 7 秒
+注意这是理论下界，实际会有协议开销。</p>
+</details>
+<p><strong>练习 9.2</strong>：一个 Transformer 模型有 48 层，要部署在 8 个 GPU 上进行流水线并行。如果使用 GPipe 策略，微批次数为 32，计算气泡时间占总时间的比例。</p>
+<details>
+<summary>提示</summary>
+<p>使用公式 $T_{bubble} = \frac{P-1}{M+P-1} \times T_{total}$，其中 P=8，M=32。</p>
+</details>
+<details>
+<summary>答案</summary>
+<p>P = 8（流水线阶段数）
+M = 32（微批次数）
+气泡比例 = (8-1)/(32+8-1) = 7/39 ≈ 17.9%</p>
+</details>
+<p><strong>练习 9.3</strong>：使用 ZeRO-2 优化，16 个 GPU 训练 70B 参数模型（FP32 参数，Adam 优化器）。计算每个 GPU 需要的最小内存。</p>
+<details>
+<summary>提示</summary>
+<p>Adam 优化器需要存储：参数（4B）、梯度（4B）、一阶矩（4B）、二阶矩（4B），共 16 字节/参数。ZeRO-2 分片优化器状态和梯度。</p>
+</details>
+<details>
+<summary>答案</summary>
+<p>每参数内存需求：</p>
+<ul>
+<li>参数：4 字节（不分片）</li>
+<li>梯度：4/16 = 0.25 字节（分片）</li>
+<li>一阶矩：4/16 = 0.25 字节（分片）</li>
+<li>二阶矩：4/16 = 0.25 字节（分片）
+总计：4 + 0.75 = 4.75 字节/参数
+70B 参数需要：70B × 4.75 = 332.5 GB
+每 GPU：332.5 GB / 16 ≈ 20.8 GB</li>
+</ul>
+</details>
+<h3 id="_5">挑战题</h3>
+<p><strong>练习 9.4</strong>：设计一个动态规划算法，为 N 层模型找到最优的流水线并行切分点，使得各阶段计算时间尽可能均衡。定义状态转移方程。</p>
+<details>
+<summary>提示</summary>
+<p>定义 dp[i][j] 为前 i 层分配到 j 个阶段的最小最大阶段时间。考虑每层的计算时间可能不同。</p>
+</details>
+<details>
+<summary>答案</summary>
+<p>状态定义：dp[i][j] = 前 i 层分成 j 个阶段时的最小化最大阶段时间
+状态转移：dp[i][j] = min{max(dp[k][j-1], sum(time[k+1]...time[i]))} for k in [j-1, i-1]
+初始化：dp[i][1] = sum(time[1]...time[i])
+复杂度：O(N²P)，N 为层数，P 为阶段数
+最优切分通过回溯 dp 数组得到。</p>
+</details>
+<p><strong>练习 9.5</strong>：推导 3D 并行（数据并行度 $N_d$，模型并行度 $N_m$，流水线并行度 $N_p$）的总通信量公式，假设模型参数量 M，批次大小 B，序列长度 S，隐藏维度 H。</p>
+<details>
+<summary>提示</summary>
+<p>分别计算三种并行的通信量，注意它们发生在不同的设备组之间。</p>
+</details>
+<details>
+<summary>答案</summary>
+<p>数据并行通信（梯度同步）：$\frac{2M(N_d-1)}{N_m \times N_p \times N_d}$ per batch
+模型并行通信（激活值）：$2BSH \times L/N_p$ per layer
+流水线并行通信（微批次）：$2BSH \times (N_p-1) \times M_{micro}$ per batch
+总通信量 = $\frac{2M(N_d-1)}{N_m \times N_p} + 2BSHL + 2BSH(N_p-1)M_{micro}$
+优化目标：选择 $N_d, N_m, N_p$ 最小化总通信量</p>
+</details>
+<p><strong>练习 9.6</strong>：具身智能机器人需要同时运行感知、规划、控制三个模型，延迟要求分别为 50ms、30ms、10ms。设计一个编译时调度策略，在 4 个异构设备（2 个高性能 GPU，2 个边缘 TPU）上满足实时性要求。</p>
+<details>
+<summary>提示</summary>
+<p>考虑模型特点匹配设备能力，设计优先级和资源预留策略。</p>
+</details>
+<details>
+<summary>答案</summary>
+<p>调度策略：</p>
+<ol>
+<li>控制模型（10ms）→ 边缘 TPU 0（独占，确定性高）</li>
+<li>规划模型（30ms）→ GPU 0（高优先级，可抢占）</li>
+<li>感知模型（50ms）→ GPU 1 + 边缘 TPU 1（并行切分）</li>
+<li>时间片设计：10ms 为基本单位</li>
+<li>优先级：控制 &gt; 规划 &gt; 感知</li>
+<li>预留策略：控制模型始终预留 20% 裕量</li>
+<li>降级策略：负载高时感知模型降低分辨率</li>
+</ol>
+</details>
+<p><strong>练习 9.7</strong>（开放性思考题）：随着模型规模向 10T、100T 发展，现有并行策略会遇到什么瓶颈？提出可能的解决方向。</p>
+<details>
+<summary>提示</summary>
+<p>考虑通信带宽、内存容量、故障容错、能耗等多个维度。</p>
+</details>
+<details>
+<summary>答案</summary>
+<p>主要瓶颈：</p>
+<ol>
+<li>通信墙：全局同步成为瓶颈 → 异步/局部同步算法</li>
+<li>内存墙：即使 ZeRO-3 也不够 → 外存/SSD 扩展</li>
+<li>故障率：设备数增加导致 MTBF 下降 → 细粒度检查点</li>
+<li>能耗墙：数据中心供电限制 → 混合精度、稀疏化
+可能方向：</li>
+</ol>
+<ul>
+<li>分层通信拓扑（蜻蜓、胖树）</li>
+<li>计算存储分离架构</li>
+<li>神经形态计算</li>
+<li>光互连技术</li>
+<li>去中心化训练算法</li>
+</ul>
+</details>
+<h2 id="_6">常见陷阱与错误</h2>
+<h3 id="1">1. 通信模式选择错误</h3>
+<p><strong>陷阱</strong>：盲目使用 Ring AllReduce，忽略小消息场景</p>
+<ul>
+<li>错误表现：小批量或小模型时通信延迟高</li>
+<li>解决方案：小消息（&lt;10MB）使用 Tree AllReduce；大消息使用 Ring AllReduce</li>
+<li>调试技巧：使用 NCCL_DEBUG=INFO 查看实际使用的算法</li>
+</ul>
+<h3 id="2">2. 梯度同步时机不当</h3>
+<p><strong>陷阱</strong>：过早或过晚触发 AllReduce</p>
+<ul>
+<li>错误表现：GPU 利用率出现周期性下降</li>
+<li>解决方案：实现梯度就绪立即同步，而非等待所有梯度</li>
+<li>调试技巧：使用 Nsight Systems 分析通信与计算重叠度</li>
+</ul>
+<h3 id="3">3. 流水线气泡过大</h3>
+<p><strong>陷阱</strong>：微批次数设置不合理</p>
+<ul>
+<li>错误表现：GPU 空闲时间超过 30%</li>
+<li>解决方案：确保 M ≥ 4P（微批次数至少为阶段数的 4 倍）</li>
+<li>调试技巧：可视化流水线执行时序图</li>
+</ul>
+<h3 id="4">4. 模型切分不均衡</h3>
+<p><strong>陷阱</strong>：按层数均分而非按计算量均分</p>
+<ul>
+<li>错误表现：某些 GPU 始终 100% 利用率，其他 GPU 等待</li>
+<li>解决方案：Profile 每层实际执行时间，动态规划最优切分</li>
+<li>调试技巧：记录每个 stage 的执行时间直方图</li>
+</ul>
+<h3 id="5-zero">5. ZeRO 配置不当</h3>
+<p><strong>陷阱</strong>：盲目使用 ZeRO-3，忽略通信开销</p>
+<ul>
+<li>错误表现：参数量不大但训练极慢</li>
+<li>解决方案：模型 &lt;10B 用 ZeRO-1/2；&gt;10B 才考虑 ZeRO-3</li>
+<li>调试技巧：对比不同 ZeRO 级别的端到端训练时间</li>
+</ul>
+<h3 id="6-numa">6. 忽略 NUMA 效应</h3>
+<p><strong>陷阱</strong>：跨 NUMA 节点的内存访问</p>
+<ul>
+<li>错误表现：多节点性能不如单节点</li>
+<li>解决方案：绑定进程到 NUMA 节点，使用本地内存</li>
+<li>调试技巧：numastat 监控跨节点内存访问</li>
+</ul>
+<h3 id="7">7. 激活值重计算策略错误</h3>
+<p><strong>陷阱</strong>：全部重计算或全部不重计算</p>
+<ul>
+<li>错误表现：OOM 或计算时间翻倍</li>
+<li>解决方案：选择性重计算（如只重计算 dropout、激活函数）</li>
+<li>调试技巧：逐层测量内存占用和重计算开销</li>
+</ul>
+<h3 id="8">8. 异步更新引入的数值问题</h3>
+<p><strong>陷阱</strong>：为了性能使用异步 SGD，但收敛性变差</p>
+<ul>
+<li>错误表现：Loss 震荡或不收敛</li>
+<li>解决方案：使用 bounded staleness 或 local SGD</li>
+<li>调试技巧：记录梯度延迟分布</li>
+</ul>
+<h2 id="_7">最佳实践检查清单</h2>
+<h3 id="_8">设计阶段</h3>
+<ul>
+<li>[ ] <strong>性能建模</strong>：在实际部署前进行理论性能分析</li>
+<li>[ ] <strong>拓扑感知</strong>：了解硬件互连拓扑（NVLink、IB、Ethernet）</li>
+<li>[ ] <strong>Profile 先行</strong>：测量单算子和端到端性能基准</li>
+<li>[ ] <strong>内存预算</strong>：精确计算峰值内存需求（参数+梯度+优化器+激活值）</li>
+</ul>
+<h3 id="_9">实现阶段</h3>
+<ul>
+<li>[ ] <strong>通信原语选择</strong>：根据消息大小和设备数选择最优原语</li>
+<li>[ ] <strong>重叠优化</strong>：实现计算与通信重叠，隐藏通信延迟</li>
+<li>[ ] <strong>负载均衡</strong>：确保所有设备计算负载接近</li>
+<li>[ ] <strong>梯度累积</strong>：内存受限时使用梯度累积增大有效批量</li>
+<li>[ ] <strong>混合精度</strong>：使用 FP16/BF16 计算，FP32 主权重</li>
+</ul>
+<h3 id="_10">调优阶段</h3>
+<ul>
+<li>[ ] <strong>自动调优</strong>：使用网格搜索或贝叶斯优化寻找最优配置</li>
+<li>[ ] <strong>弱扩展测试</strong>：增加设备时保持每设备负载不变</li>
+<li>[ ] <strong>强扩展测试</strong>：固定总负载，测试加速比</li>
+<li>[ ] <strong>通信分析</strong>：使用集合通信分析工具（如 NCCL_DEBUG）</li>
+<li>[ ] <strong>性能追踪</strong>：使用 Nsight、VTune 等工具分析瓶颈</li>
+</ul>
+<h3 id="_11">部署阶段</h3>
+<ul>
+<li>[ ] <strong>容错机制</strong>：实现检查点和故障恢复</li>
+<li>[ ] <strong>监控告警</strong>：监控设备利用率、通信带宽、内存使用</li>
+<li>[ ] <strong>版本管理</strong>：记录并行配置，支持回滚</li>
+<li>[ ] <strong>文档完善</strong>：记录最优配置和调优经验</li>
+<li>[ ] <strong>持续优化</strong>：定期 review 并行效率，寻找优化机会</li>
+</ul>
+<h3 id="_12">自动驾驶/具身智能特殊考虑</h3>
+<ul>
+<li>[ ] <strong>确定性保证</strong>：关闭所有非确定性优化</li>
+<li>[ ] <strong>延迟约束</strong>：设置严格的延迟 SLA</li>
+<li>[ ] <strong>资源隔离</strong>：关键路径独占资源</li>
+<li>[ ] <strong>降级策略</strong>：定义过载时的优雅降级方案</li>
+<li>[ ] <strong>安全边界</strong>：保证最坏情况下的安全响应时间</li>
+</ul>
+            </article>
+            
+            <nav class="page-nav"><a href="chapter8.html" class="nav-link prev">← 第 8 章：自动微分与梯度优化</a><a href="chapter11.html" class="nav-link next">第 11 章：多维 Stride DMA 利用 →</a></nav>
+        </main>
+    </div>
+</body>
+</html>

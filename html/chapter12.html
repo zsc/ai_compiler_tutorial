@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="./">
+    <title>第 12 章：JIT 编译技术</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="assets/highlight.css">
+    <script src="assets/script.js" defer></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']],
+                processEscapes: false,
+                packages: {'[+]': ['noerrors', 'ams']}
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            loader: {
+                load: ['[tex]/noerrors', '[tex]/ams']
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3>目录</h3>
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+            <div class="sidebar-search">
+                <input type="text" id="sidebar-search-input" placeholder="搜索..." autocomplete="off">
+            </div>
+            <div id="tree-container">
+                <nav class="tree-nav" role="tree">
+                    <div class="tree-item " >
+                        <a href="index.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">AI 编译器教程：从理论到 200T 规模实践</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter1.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 1 章：AI 编译器概述</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter2.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 2 章：中间表示（IR）设计</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter3.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 3 章：计算图表示与分析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter4.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 4 章：统一缓冲区设计</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter5.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 5 章：内存规划与分配</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter6.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 6 章：数据布局优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter7.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 7 章：算子融合</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter8.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 8 章：自动微分与梯度优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter9.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 9 章：并行化策略</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter11.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 11 章：多维 Stride DMA 利用</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item active" >
+                        <a href="chapter12.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 12 章：JIT 编译技术</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter13.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 13 章：GPU 编译优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter14.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 14 章：移动端与边缘设备优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter15.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 15 章：NUMA 架构优化（一）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter16.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 16 章：NUMA 架构优化（二）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter17.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 17 章：动态 Shape 编译（一）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter18.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 18 章：动态 Shape 编译（二）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter19.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 19 章：稀疏与变长数据支持</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter20.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 20 章：JIT 编译技术</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter21.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 21 章：高维张量别名分析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter22.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 22 章：投机执行支持</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter23.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 23 章：自动驾驶场景优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter24.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 24 章：具身智能编译挑战</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter25.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 25 章：200T 模型编译实践</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="CLAUDE.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">Untitled</span>
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </nav>
+        
+        <main class="content">
+            <article>
+                <h1 id="12-jit">第 12 章：JIT 编译技术</h1>
+<h2 id="_1">章节大纲</h2>
+<h3 id="121-jit-vs-aot">12.1 JIT vs AOT 权衡</h3>
+<ul>
+<li>JIT 编译的基本原理</li>
+<li>AOT 编译的优势与局限</li>
+<li>混合编译策略</li>
+<li>性能与部署权衡</li>
+</ul>
+<h3 id="122">12.2 热点检测与优化</h3>
+<ul>
+<li>分析型热点检测</li>
+<li>采样型热点检测</li>
+<li>热度阈值设计</li>
+<li>自适应优化策略</li>
+</ul>
+<h3 id="123">12.3 编译缓存管理</h3>
+<ul>
+<li>缓存键设计</li>
+<li>持久化策略</li>
+<li>内存管理</li>
+<li>版本兼容性</li>
+</ul>
+<h3 id="124">12.4 分层编译策略</h3>
+<ul>
+<li>编译层级设计</li>
+<li>晋升与降级机制</li>
+<li>优化级别选择</li>
+<li>资源分配策略</li>
+</ul>
+<hr />
+<h2 id="_2">开篇</h2>
+<p>即时编译（JIT）技术是 AI 编译器中平衡编译开销与运行性能的关键技术。不同于传统编译器的静态优化，JIT 编译器能够利用运行时信息进行动态优化，这对于处理动态 shape、稀疏模式和自适应计算尤为重要。本章将深入探讨 JIT 编译在 AI 场景中的设计与实现，特别关注自动驾驶和具身智能等对延迟敏感的应用场景。</p>
+<h3 id="_3">学习目标</h3>
+<ol>
+<li>理解 JIT 与 AOT 编译的本质区别和适用场景</li>
+<li>掌握热点检测的数学模型和工程实现</li>
+<li>设计高效的编译缓存系统</li>
+<li>实现多层级编译策略以平衡性能与开销</li>
+</ol>
+<h2 id="121-jit-vs-aot_1">12.1 JIT vs AOT 权衡</h2>
+<h3 id="1211">12.1.1 基本概念对比</h3>
+<p>提前编译（Ahead-of-Time, AOT）和即时编译（Just-In-Time, JIT）代表了两种不同的编译哲学：</p>
+<p><strong>AOT 编译特征：</strong></p>
+<ul>
+<li>编译发生在部署前</li>
+<li>可进行耗时的全局优化</li>
+<li>生成的代码大小可预测</li>
+<li>启动延迟低</li>
+<li>无法利用运行时信息</li>
+</ul>
+<p><strong>JIT 编译特征：</strong></p>
+<ul>
+<li>编译发生在运行时</li>
+<li>可利用实际运行数据优化</li>
+<li>动态适应执行模式</li>
+<li>启动延迟高（冷启动问题）</li>
+<li>内存开销包含编译器本身</li>
+</ul>
+<h3 id="1212">12.1.2 性能模型</h3>
+<p>设运行时间为 $T_{total}$，可以建模为：</p>
+<p>$$T_{total} = T_{compile} + T_{execute}$$
+对于 AOT：
+$$T_{AOT} = 0 + N \cdot t_{AOT}$$
+对于 JIT：
+$$T_{JIT} = \sum_{i=1}^{k} c_i + N \cdot t_{JIT}$$
+其中：</p>
+<ul>
+<li>$N$ 是执行次数</li>
+<li>$t_{AOT}$ 是 AOT 编译代码的单次执行时间</li>
+<li>$t_{JIT}$ 是 JIT 优化后代码的执行时间</li>
+<li>$c_i$ 是第 $i$ 次编译的开销</li>
+<li>$k$ 是总编译次数</li>
+</ul>
+<p>当 $t_{JIT} &lt; t_{AOT}$ 且 $N$ 足够大时，JIT 的优势显现：
+$$N &gt; \frac{\sum_{i=1}^{k} c_i}{t_{AOT} - t_{JIT}}$$</p>
+<h3 id="1213">12.1.3 混合编译策略</h3>
+<p>现代 AI 编译器通常采用混合策略：</p>
+<div class="codehilite"><pre><span></span><code>编译决策树：
+         输入程序
+            |
+      静态形状分析
+         /     \
+    固定形状   动态形状
+       |         |
+   AOT编译    JIT框架
+               |
+          运行时特化
+</code></pre></div>
+
+<p><strong>分层决策模型：</strong></p>
+<p>定义收益函数 $B(op, mode)$：
+$$B(op, mode) = P_{hot}(op) \cdot G_{opt}(op, mode) - C_{compile}(op, mode)$$
+其中：</p>
+<ul>
+<li>$P_{hot}(op)$ 是算子成为热点的概率</li>
+<li>$G_{opt}(op, mode)$ 是优化后的性能增益</li>
+<li>$C_{compile}(op, mode)$ 是编译成本</li>
+</ul>
+<h3 id="1214-ai">12.1.4 AI 场景的特殊考虑</h3>
+<p><strong>自动驾驶场景：</strong></p>
+<ul>
+<li>实时性要求严格（&lt; 100ms 端到端延迟）</li>
+<li>倾向 AOT 编译关键路径</li>
+<li>JIT 用于非关键的后处理</li>
+</ul>
+<p><strong>具身智能场景：</strong></p>
+<ul>
+<li>任务多样性高</li>
+<li>动态 shape 频繁</li>
+<li>JIT 编译更有优势</li>
+</ul>
+<p><strong>延迟敏感度分析：</strong></p>
+<p>设系统延迟预算为 $L_{budget}$，第 $i$ 个算子的延迟为 $l_i$：
+$$\sum_{i \in critical_path} l_i \leq L_{budget}$$
+JIT 编译引入的额外延迟 $l_{JIT}$ 必须满足：
+$$l_{JIT} &lt; L_{budget} - \sum_{i \in critical_path} l_i^{min}$$</p>
+<h2 id="122_1">12.2 热点检测与优化</h2>
+<h3 id="1221">12.2.1 热点检测机制</h3>
+<p>热点（Hotspot）是程序中频繁执行的代码区域。准确识别热点是 JIT 优化的前提。</p>
+<p><strong>计数器方法：</strong></p>
+<p>每个算子维护执行计数器 $count(op)$：
+$$hotness(op) = \frac{count(op)}{\sum_{i} count(op_i)}$$
+当 $hotness(op) &gt; \theta_{hot}$ 时触发编译。</p>
+<p><strong>采样方法：</strong></p>
+<p>使用概率采样减少开销：
+$$P_{sample} = \min(1, \frac{k}{f_{exec}})$$
+其中 $f_{exec}$ 是执行频率，$k$ 是采样常数。</p>
+<h3 id="1222">12.2.2 热度传播模型</h3>
+<p>考虑计算图 $\mathcal{G} = (V, E)$，热度在图中传播：
+$$H_v^{(t+1)} = \alpha \cdot H_v^{(t)} + (1-\alpha) \cdot \sum_{u \in pred(v)} \frac{H_u^{(t)}}{|succ(u)|}$$
+其中：</p>
+<ul>
+<li>$H_v^{(t)}$ 是节点 $v$ 在时刻 $t$ 的热度</li>
+<li>$\alpha$ 是衰减因子（通常取 0.9）</li>
+<li>$pred(v)$ 和 $succ(u)$ 分别是前驱和后继节点集</li>
+</ul>
+<h3 id="1223">12.2.3 自适应阈值调整</h3>
+<p>静态阈值可能导致过早或过晚编译。自适应阈值根据历史数据动态调整：
+$$\theta_{hot}^{(t+1)} = \theta_{hot}^{(t)} + \eta \cdot (R_{actual} - R_{target})$$
+其中：</p>
+<ul>
+<li>$R_{actual}$ 是实际编译收益</li>
+<li>$R_{target}$ 是目标收益</li>
+<li>$\eta$ 是学习率</li>
+</ul>
+<p><strong>收益度量：</strong>
+$$R = \frac{t_{before} - t_{after}}{t_{compile}}$$</p>
+<h3 id="1224">12.2.4 多维度热点分析</h3>
+<p>除执行频率外，还需考虑：</p>
+<ol>
+<li><strong>时间占比：</strong> $T_{ratio} = \frac{t_{op}}{\sum_i t_i}$</li>
+<li><strong>内存带宽：</strong> $B_{ratio} = \frac{bytes_{op}}{bandwidth_{peak}}$</li>
+<li><strong>计算密度：</strong> $C_{density} = \frac{FLOPs}{bytes}$</li>
+</ol>
+<p>综合热度评分：
+$$Score = w_1 \cdot count + w_2 \cdot T_{ratio} + w_3 \cdot B_{ratio} + w_4 \cdot C_{density}$$
+权重 $w_i$ 根据硬件特性调整。</p>
+<h2 id="123_1">12.3 编译缓存管理</h2>
+<h3 id="1231">12.3.1 缓存键设计</h3>
+<p>缓存键必须唯一标识编译结果：
+$$Key = Hash(IR, Shape, OptLevel, Target)$$
+<strong>多级缓存键：</strong></p>
+<ul>
+<li>L1：精确匹配 - $(IR_{hash}, shape_{exact}, opt_{level})$</li>
+<li>L2：形状类匹配 - $(IR_{hash}, shape_{bucket}, opt_{level})$</li>
+<li>L3：结构匹配 - $(IR_{structure}, *, opt_{level})$</li>
+</ul>
+<h3 id="1232">12.3.2 缓存替换策略</h3>
+<p><strong>LRU-K 算法：</strong></p>
+<p>记录最近 $K$ 次访问时间，按第 $K$ 次访问时间排序：
+$$Priority(item) = \begin{cases}
+    t_K &amp; \text{if } count \geq K \\
+    -\infty &amp; \text{otherwise}
+\end{cases}$$
+<strong>成本感知替换：</strong></p>
+<p>考虑编译成本的替换策略：
+$$Value(item) = \frac{hit_count \cdot speedup}{size + compile_cost}$$
+替换 $Value$ 最小的项。</p>
+<h3 id="1233">12.3.3 持久化与共享</h3>
+<p><strong>分层存储：</strong></p>
+<div class="codehilite"><pre><span></span><code>    内存缓存 (L1)
+         |
+    本地磁盘 (L2)
+         |
+   分布式缓存 (L3)
+</code></pre></div>
+
+<p><strong>版本兼容性：</strong></p>
+<p>缓存项包含版本信息：
+$$CacheEntry = \{Key, Binary, Version, Metadata\}$$
+版本检查：
+$$Compatible(v_1, v_2) = major(v_1) = major(v_2) \land minor(v_1) \leq minor(v_2)$$</p>
+<h3 id="1234">12.3.4 内存管理</h3>
+<p><strong>内存预算分配：</strong></p>
+<p>设总内存预算为 $M_{total}$，分配给缓存的比例为 $\rho$：
+$$M_{cache} = \rho \cdot M_{total}$$
+动态调整 $\rho$：
+$$\rho^{(t+1)} = \rho^{(t)} + \beta \cdot (hit_rate - target_rate)$$
+<strong>碎片整理：</strong></p>
+<p>当碎片率超过阈值时触发整理：
+$$Fragmentation = 1 - \frac{\sum_i size_i}{M_{allocated}}$$</p>
+<h2 id="124_1">12.4 分层编译策略</h2>
+<h3 id="1241">12.4.1 编译层级设计</h3>
+<p>典型的分层编译包含以下层级：</p>
+<p><strong>Layer 0 - 解释执行：</strong></p>
+<ul>
+<li>零编译开销</li>
+<li>最慢执行速度</li>
+<li>收集 profiling 信息</li>
+</ul>
+<p><strong>Layer 1 - 基础编译：</strong></p>
+<ul>
+<li>快速编译（&lt; 10ms）</li>
+<li>基本优化（常量折叠、死代码消除）</li>
+<li>生成基础机器码</li>
+</ul>
+<p><strong>Layer 2 - 优化编译：</strong></p>
+<ul>
+<li>中等编译时间（10-100ms）</li>
+<li>循环优化、向量化</li>
+<li>算子融合</li>
+</ul>
+<p><strong>Layer 3 - 激进优化：</strong></p>
+<ul>
+<li>长编译时间（&gt; 100ms）</li>
+<li>全局优化、自动调优</li>
+<li>特化代码生成</li>
+</ul>
+<h3 id="1242">12.4.2 晋升与降级机制</h3>
+<p><strong>晋升条件：</strong></p>
+<p>从层级 $i$ 晋升到 $i+1$ 的条件：
+$$Promote(op, i \to i+1) = \begin{cases}
+    true &amp; \text{if } count(op) &gt; \theta_i \land benefit(op) &gt; B_{min} \\
+    false &amp; \text{otherwise}
+\end{cases}$$
+晋升阈值呈指数增长：
+$$\theta_i = \theta_0 \cdot \gamma^i$$
+其中 $\gamma &gt; 1$（通常取 10）。</p>
+<p><strong>降级触发：</strong></p>
+<p>当检测到执行模式变化时降级：
+$$Demote(op) = |profile_{current} - profile_{compiled}| &gt; \epsilon$$
+Profile 向量包含：</p>
+<ul>
+<li>输入形状分布</li>
+<li>分支概率</li>
+<li>内存访问模式</li>
+</ul>
+<h3 id="1243">12.4.3 优化级别选择</h3>
+<p><strong>成本-收益分析：</strong></p>
+<p>选择优化级别 $l^*$ 使得净收益最大：
+$$l^* = \arg\max_l \left[ N_{expected} \cdot (t_0 - t_l) - C_l \right]$$
+其中：</p>
+<ul>
+<li>$N_{expected}$ 是预期执行次数</li>
+<li>$t_l$ 是级别 $l$ 的执行时间</li>
+<li>$C_l$ 是级别 $l$ 的编译成本</li>
+</ul>
+<p><strong>执行次数预测：</strong></p>
+<p>使用指数加权移动平均：
+$$N_{expected}^{(t+1)} = \alpha \cdot N_{actual}^{(t)} + (1-\alpha) \cdot N_{expected}^{(t)}$$</p>
+<h3 id="1244">12.4.4 资源分配策略</h3>
+<p><strong>编译线程池管理：</strong></p>
+<p>设系统有 $P$ 个处理器，分配策略：</p>
+<ul>
+<li>执行线程：$P_{exec} = \lceil 0.8P \rceil$</li>
+<li>编译线程：$P_{compile} = \lfloor 0.2P \rfloor$</li>
+</ul>
+<p>动态调整基于队列长度：
+$$P_{compile}^{(t+1)} = \min(P/2, P_{compile}^{(t)} + sign(Q_{length} - Q_{target}))$$
+<strong>内存预算分配：</strong></p>
+<p>各层级内存分配比例：
+$$M_i = M_{total} \cdot \frac{w_i \cdot usage_i}{\sum_j w_j \cdot usage_j}$$
+权重 $w_i$ 反映层级重要性：</p>
+<ul>
+<li>Layer 0: $w_0 = 0.1$</li>
+<li>Layer 1: $w_1 = 0.3$</li>
+<li>Layer 2: $w_2 = 0.4$</li>
+<li>Layer 3: $w_3 = 0.2$</li>
+</ul>
+<h2 id="125-jit-ai">12.5 JIT 在 AI 场景的特殊优化</h2>
+<h3 id="1251-shape">12.5.1 动态 Shape 特化</h3>
+<p><strong>Shape 桶化策略：</strong></p>
+<p>将连续的 shape 空间离散化为桶：
+$$Bucket(s) = \left\lfloor \frac{\log_2(s)}{\delta} \right\rfloor \cdot \delta$$
+其中 $\delta$ 控制桶的粒度。</p>
+<p><strong>特化决策：</strong></p>
+<p>当某个 shape 的频率超过阈值时特化：
+$$Specialize(shape) = \frac{count(shape)}{count_{total}} &gt; \theta_{spec}$$</p>
+<h3 id="1252-jit">12.5.2 算子融合的 JIT 优化</h3>
+<p><strong>动态融合模式识别：</strong></p>
+<p>运行时识别可融合的算子序列：
+$$Fusible(op_1, op_2) = Compatible(output_1, input_2) \land NoAlias(op_1, op_2)$$
+融合收益评估：
+$$Benefit_{fusion} = BW_{saved} - Overhead_{fusion}$$
+其中：
+$$BW_{saved} = size(intermediate) \cdot (read + write)$$</p>
+<h3 id="1253">12.5.3 投机编译</h3>
+<p><strong>预测性编译：</strong></p>
+<p>基于历史模式预测未来需要的编译：
+$$P(shape_{next} = s | history) = \frac{count(pattern \to s)}{\sum_i count(pattern \to s_i)}$$
+当 $P(s) &gt; \theta_{spec}$ 时触发投机编译。</p>
+<p><strong>资源约束下的投机：</strong></p>
+<p>限制投机编译的资源使用：
+$$\sum_{s \in speculative} C(s) \leq \beta \cdot C_{available}$$
+其中 $\beta \in [0, 1]$ 是投机编译的资源比例上限。</p>
+<h2 id="126">12.6 性能分析与调优</h2>
+<h3 id="1261-jit">12.6.1 JIT 开销分解</h3>
+<p>总开销可分解为：
+$$Overhead_{JIT} = T_{detect} + T_{compile} + T_{install} + T_{deopt}$$
+各部分典型占比：</p>
+<ul>
+<li>热点检测：5-10%</li>
+<li>编译：70-80%</li>
+<li>代码安装：5-10%</li>
+<li>去优化：5-15%</li>
+</ul>
+<h3 id="1262">12.6.2 编译时间预测</h3>
+<p>使用线性模型预测编译时间：
+$$T_{compile} = \alpha \cdot |IR| + \beta \cdot OptLevel + \gamma \cdot Complexity + \epsilon$$
+其中 $Complexity$ 可用循环嵌套深度、数据依赖复杂度等度量。</p>
+<h3 id="1263">12.6.3 性能监控指标</h3>
+<p>关键监控指标：</p>
+<ol>
+<li><strong>编译吞吐量：</strong> $Throughput = \frac{BytesCompiled}{Time}$</li>
+<li><strong>缓存命中率：</strong> $HitRate = \frac{Hits}{Hits + Misses}$</li>
+<li><strong>晋升率：</strong> $PromotionRate = \frac{Promotions}{Executions}$</li>
+<li><strong>去优化率：</strong> $DeoptRate = \frac{Deopts}{OptimizedExecutions}$</li>
+</ol>
+<h2 id="_4">本章小结</h2>
+<p>JIT 编译技术在 AI 编译器中扮演着至关重要的角色，特别是在处理动态 shape 和自适应优化场景。本章核心要点：</p>
+<ol>
+<li><strong>JIT vs AOT 权衡：</strong> JIT 适合动态场景但有冷启动开销，AOT 适合静态场景和实时系统</li>
+<li><strong>热点检测：</strong> 准确识别热点是 JIT 优化的基础，需要平衡检测开销和准确性</li>
+<li><strong>缓存管理：</strong> 高效的缓存系统可以显著减少重复编译开销</li>
+<li><strong>分层编译：</strong> 通过多级优化平衡编译开销和执行性能</li>
+<li><strong>AI 特殊优化：</strong> 动态 shape 特化、算子融合和投机编译是 AI 场景的关键技术</li>
+</ol>
+<p>关键公式回顾：</p>
+<ul>
+<li>性能平衡点：$N &gt; \frac{\sum_{i=1}^{k} c_i}{t_{AOT} - t_{JIT}}$</li>
+<li>热度传播：$H_v^{(t+1)} = \alpha \cdot H_v^{(t)} + (1-\alpha) \cdot \sum_{u} \frac{H_u^{(t)}}{|succ(u)|}$</li>
+<li>优化级别选择：$l^* = \arg\max_l \left[ N_{expected} \cdot (t_0 - t_l) - C_l \right]$</li>
+</ul>
+<h2 id="_5">练习题</h2>
+<h3 id="_6">基础题</h3>
+<p><strong>练习 12.1：</strong> 某 AI 模型的推理包含 100 个算子，其中 20 个算子占总执行时间的 80%。如果 JIT 编译每个算子需要 50ms，优化后性能提升 2 倍，每个算子平均执行 1000 次，计算 JIT 相比解释执行的收益。</p>
+<p><em>Hint：分别计算关键算子和非关键算子的优化收益。</em></p>
+<details>
+<summary>参考答案</summary>
+<p>设总执行时间为 $T$，则：</p>
+<ul>
+<li>20 个关键算子：执行时间 $0.8T$，单次 $\frac{0.8T}{20 \times 1000} = \frac{T}{25000}$</li>
+<li>80 个非关键算子：执行时间 $0.2T$，单次 $\frac{0.2T}{80 \times 1000} = \frac{T}{400000}$</li>
+</ul>
+<p>JIT 后：</p>
+<ul>
+<li>关键算子：编译 $20 \times 50ms = 1s$，执行 $0.8T/2 = 0.4T$</li>
+<li>总时间：$1s + 0.4T + 0.2T = 1s + 0.6T$</li>
+</ul>
+<p>收益：当 $T &gt; 2.5s$ 时，JIT 有正收益。
+实际收益率：$(T - 1 - 0.6T)/T = 0.4 - 1/T$</p>
+</details>
+<p><strong>练习 12.2：</strong> 设计一个简单的热点检测算法，使用计数器方法，当算子执行次数超过 $\sqrt{N}$（$N$ 为总执行次数）时触发编译。证明这个阈值的合理性。</p>
+<p><em>Hint：考虑帕累托分布（80/20 法则）。</em></p>
+<details>
+<summary>参考答案</summary>
+<p>假设执行次数服从帕累托分布：$P(X &gt; x) = (x_m/x)^\alpha$</p>
+<p>对于 80/20 法则，$\alpha \approx 1.16$。</p>
+<p>设有 $M$ 个算子，总执行 $N$ 次。热点算子数量约为 $0.2M$，执行 $0.8N$ 次。</p>
+<p>平均每个热点算子执行：$\frac{0.8N}{0.2M} = \frac{4N}{M}$</p>
+<p>选择阈值 $\theta = \sqrt{N}$，当 $M &lt; 16\sqrt{N}$ 时，所有热点都会被检测到。</p>
+<p>这在实践中通常成立，因为算子数量相对执行次数的平方根较小。</p>
+</details>
+<p><strong>练习 12.3：</strong> 某编译缓存使用 LRU 策略，缓存大小为 100MB，平均每个编译结果 5MB。如果访问模式符合 Zipf 分布（$P(i) \propto 1/i$），计算前 20 个最热项的缓存命中率。</p>
+<p><em>Hint：计算 Zipf 分布的累积概率。</em></p>
+<details>
+<summary>参考答案</summary>
+<p>缓存可存储：$100MB / 5MB = 20$ 个项。</p>
+<p>Zipf 分布：$P(i) = \frac{1/i}{\sum_{j=1}^{n} 1/j} = \frac{1/i}{H_n}$</p>
+<p>其中 $H_n$ 是调和数。</p>
+<p>前 20 项的命中率：
+$$HitRate = \frac{\sum_{i=1}^{20} 1/i}{H_n}$$
+对于大 $n$，$H_n \approx \ln(n) + \gamma$（$\gamma \approx 0.577$）</p>
+<p>若总共 1000 个不同编译结果：
+$$HitRate = \frac{H_{20}}{H_{1000}} \approx \frac{3.598}{7.486} \approx 48\%$$</p>
+</details>
+<h3 id="_7">挑战题</h3>
+<p><strong>练习 12.4：</strong> 设计一个自适应的分层编译策略，根据算子的执行频率和计算复杂度动态选择编译层级。考虑 4 个层级，编译时间分别为 1ms、10ms、100ms、1000ms，性能提升分别为 1.2x、1.5x、2x、3x。</p>
+<p><em>Hint：建立成本模型，使用动态规划求解最优策略。</em></p>
+<details>
+<summary>参考答案</summary>
+<p>定义状态：$V(n, l)$ = 执行 $n$ 次、当前层级 $l$ 的最小总时间。</p>
+<p>状态转移：
+$$V(n, l) = \min_{l' \geq l} \left\{ C_{l'} + n \cdot T_{l'} + V(n - n_{current}, l') \right\}$$
+其中：</p>
+<ul>
+<li>$C_{l'}$ 是编译到层级 $l'$ 的成本</li>
+<li>$T_{l'}$ 是层级 $l'$ 的单次执行时间</li>
+<li>$n_{current}$ 是当前批次执行次数</li>
+</ul>
+<p>动态策略：</p>
+<ol>
+<li>初始使用 Layer 0（解释执行）</li>
+<li>当 $n &gt; 10$ 时，评估是否编译到 Layer 1</li>
+<li>当 $n &gt; 100$ 时，评估是否编译到 Layer 2</li>
+<li>当 $n &gt; 1000$ 时，评估是否编译到 Layer 3</li>
+</ol>
+<p>决策函数：
+$$Compile(n, l_{current}, l_{target}) = n \cdot (T_{current} - T_{target}) &gt; C_{target}$$</p>
+</details>
+<p><strong>练习 12.5：</strong> 分析投机编译的风险与收益。假设有 $K$ 种可能的 shape，每种概率为 $p_i$，编译成本为 $C$，优化收益为 $B$。设计最优的投机编译策略。</p>
+<p><em>Hint：将问题建模为背包问题的变体。</em></p>
+<details>
+<summary>参考答案</summary>
+<p>期望收益：
+$$E[Benefit] = \sum_{i=1}^{K} p_i \cdot (B_i \cdot I_{compiled}(i) - C \cdot I_{compile}(i))$$
+其中 $I_{compiled}(i)$ 表示 shape $i$ 是否已编译。</p>
+<p>约束条件（资源限制）：
+$$\sum_{i=1}^{K} I_{compile}(i) \cdot C \leq Budget$$
+这是一个 0-1 背包问题。最优策略：</p>
+<ol>
+<li>计算收益密度：$\rho_i = \frac{p_i \cdot B_i}{C}$</li>
+<li>按 $\rho_i$ 降序排序</li>
+<li>贪心选择直到资源耗尽</li>
+</ol>
+<p>当 shape 分布不确定时，使用置信区间：
+$$p_i \in [\hat{p}_i - \epsilon, \hat{p}_i + \epsilon]$$
+采用鲁棒优化：
+$$\max_{\{I_i\}} \min_{p \in \mathcal{P}} E[Benefit]$$</p>
+</details>
+<p><strong>练习 12.6：</strong> 在自动驾驶场景中，感知模块要求 99.9% 的推理在 50ms 内完成。设计一个 JIT 策略，保证实时性的同时最大化性能。考虑编译时间的尾部延迟。</p>
+<p><em>Hint：使用分位数优化和降级机制。</em></p>
+<details>
+<summary>参考答案</summary>
+<p>设计两级系统：</p>
+<ol>
+<li><strong>快速路径：</strong> AOT 编译的基础版本，保证 $t_{AOT} &lt; 45ms$</li>
+<li><strong>优化路径：</strong> JIT 编译的优化版本，目标 $t_{JIT} &lt; 30ms$</li>
+</ol>
+<p>策略：</p>
+<ol>
+<li>所有请求先走快速路径</li>
+<li>后台异步 JIT 编译</li>
+<li>编译完成后切换到优化路径</li>
+</ol>
+<p>尾部延迟控制：</p>
+<ul>
+<li>设置编译超时：$T_{timeout} = 5ms$</li>
+<li>使用优先级队列，关键算子优先</li>
+<li>监控 P99.9 延迟：
+$$P_{99.9}(latency) = \max(t_{AOT}, p_{switch} \cdot t_{switch} + t_{JIT})$$</li>
+</ul>
+<p>其中 $p_{switch}$ 是切换期间的请求比例。</p>
+<p>降级机制：</p>
+<ul>
+<li>当检测到延迟尖峰时，立即降级到 AOT 版本</li>
+<li>降级条件：$latency_{current} &gt; 0.9 \cdot budget$</li>
+</ul>
+</details>
+<h2 id="gotchas">常见陷阱与错误 (Gotchas)</h2>
+<ol>
+<li>
+<p><strong>过早优化陷阱</strong>
+   - 错误：设置过低的编译阈值
+   - 后果：编译开销超过性能收益
+   - 解决：使用自适应阈值，基于历史数据调整</p>
+</li>
+<li>
+<p><strong>缓存键设计错误</strong>
+   - 错误：缓存键未包含所有影响因素
+   - 后果：使用错误的编译结果，导致计算错误
+   - 解决：完整的键设计，包括 IR、shape、优化级别、硬件目标</p>
+</li>
+<li>
+<p><strong>内存泄漏</strong>
+   - 错误：编译结果未及时释放
+   - 后果：内存持续增长，最终 OOM
+   - 解决：实现严格的生命周期管理，使用引用计数</p>
+</li>
+<li>
+<p><strong>热点检测偏差</strong>
+   - 错误：只考虑执行次数，忽略执行时间
+   - 后果：优化了错误的目标
+   - 解决：综合考虑频率、时间占比、内存带宽等因素</p>
+</li>
+<li>
+<p><strong>编译风暴</strong>
+   - 错误：大量算子同时触发编译
+   - 后果：系统卡顿，响应时间激增
+   - 解决：限制并发编译数，使用编译队列</p>
+</li>
+<li>
+<p><strong>版本不兼容</strong>
+   - 错误：使用旧版本编译的缓存
+   - 后果：运行时错误或性能退化
+   - 解决：严格的版本检查，自动缓存失效机制</p>
+</li>
+</ol>
+<h2 id="_8">最佳实践检查清单</h2>
+<h3 id="_9">设计阶段</h3>
+<ul>
+<li>[ ] 明确 JIT vs AOT 的选择标准</li>
+<li>[ ] 设计多级编译层次</li>
+<li>[ ] 规划缓存策略和容量</li>
+<li>[ ] 定义热点检测指标</li>
+<li>[ ] 设计降级和回退机制</li>
+</ul>
+<h3 id="_10">实现阶段</h3>
+<ul>
+<li>[ ] 实现准确的 profiling 机制</li>
+<li>[ ] 优化编译器自身的性能</li>
+<li>[ ] 实现高效的缓存系统</li>
+<li>[ ] 添加编译任务调度器</li>
+<li>[ ] 实现版本兼容性检查</li>
+</ul>
+<h3 id="_11">优化阶段</h3>
+<ul>
+<li>[ ] 分析编译开销分布</li>
+<li>[ ] 优化热点检测算法</li>
+<li>[ ] 调优缓存替换策略</li>
+<li>[ ] 实现投机编译</li>
+<li>[ ] 优化层级晋升策略</li>
+</ul>
+<h3 id="_12">监控阶段</h3>
+<ul>
+<li>[ ] 监控编译吞吐量</li>
+<li>[ ] 跟踪缓存命中率</li>
+<li>[ ] 分析去优化频率</li>
+<li>[ ] 监控内存使用</li>
+<li>[ ] 跟踪 P99 延迟</li>
+</ul>
+<h3 id="_13">调试阶段</h3>
+<ul>
+<li>[ ] 记录编译决策日志</li>
+<li>[ ] 保存 profiling 数据</li>
+<li>[ ] 支持强制编译模式</li>
+<li>[ ] 提供缓存统计信息</li>
+<li>[ ] 实现性能回归检测</li>
+</ul>
+            </article>
+            
+            <nav class="page-nav"><a href="chapter11.html" class="nav-link prev">← 第 11 章：多维 Stride DMA 利用</a><a href="chapter13.html" class="nav-link next">第 13 章：GPU 编译优化 →</a></nav>
+        </main>
+    </div>
+</body>
+</html>

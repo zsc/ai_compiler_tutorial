@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="./">
+    <title>第 17 章：动态 Shape 编译（一）</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="assets/highlight.css">
+    <script src="assets/script.js" defer></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']],
+                processEscapes: false,
+                packages: {'[+]': ['noerrors', 'ams']}
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            loader: {
+                load: ['[tex]/noerrors', '[tex]/ams']
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3>目录</h3>
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+            <div class="sidebar-search">
+                <input type="text" id="sidebar-search-input" placeholder="搜索..." autocomplete="off">
+            </div>
+            <div id="tree-container">
+                <nav class="tree-nav" role="tree">
+                    <div class="tree-item " >
+                        <a href="index.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">AI 编译器教程：从理论到 200T 规模实践</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter1.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 1 章：AI 编译器概述</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter2.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 2 章：中间表示（IR）设计</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter3.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 3 章：计算图表示与分析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter4.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 4 章：统一缓冲区设计</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter5.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 5 章：内存规划与分配</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter6.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 6 章：数据布局优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter7.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 7 章：算子融合</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter8.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 8 章：自动微分与梯度优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter9.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 9 章：并行化策略</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter11.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 11 章：多维 Stride DMA 利用</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter12.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 12 章：JIT 编译技术</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter13.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 13 章：GPU 编译优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter14.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 14 章：移动端与边缘设备优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter15.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 15 章：NUMA 架构优化（一）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter16.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 16 章：NUMA 架构优化（二）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item active" >
+                        <a href="chapter17.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 17 章：动态 Shape 编译（一）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter18.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 18 章：动态 Shape 编译（二）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter19.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 19 章：稀疏与变长数据支持</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter20.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 20 章：JIT 编译技术</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter21.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 21 章：高维张量别名分析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter22.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 22 章：投机执行支持</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter23.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 23 章：自动驾驶场景优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter24.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 24 章：具身智能编译挑战</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter25.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 25 章：200T 模型编译实践</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="CLAUDE.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">Untitled</span>
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </nav>
+        
+        <main class="content">
+            <article>
+                <h1 id="17-shape">第 17 章：动态 Shape 编译（一）</h1>
+<h2 id="_1">大纲</h2>
+<h3 id="171-shape">17.1 开篇：动态 Shape 的挑战与机遇</h3>
+<ul>
+<li>动态 Shape 的定义与场景</li>
+<li>编译时未知维度的处理</li>
+<li>与静态 Shape 编译的本质区别</li>
+<li>在自动驾驶和具身智能中的应用</li>
+</ul>
+<h3 id="172">17.2 符号形状推导</h3>
+<ul>
+<li>符号维度表示</li>
+<li>符号算术系统</li>
+<li>形状传播算法</li>
+<li>约束求解器设计</li>
+</ul>
+<h3 id="173-shape">17.3 Shape 函数与约束</h3>
+<ul>
+<li>Shape 函数的定义与作用</li>
+<li>约束表达式语言</li>
+<li>约束传播机制</li>
+<li>冲突检测与解决</li>
+</ul>
+<h3 id="174">17.4 动态内存管理</h3>
+<ul>
+<li>运行时内存分配策略</li>
+<li>内存池的动态扩展</li>
+<li>碎片管理</li>
+<li>峰值内存预测</li>
+</ul>
+<h3 id="175">17.5 桶化策略</h3>
+<ul>
+<li>桶化的基本原理</li>
+<li>桶边界选择算法</li>
+<li>多维桶化</li>
+<li>性能与内存权衡</li>
+</ul>
+<h3 id="176">17.6 本章小结</h3>
+<h3 id="177">17.7 练习题</h3>
+<h3 id="178">17.8 常见陷阱与错误</h3>
+<h3 id="179">17.9 最佳实践检查清单</h3>
+<hr />
+<h2 id="171-shape_1">17.1 动态 Shape 的挑战与机遇</h2>
+<p>动态 Shape 编译是现代 AI 编译器面临的核心挑战之一。不同于传统的静态 Shape 场景，动态 Shape 允许张量的某些维度在编译时未知，只有在运行时才能确定。这种灵活性在自动驾驶的变长序列处理、具身智能的多模态输入融合等场景中至关重要，但也给编译优化带来了巨大挑战。</p>
+<h3 id="shape">动态 Shape 的典型场景</h3>
+<p>在自动驾驶系统中，激光雷达点云数据的点数会随环境复杂度变化，每帧可能包含 10,000 到 200,000 个点不等。类似地，目标检测后的 RoI (Region of Interest) 数量也是动态的。具身智能机器人需要处理不定长的自然语言指令，同时融合数量可变的传感器输入。这些场景都要求编译器能够高效处理动态 Shape。</p>
+<h3 id="_2">编译时的核心问题</h3>
+<p>动态 Shape 给编译器带来三个核心问题：</p>
+<ol>
+<li><strong>内存规划的不确定性</strong>：无法在编译时确定准确的内存需求，静态内存规划算法失效</li>
+<li><strong>优化决策的困难</strong>：许多优化（如循环展开、向量化）依赖于具体的维度信息</li>
+<li><strong>调度的复杂性</strong>：无法预先确定最优的并行策略和任务分配</li>
+</ol>
+<h3 id="_3">符号化处理方法</h3>
+<p>解决动态 Shape 的核心思想是引入符号维度（symbolic dimension）。我们用符号变量表示未知的维度，建立符号算术系统进行形状推导。例如，批次大小用符号 $N$ 表示，序列长度用 $L$ 表示，则自注意力机制的计算复杂度可表示为 $\mathcal{O}(N \cdot L^2 \cdot D)$，其中 $D$ 是特征维度。</p>
+<h3 id="_4">编译策略概览</h3>
+<p>动态 Shape 编译采用分阶段策略：</p>
+<div class="codehilite"><pre><span></span><code>编译时：符号分析 → 约束提取 → 模板生成 → 特化准备
+运行时：形状具体化 → 快速特化 → 执行优化代码
+</code></pre></div>
+
+<p>这种方法在编译时完成尽可能多的分析和准备工作，运行时只需要快速填充具体数值并执行。</p>
+<h2 id="172_1">17.2 符号形状推导</h2>
+<p>符号形状推导是动态 Shape 编译的理论基础，它将编译时的形状分析从具体数值域扩展到符号域，使得编译器能够在维度未知的情况下进行正确性验证和优化决策。</p>
+<h3 id="1721">17.2.1 符号维度表示</h3>
+<p>符号维度系统的核心是用代数表达式表示张量的每个维度。我们定义符号维度 $d$ 为：</p>
+<p>$$d ::= n \mid s \mid d_1 + d_2 \mid d_1 \cdot d_2 \mid \lfloor d_1 / d_2 \rfloor \mid \max(d_1, d_2) \mid \min(d_1, d_2)$$
+其中 $n \in \mathbb{N}$ 是具体数值，$s$ 是符号变量。每个符号变量可以附加约束，如 $s \in [l, u]$ 表示 $s$ 的取值范围。</p>
+<h3 id="1722">17.2.2 符号算术系统</h3>
+<p>符号算术系统需要支持基本运算的符号化：</p>
+<p><strong>加法规则</strong>：</p>
+<ul>
+<li>$(a + b) + c = a + (b + c)$ （结合律）</li>
+<li>$a + 0 = a$ （单位元）</li>
+<li>$n_1 + n_2 = n_3$ 其中 $n_3$ 是具体数值的和</li>
+</ul>
+<p><strong>乘法规则</strong>：</p>
+<ul>
+<li>$(a \cdot b) \cdot c = a \cdot (b \cdot c)$ （结合律）</li>
+<li>$a \cdot 1 = a$ （单位元）</li>
+<li>$a \cdot (b + c) = a \cdot b + a \cdot c$ （分配律）</li>
+</ul>
+<p><strong>除法规则</strong>（整数除法）：</p>
+<ul>
+<li>$\lfloor a / 1 \rfloor = a$</li>
+<li>$\lfloor n_1 / n_2 \rfloor = n_3$ 其中 $n_3 = \lfloor n_1 / n_2 \rfloor$</li>
+<li>当 $a &lt; b$ 且都为正时，$\lfloor a / b \rfloor = 0$</li>
+</ul>
+<h3 id="1723">17.2.3 形状传播算法</h3>
+<p>形状传播算法通过数据流图传播符号形状信息。对于每个算子 $op$，我们定义形状传播函数 $f_{op}: Shape_{in} \rightarrow Shape_{out}$。</p>
+<p><strong>矩阵乘法的形状传播</strong>：</p>
+<p>给定输入形状 $A: [M, K]$ 和 $B: [K, N]$，输出形状为 $C: [M, N]$。当维度是符号时，需要添加约束 $K_A = K_B$。</p>
+<p><strong>卷积的形状传播</strong>：</p>
+<p>对于 2D 卷积，输入 $X: [N, C_{in}, H_{in}, W_{in}]$，卷积核 $K: [C_{out}, C_{in}, K_h, K_w]$，输出形状为：
+$$Y: [N, C_{out}, H_{out}, W_{out}]$$
+其中：
+$$H_{out} = \lfloor \frac{H_{in} + 2p_h - K_h}{s_h} \rfloor + 1$$
+$$W_{out} = \lfloor \frac{W_{in} + 2p_w - K_w}{s_w} \rfloor + 1$$
+$p_h, p_w$ 是 padding，$s_h, s_w$ 是 stride。</p>
+<h3 id="1724">17.2.4 符号简化与规范化</h3>
+<p>符号表达式需要简化以提高效率和可读性。简化规则包括：</p>
+<ol>
+<li><strong>常量折叠</strong>：$2 + 3 \rightarrow 5$</li>
+<li><strong>代数简化</strong>：$a + a \rightarrow 2a$，$a - a \rightarrow 0$</li>
+<li><strong>约束传播</strong>：如果 $a \in [1, 10]$ 且 $b \in [5, 15]$，则 $a + b \in [6, 25]$</li>
+<li><strong>符号消除</strong>：$\lfloor a \cdot b / a \rfloor \rightarrow b$ （当 $a &gt; 0$）</li>
+</ol>
+<h3 id="1725">17.2.5 约束求解器设计</h3>
+<p>约束求解器负责验证符号约束的可满足性。我们使用 SMT (Satisfiability Modulo Theories) 求解器处理整数线性约束。</p>
+<p><strong>约束类型</strong>：</p>
+<ul>
+<li>相等约束：$d_1 = d_2$</li>
+<li>不等约束：$d_1 \leq d_2$, $d_1 &lt; d_2$</li>
+<li>整除约束：$d_1 \mod d_2 = 0$</li>
+<li>范围约束：$l \leq d \leq u$</li>
+</ul>
+<p><strong>约束求解算法</strong>：</p>
+<div class="codehilite"><pre><span></span><code>输入：约束集合 C = {c_1, c_2, ..., c_n}
+输出：可满足性判定及符号变量赋值
+
+1. 将约束转换为标准形式
+2. 构建约束图，节点为符号变量，边为约束关系
+3. 使用 Bellman-Ford 算法检测负环（不可满足）
+4. 若可满足，使用线性规划求解可行域
+5. 返回可行解或报告冲突
+</code></pre></div>
+
+<h2 id="173-shape_1">17.3 Shape 函数与约束</h2>
+<p>Shape 函数是动态 Shape 编译中的关键抽象，它显式地描述了算子的输入输出形状关系，并生成相应的约束条件。这种机制使得编译器能够在符号层面验证程序的正确性，并为后续优化提供依据。</p>
+<h3 id="1731-shape">17.3.1 Shape 函数的定义</h3>
+<p>Shape 函数 $\mathcal{S}$ 是一个从输入形状到输出形状的映射，同时生成约束集合：
+$$\mathcal{S}: \text{Shape}^n \rightarrow \text{Shape}^m \times \text{Constraints}$$
+其中 $n$ 是输入张量数量，$m$ 是输出张量数量。每个 Shape 函数都必须满足：</p>
+<ol>
+<li><strong>确定性</strong>：相同输入产生相同输出</li>
+<li><strong>单调性</strong>：输入维度增大时，输出维度不减小</li>
+<li><strong>可组合性</strong>：多个 Shape 函数可以串联</li>
+</ol>
+<h3 id="1732-shape">17.3.2 Shape 函数的表示语言</h3>
+<p>我们定义一个专门的 DSL (Domain Specific Language) 来表示 Shape 函数：</p>
+<div class="codehilite"><pre><span></span><code><span class="n">shape_func</span><span class="w"> </span><span class="p">::</span><span class="o">=</span><span class="w"> </span><span class="err">λ</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span><span class="w"> </span><span class="err">→</span><span class="w"> </span><span class="p">(</span><span class="n">outputs</span><span class="p">,</span><span class="w"> </span><span class="n">constraints</span><span class="p">)</span>
+<span class="n">inputs</span><span class="w"> </span><span class="p">::</span><span class="o">=</span><span class="w"> </span><span class="n">tensor_shape</span><span class="o">*</span>
+<span class="n">tensor_shape</span><span class="w"> </span><span class="p">::</span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="n">dim_expr</span><span class="o">*</span><span class="p">]</span>
+<span class="n">dim_expr</span><span class="w"> </span><span class="p">::</span><span class="o">=</span><span class="w"> </span><span class="n">symbol</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">constant</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">binary_op</span><span class="p">(</span><span class="n">dim_expr</span><span class="p">,</span><span class="w"> </span><span class="n">dim_expr</span><span class="p">)</span>
+<span class="n">constraints</span><span class="w"> </span><span class="p">::</span><span class="o">=</span><span class="w"> </span><span class="n">constraint</span><span class="o">*</span>
+<span class="n">constraint</span><span class="w"> </span><span class="p">::</span><span class="o">=</span><span class="w"> </span><span class="n">dim_expr</span><span class="w"> </span><span class="n">rel_op</span><span class="w"> </span><span class="n">dim_expr</span>
+<span class="n">rel_op</span><span class="w"> </span><span class="p">::</span><span class="o">=</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="err">≤</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="err">≥</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="err">≡</span><span class="w"> </span><span class="p">(</span><span class="n">mod</span><span class="w"> </span><span class="n">n</span><span class="p">)</span>
+</code></pre></div>
+
+<h3 id="1733-shape">17.3.3 常见算子的 Shape 函数</h3>
+<p><strong>广播机制的 Shape 函数</strong>：</p>
+<p>广播是动态 Shape 中最复杂的操作之一。给定两个张量 $A$ 和 $B$，广播后的形状计算如下：</p>
+<div class="codehilite"><pre><span></span><code><span class="n">broadcast_shape</span><span class="p">(</span><span class="n">A</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="n">d₁</span><span class="p">,</span><span class="w"> </span><span class="n">d₂</span><span class="p">,</span><span class="w"> </span><span class="o">...</span><span class="p">,</span><span class="w"> </span><span class="n">dₙ</span><span class="p">],</span><span class="w"> </span><span class="n">B</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="n">e₁</span><span class="p">,</span><span class="w"> </span><span class="n">e₂</span><span class="p">,</span><span class="w"> </span><span class="o">...</span><span class="p">,</span><span class="w"> </span><span class="n">eₘ</span><span class="p">])</span><span class="w"> </span><span class="err">→</span><span class="w"> </span><span class="n">C</span><span class="p">,</span><span class="w"> </span><span class="n">constraints</span>
+<span class="err">其中：</span>
+<span class="w">  </span><span class="n">rank_C</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">max</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">m</span><span class="p">)</span>
+<span class="w">  </span><span class="err">对于</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="n">rank_C</span><span class="p">:</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="n">dᵢ</span><span class="w"> </span><span class="n">exists</span><span class="w"> </span><span class="ow">and</span><span class="w"> </span><span class="n">eᵢ</span><span class="w"> </span><span class="n">exists</span><span class="p">:</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="n">dᵢ</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">eᵢ</span><span class="p">:</span><span class="w"> </span><span class="n">Cᵢ</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dᵢ</span>
+<span class="w">      </span><span class="k">elif</span><span class="w"> </span><span class="n">dᵢ</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">:</span><span class="w"> </span><span class="n">Cᵢ</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">eᵢ</span>
+<span class="w">      </span><span class="k">elif</span><span class="w"> </span><span class="n">eᵢ</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">:</span><span class="w"> </span><span class="n">Cᵢ</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dᵢ</span>
+<span class="w">      </span><span class="k">else</span><span class="p">:</span><span class="w"> </span><span class="err">添加约束</span><span class="w"> </span><span class="n">dᵢ</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">eᵢ</span><span class="w"> </span><span class="err">或</span><span class="w"> </span><span class="n">dᵢ</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="err">或</span><span class="w"> </span><span class="n">eᵢ</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span>
+<span class="w">    </span><span class="k">elif</span><span class="w"> </span><span class="n">only</span><span class="w"> </span><span class="n">dᵢ</span><span class="w"> </span><span class="n">exists</span><span class="p">:</span><span class="w"> </span><span class="n">Cᵢ</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dᵢ</span>
+<span class="w">    </span><span class="k">elif</span><span class="w"> </span><span class="n">only</span><span class="w"> </span><span class="n">eᵢ</span><span class="w"> </span><span class="n">exists</span><span class="p">:</span><span class="w"> </span><span class="n">Cᵢ</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">eᵢ</span>
+</code></pre></div>
+
+<p><strong>Reshape 的 Shape 函数</strong>：</p>
+<p>Reshape 操作需要保持元素总数不变：</p>
+<div class="codehilite"><pre><span></span><code><span class="n">reshape</span><span class="p">(</span><span class="n">X</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="n">d₁</span><span class="p">,</span><span class="w"> </span><span class="n">d₂</span><span class="p">,</span><span class="w"> </span><span class="o">...</span><span class="p">,</span><span class="w"> </span><span class="n">dₙ</span><span class="p">],</span><span class="w"> </span><span class="n">target</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="n">e₁</span><span class="p">,</span><span class="w"> </span><span class="n">e₂</span><span class="p">,</span><span class="w"> </span><span class="o">...</span><span class="p">,</span><span class="w"> </span><span class="n">eₘ</span><span class="p">])</span><span class="w"> </span><span class="err">→</span><span class="w"> </span><span class="n">Y</span><span class="p">:</span><span class="w"> </span><span class="n">target</span><span class="p">,</span><span class="w"> </span><span class="n">constraints</span>
+<span class="err">约束：∏</span><span class="n">dᵢ</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">∏</span><span class="n">eⱼ</span>
+<span class="err">特殊情况：当</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="err">中存在</span><span class="w"> </span><span class="o">-</span><span class="mi">1</span><span class="w"> </span><span class="err">时，该维度计算为</span><span class="w"> </span><span class="err">∏</span><span class="n">dᵢ</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="err">∏</span><span class="p">(</span><span class="n">eⱼ</span><span class="w"> </span><span class="n">where</span><span class="w"> </span><span class="n">eⱼ</span><span class="w"> </span><span class="err">≠</span><span class="w"> </span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div>
+
+<p><strong>动态 Slice 的 Shape 函数</strong>：</p>
+<div class="codehilite"><pre><span></span><code><span class="n">slice</span><span class="p">(</span><span class="n">X</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="n">d₁</span><span class="p">,</span><span class="w"> </span><span class="o">...</span><span class="p">,</span><span class="w"> </span><span class="n">dₙ</span><span class="p">],</span><span class="w"> </span><span class="n">start</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="n">s₁</span><span class="p">,</span><span class="w"> </span><span class="o">...</span><span class="p">,</span><span class="w"> </span><span class="n">sₙ</span><span class="p">],</span><span class="w"> </span><span class="n">end</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="n">e₁</span><span class="p">,</span><span class="w"> </span><span class="o">...</span><span class="p">,</span><span class="w"> </span><span class="n">eₙ</span><span class="p">])</span><span class="w"> </span><span class="err">→</span><span class="w"> </span><span class="n">Y</span><span class="p">,</span><span class="w"> </span><span class="n">constraints</span>
+<span class="n">Y</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">e₁</span><span class="o">-</span><span class="n">s₁</span><span class="p">,</span><span class="w"> </span><span class="n">d₁</span><span class="o">-</span><span class="n">s₁</span><span class="p">),</span><span class="w"> </span><span class="o">...</span><span class="p">,</span><span class="w"> </span><span class="nb">min</span><span class="p">(</span><span class="n">eₙ</span><span class="o">-</span><span class="n">sₙ</span><span class="p">,</span><span class="w"> </span><span class="n">dₙ</span><span class="o">-</span><span class="n">sₙ</span><span class="p">)]</span>
+<span class="err">约束：∀</span><span class="n">i</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="err">≤</span><span class="w"> </span><span class="n">sᵢ</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">dᵢ</span><span class="p">,</span><span class="w"> </span><span class="n">sᵢ</span><span class="w"> </span><span class="err">≤</span><span class="w"> </span><span class="n">eᵢ</span><span class="w"> </span><span class="err">≤</span><span class="w"> </span><span class="n">dᵢ</span>
+</code></pre></div>
+
+<h3 id="1734">17.3.4 约束表达式语言</h3>
+<p>约束表达式需要支持复杂的逻辑关系：</p>
+<p><strong>基本约束类型</strong>：</p>
+<ol>
+<li><strong>线性约束</strong>：$a₁x₁ + a₂x₂ + ... + aₙxₙ ≤ b$</li>
+<li><strong>乘积约束</strong>：$x₁ \cdot x₂ = c$</li>
+<li><strong>整除约束</strong>：$x \mod n = 0$</li>
+<li><strong>条件约束</strong>：$\text{if } p \text{ then } q \text{ else } r$</li>
+</ol>
+<p><strong>约束的逻辑组合</strong>：</p>
+<ul>
+<li>合取：$c₁ \land c₂$ （两个约束都必须满足）</li>
+<li>析取：$c₁ \lor c₂$ （至少一个约束满足）</li>
+<li>蕴含：$c₁ \Rightarrow c₂$ （如果 $c₁$ 满足则 $c₂$ 必须满足）</li>
+</ul>
+<h3 id="1735">17.3.5 约束传播机制</h3>
+<p>约束传播通过数据流图将局部约束扩展为全局约束：</p>
+<p><strong>前向传播算法</strong>：</p>
+<div class="codehilite"><pre><span></span><code><span class="mf">1.</span><span class="w"> </span><span class="n">初始化</span><span class="err">：</span><span class="n">将输入张量的约束加入约束集</span><span class="w"> </span><span class="n">C</span>
+<span class="mf">2.</span><span class="w"> </span><span class="n">对于拓扑排序的每个节点</span><span class="w"> </span><span class="n">n</span><span class="p">:</span>
+<span class="w">   </span><span class="n">a</span><span class="mf">.</span><span class="w"> </span><span class="n">获取</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="n">的输入形状</span><span class="err">（</span><span class="n">可能包含符号</span><span class="err">）</span>
+<span class="w">   </span><span class="n">b</span><span class="mf">.</span><span class="w"> </span><span class="n">应用</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="n">的</span><span class="w"> </span><span class="n">Shape</span><span class="w"> </span><span class="n">函数</span><span class="err">，</span><span class="n">生成输出形状和新约束</span>
+<span class="w">   </span><span class="n">c</span><span class="mf">.</span><span class="w"> </span><span class="n">将新约束加入</span><span class="w"> </span><span class="n">C</span>
+<span class="w">   </span><span class="n">d</span><span class="mf">.</span><span class="w"> </span><span class="n">简化</span><span class="w"> </span><span class="n">C</span><span class="w"> </span><span class="n">中的约束</span>
+
+<span class="mf">3.</span><span class="w"> </span><span class="n">返回最终约束集</span><span class="w"> </span><span class="n">C</span>
+</code></pre></div>
+
+<p><strong>反向传播算法</strong>（用于推断输入约束）：</p>
+<div class="codehilite"><pre><span></span><code><span class="mf">1.</span><span class="w"> </span><span class="n">从输出开始</span><span class="err">，</span><span class="n">已知输出形状约束</span>
+<span class="mf">2.</span><span class="w"> </span><span class="n">对于反向拓扑排序的每个节点</span><span class="w"> </span><span class="n">n</span><span class="p">:</span>
+<span class="w">   </span><span class="n">a</span><span class="mf">.</span><span class="w"> </span><span class="n">根据输出约束和</span><span class="w"> </span><span class="n">Shape</span><span class="w"> </span><span class="n">函数</span><span class="err">，</span><span class="n">推断输入约束</span>
+<span class="w">   </span><span class="n">b</span><span class="mf">.</span><span class="w"> </span><span class="n">传播约束到前驱节点</span>
+
+<span class="mf">3.</span><span class="w"> </span><span class="n">验证推断的输入约束与实际输入约束的兼容性</span>
+</code></pre></div>
+
+<h3 id="1736">17.3.6 冲突检测与解决</h3>
+<p>约束冲突是动态 Shape 编译中的常见问题：</p>
+<p><strong>冲突类型</strong>：</p>
+<ol>
+<li><strong>直接冲突</strong>：$x = 5 \land x = 10$</li>
+<li><strong>传递冲突</strong>：$x &lt; y \land y &lt; z \land z &lt; x$</li>
+<li><strong>域冲突</strong>：$x \in [1, 5] \land x &gt; 10$</li>
+</ol>
+<p><strong>冲突检测算法</strong>：</p>
+<div class="codehilite"><pre><span></span><code><span class="mf">1.</span><span class="w"> </span><span class="n">构建约束依赖图</span>
+<span class="mf">2.</span><span class="w"> </span><span class="n">检测负环</span><span class="err">（</span><span class="n">使用</span><span class="w"> </span><span class="n">Bellman</span><span class="o">-</span><span class="kr">For</span><span class="n">d</span><span class="err">）</span>
+<span class="mf">3.</span><span class="w"> </span><span class="n">使用</span><span class="w"> </span><span class="n">SMT</span><span class="w"> </span><span class="n">求解器验证可满足性</span>
+<span class="mf">4.</span><span class="w"> </span><span class="n">如果不可满足</span><span class="err">，</span><span class="n">提取最小不可满足核心</span><span class="err">（</span><span class="n">MUC</span><span class="err">）</span>
+</code></pre></div>
+
+<p><strong>冲突解决策略</strong>：</p>
+<ol>
+<li><strong>放松约束</strong>：将硬约束转为软约束，允许一定误差</li>
+<li><strong>插入转换</strong>：自动插入 reshape、pad 等操作消除冲突</li>
+<li><strong>分支特化</strong>：为不同约束条件生成不同代码路径</li>
+<li><strong>运行时检查</strong>：将约束检查延迟到运行时</li>
+</ol>
+<h2 id="174_1">17.4 动态内存管理</h2>
+<p>动态 Shape 带来的最大挑战之一是内存管理的不确定性。传统的静态内存规划在这里不再适用，需要设计新的动态内存管理机制，既要保证正确性，又要优化性能。</p>
+<h3 id="1741">17.4.1 运行时内存分配策略</h3>
+<p>动态内存分配需要在效率和灵活性之间权衡：</p>
+<p><strong>分配策略分类</strong>：</p>
+<ol>
+<li>
+<p><strong>即时分配（Eager Allocation）</strong>：
+   - 每个张量在创建时立即分配内存
+   - 优点：简单直接，易于调试
+   - 缺点：内存峰值高，可能导致 OOM</p>
+</li>
+<li>
+<p><strong>延迟分配（Lazy Allocation）</strong>：
+   - 推迟到首次使用时才分配
+   - 优点：减少不必要的分配
+   - 缺点：增加运行时开销</p>
+</li>
+<li>
+<p><strong>预分配池（Pre-allocated Pool）</strong>：
+   - 预先分配大块内存池
+   - 优点：避免频繁的系统调用
+   - 缺点：可能浪费内存</p>
+</li>
+</ol>
+<p><strong>自适应分配算法</strong>：</p>
+<div class="codehilite"><pre><span></span><code><span class="nx">输入</span><span class="err">：</span><span class="nx">张量请求</span><span class="w"> </span><span class="nx">T</span><span class="err">，</span><span class="nx">历史统计</span><span class="w"> </span><span class="nx">H</span>
+<span class="nx">输出</span><span class="err">：</span><span class="nx">内存块</span><span class="w"> </span><span class="nx">M</span>
+
+<span class="mi">1</span><span class="p">.</span><span class="w"> </span><span class="nx">估算大小范围</span><span class="err">：</span>
+<span class="w">   </span><span class="nx">size_min</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">eval_min</span><span class="p">(</span><span class="nx">T</span><span class="p">.</span><span class="nx">shape_constraints</span><span class="p">)</span>
+<span class="w">   </span><span class="nx">size_max</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">eval_max</span><span class="p">(</span><span class="nx">T</span><span class="p">.</span><span class="nx">shape_constraints</span><span class="p">)</span>
+
+<span class="mi">2</span><span class="p">.</span><span class="w"> </span><span class="nx">查询历史模式</span><span class="err">：</span>
+<span class="w">   </span><span class="nx">pattern</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">H</span><span class="p">.</span><span class="nx">find_pattern</span><span class="p">(</span><span class="nx">T</span><span class="p">.</span><span class="nx">op_type</span><span class="p">,</span><span class="w"> </span><span class="nx">T</span><span class="p">.</span><span class="nx">shape_pattern</span><span class="p">)</span>
+<span class="w">   </span><span class="nx">size_likely</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">pattern</span><span class="p">.</span><span class="nx">percentile</span><span class="p">(</span><span class="mi">95</span><span class="p">)</span>
+
+<span class="mi">3</span><span class="p">.</span><span class="w"> </span><span class="nx">选择分配策略</span><span class="err">：</span>
+<span class="w">   </span><span class="k">if</span><span class="w"> </span><span class="nx">size_max</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nx">size_min</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="nx">threshold</span><span class="p">:</span>
+<span class="w">     </span><span class="nx">M</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">allocate_fixed</span><span class="p">(</span><span class="nx">size_max</span><span class="p">)</span><span class="w">  </span><span class="c1">// 差异小，直接分配最大</span>
+<span class="w">   </span><span class="nx">elif</span><span class="w"> </span><span class="nx">pattern</span><span class="p">.</span><span class="nx">variance</span><span class="w"> </span><span class="p">&lt;</span><span class="w"> </span><span class="nx">threshold</span><span class="p">:</span>
+<span class="w">     </span><span class="nx">M</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">allocate_fixed</span><span class="p">(</span><span class="nx">size_likely</span><span class="p">)</span><span class="w">  </span><span class="c1">// 历史稳定，按经验分配</span>
+<span class="w">   </span><span class="k">else</span><span class="p">:</span>
+<span class="w">     </span><span class="nx">M</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">allocate_growable</span><span class="p">(</span><span class="nx">size_min</span><span class="p">,</span><span class="w"> </span><span class="nx">size_max</span><span class="p">)</span><span class="w">  </span><span class="c1">// 可增长分配</span>
+
+<span class="mi">4</span><span class="p">.</span><span class="w"> </span><span class="nx">更新统计</span><span class="err">：</span><span class="nx">H</span><span class="p">.</span><span class="nx">update</span><span class="p">(</span><span class="nx">T</span><span class="p">,</span><span class="w"> </span><span class="nx">actual_size</span><span class="p">)</span>
+</code></pre></div>
+
+<h3 id="1742">17.4.2 内存池的动态扩展</h3>
+<p>内存池需要支持动态扩展以适应变化的需求：</p>
+<p><strong>分层内存池设计</strong>：</p>
+<div class="codehilite"><pre><span></span><code>┌─────────────────────────────────────┐
+│         L0: 小对象池 (&lt;1KB)          │ ← 高频分配
+├─────────────────────────────────────┤
+│         L1: 中对象池 (1KB-1MB)       │ ← 常规张量
+├─────────────────────────────────────┤
+│         L2: 大对象池 (1MB-100MB)     │ ← 大型激活
+├─────────────────────────────────────┤
+│         L3: 巨对象池 (&gt;100MB)        │ ← 模型参数
+└─────────────────────────────────────┘
+</code></pre></div>
+
+<p><strong>动态扩展策略</strong>：</p>
+<ol>
+<li><strong>指数增长</strong>：每次扩展为当前大小的 2 倍</li>
+<li><strong>线性增长</strong>：每次增加固定大小</li>
+<li><strong>自适应增长</strong>：根据使用率和预测需求调整</li>
+</ol>
+<p><strong>内存池扩展算法</strong>：</p>
+<div class="codehilite"><pre><span></span><code>扩展决策：
+growth_factor = 1.0 + min(0.5, allocation_rate / deallocation_rate)
+new_size = current_size * growth_factor
+
+扩展时机：
+
+<span class="k">-</span> 可用内存 &lt; 总量的 20%
+<span class="k">-</span> 连续分配失败次数 &gt; 阈值
+<span class="k">-</span> 预测未来 N 步需求超过当前容量
+</code></pre></div>
+
+<h3 id="1743">17.4.3 碎片管理</h3>
+<p>动态分配容易产生内存碎片，需要专门的管理策略：</p>
+<p><strong>碎片类型</strong>：</p>
+<ol>
+<li><strong>内部碎片</strong>：分配的内存大于实际需求</li>
+<li><strong>外部碎片</strong>：空闲内存被分割成小块</li>
+</ol>
+<p><strong>碎片度量</strong>：
+$$\text{碎片率} = \frac{\text{总空闲内存} - \text{最大连续空闲块}}{\text{总空闲内存}}$$
+<strong>反碎片化策略</strong>：</p>
+<ol>
+<li>
+<p><strong>伙伴系统（Buddy System）</strong>：
+   - 将内存分成 2^n 大小的块
+   - 合并相邻的空闲块
+   - 碎片率控制在 50% 以内</p>
+</li>
+<li>
+<p><strong>内存压缩（Memory Compaction）</strong>：
+   - 定期移动活跃内存块
+   - 创建大的连续空闲区域
+   - 需要更新所有引用</p>
+</li>
+<li>
+<p><strong>分离适配（Segregated Fit）</strong>：
+   - 不同大小类别使用不同的空闲列表
+   - 减少大小不匹配导致的碎片</p>
+</li>
+</ol>
+<h3 id="1744">17.4.4 峰值内存预测</h3>
+<p>准确预测峰值内存对于避免 OOM 至关重要：</p>
+<p><strong>静态分析方法</strong>：</p>
+<p>基于符号形状的最坏情况分析：
+$$M_{peak} = \max_{t \in [0, T]} \sum_{v \in \text{live}(t)} \text{size}_{max}(v)$$
+其中 $\text{live}(t)$ 是时刻 $t$ 的活跃张量集合，$\text{size}_{max}(v)$ 是张量 $v$ 的最大可能大小。</p>
+<p><strong>动态预测方法</strong>：</p>
+<p>使用历史数据和机器学习模型：</p>
+<div class="codehilite"><pre><span></span><code>特征提取：
+
+<span class="k">-</span> 输入形状的统计特征（均值、方差、最大值）
+<span class="k">-</span> 算子类型和参数
+<span class="k">-</span> 历史执行的内存使用模式
+
+预测模型：
+peak_memory = α <span class="gs">* input_size + β *</span> model_complexity + γ * history_pattern + ε
+
+其中系数通过在线学习持续更新
+</code></pre></div>
+
+<h3 id="1745">17.4.5 内存共享与别名</h3>
+<p>动态 Shape 下的内存共享需要更谨慎的分析：</p>
+<p><strong>共享条件</strong>：</p>
+<ol>
+<li>生命周期不重叠</li>
+<li>内存布局兼容</li>
+<li>大小约束可满足</li>
+</ol>
+<p><strong>动态别名分析</strong>：</p>
+<div class="codehilite"><pre><span></span><code>can_alias(T1, T2):
+  // 检查生命周期
+  if overlaps(T1.lifetime, T2.lifetime):
+    return false
+
+  // 检查大小兼容性
+  if T1.size_max &gt; T2.allocated_size:
+    return false
+
+  // 检查 stride 兼容性
+  if not compatible_stride(T1.stride_pattern, T2.stride):
+    return false
+
+  return true
+</code></pre></div>
+
+<h3 id="1746">17.4.6 异常处理机制</h3>
+<p>动态内存管理需要健壮的异常处理：</p>
+<p><strong>OOM 预防策略</strong>：</p>
+<ol>
+<li><strong>早期检测</strong>：在分配前检查可用内存</li>
+<li><strong>渐进式回收</strong>：逐步释放缓存和临时数据</li>
+<li><strong>优雅降级</strong>：切换到更节省内存的算法</li>
+</ol>
+<p><strong>恢复机制</strong>：</p>
+<div class="codehilite"><pre><span></span><code>处理 OOM：
+
+1. 触发垃圾回收
+2. 压缩内存池
+3. 卸载非关键数据到磁盘
+4. 如果仍然失败，触发重新编译（使用更保守的内存策略）
+</code></pre></div>
+
+<h2 id="175_1">17.5 桶化策略</h2>
+<p>桶化（Bucketing）是处理动态 Shape 的实用技术，通过将连续的形状空间离散化为有限的桶，在编译时生成多个特化版本，运行时选择最合适的版本执行。这种方法在保持性能的同时，避免了完全动态带来的开销。</p>
+<h3 id="1751">17.5.1 桶化的基本原理</h3>
+<p>桶化的核心思想是将无限的形状空间 $\mathcal{S}$ 划分为有限个互不相交的子空间（桶）：
+$$\mathcal{S} = \bigcup_{i=1}^{n} B_i, \quad B_i \cap B_j = \emptyset \text{ for } i \neq j$$
+每个桶 $B_i$ 对应一个编译后的特化版本，运行时根据实际形状选择对应的桶。</p>
+<p><strong>桶的表示</strong>：</p>
+<p>每个桶用一个多维区间表示：
+$$B = \{[l_1, u_1] \times [l_2, u_2] \times ... \times [l_d, u_d]\}$$
+其中 $[l_i, u_i]$ 是第 $i$ 维的范围。</p>
+<h3 id="1752">17.5.2 桶边界选择算法</h3>
+<p>桶边界的选择直接影响性能和资源消耗：</p>
+<p><strong>等间隔划分</strong>：</p>
+<p>简单地将每个维度等分：</p>
+<div class="codehilite"><pre><span></span><code>对于维度 d ∈ [min_d, max_d]：
+  桶边界 = {min_d + i * (max_d - min_d) / n | i = 0, 1, ..., n}
+</code></pre></div>
+
+<p><strong>基于分布的划分</strong>：</p>
+<p>根据历史数据的分布选择边界：</p>
+<div class="codehilite"><pre><span></span><code><span class="mf">1.</span><span class="w"> </span><span class="n">收集历史形状数据</span><span class="w"> </span><span class="n">H</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">{</span><span class="n">s_1</span><span class="p">,</span><span class="w"> </span><span class="n">s_2</span><span class="p">,</span><span class="w"> </span><span class="mf">...</span><span class="p">,</span><span class="w"> </span><span class="n">s_m</span><span class="err">}</span>
+<span class="mf">2.</span><span class="w"> </span><span class="n">对每个维度</span><span class="w"> </span><span class="n">d</span><span class="err">：</span>
+<span class="w">   </span><span class="n">a</span><span class="mf">.</span><span class="w"> </span><span class="n">构建累积分布函数</span><span class="w"> </span><span class="n">CDF_d</span>
+<span class="w">   </span><span class="n">b</span><span class="mf">.</span><span class="w"> </span><span class="n">选择分位点作为边界</span><span class="err">：</span>
+<span class="w">      </span><span class="n">boundaries_d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">{</span><span class="n">CDF_d</span><span class="o">^</span><span class="p">(</span><span class="o">-</span><span class="mf">1</span><span class="p">)(</span><span class="n">i</span><span class="o">/</span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="err">|</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="mf">...</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="err">}</span>
+</code></pre></div>
+
+<p><strong>自适应划分算法</strong>：</p>
+<p>使用聚类算法自动发现最优边界：</p>
+<div class="codehilite"><pre><span></span><code>输入：历史形状集合<span class="w"> </span><span class="nv">H</span>，目标桶数<span class="w"> </span><span class="nv">K</span>
+输出：桶边界集合<span class="w"> </span><span class="nv">B</span>
+
+<span class="mi">1</span>.<span class="w"> </span>初始化：使用<span class="w"> </span><span class="nv">K</span><span class="o">-</span><span class="nv">means</span><span class="o">++</span><span class="w"> </span>选择<span class="w"> </span><span class="nv">K</span><span class="w"> </span>个初始中心
+<span class="mi">2</span>.<span class="w"> </span>迭代优化：
+<span class="w">   </span><span class="nv">repeat</span>:
+<span class="w">     </span><span class="nv">a</span>.<span class="w"> </span>分配：将每个形状分配到最近的桶
+<span class="w">     </span><span class="nv">b</span>.<span class="w"> </span>更新：重新计算每个桶的边界
+<span class="w">     </span><span class="nv">c</span>.<span class="w"> </span>评估：计算总体代价函数
+<span class="w">   </span><span class="k">until</span><span class="w"> </span>收敛或达到最大迭代次数
+
+<span class="mi">3</span>.<span class="w"> </span>后处理：合并过小的桶，分裂过大的桶
+</code></pre></div>
+
+<p><strong>代价函数设计</strong>：
+$$\text{Cost} = \alpha \cdot \text{CompilationOverhead} + \beta \cdot \text{RuntimeOverhead} + \gamma \cdot \text{MemoryUsage}$$
+其中：</p>
+<ul>
+<li>CompilationOverhead = 桶数量 × 单个版本编译时间</li>
+<li>RuntimeOverhead = 平均填充率 × 执行时间</li>
+<li>MemoryUsage = 桶数量 × 平均代码大小</li>
+</ul>
+<h3 id="1753">17.5.3 多维桶化</h3>
+<p>处理多个动态维度时，需要考虑维度间的相关性：</p>
+<p><strong>独立桶化</strong>：</p>
+<p>每个维度独立划分，总桶数为各维度桶数的乘积：</p>
+<div class="codehilite"><pre><span></span><code>总桶数 = ∏(每个维度的桶数)
+</code></pre></div>
+
+<p>优点：简单直接
+缺点：桶数量呈指数增长</p>
+<p><strong>联合桶化</strong>：</p>
+<p>考虑维度间的相关性，减少总桶数：</p>
+<div class="codehilite"><pre><span></span><code><span class="mf">1.</span><span class="w"> </span><span class="n">构建维度相关性矩阵</span><span class="err">：</span>
+<span class="w">   </span><span class="n">Corr</span><span class="err">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="err">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">correlation</span><span class="p">(</span><span class="kd">dim</span><span class="n">_i</span><span class="p">,</span><span class="w"> </span><span class="kd">dim</span><span class="n">_j</span><span class="p">)</span>
+
+<span class="mf">2.</span><span class="w"> </span><span class="n">识别强相关维度组</span><span class="err">：</span>
+<span class="w">   </span><span class="n">使用谱聚类将维度分组</span>
+
+<span class="mf">3.</span><span class="w"> </span><span class="n">对每组联合桶化</span><span class="err">：</span>
+<span class="w">   </span><span class="n">组内维度一起考虑</span><span class="err">，</span><span class="n">组间独立</span>
+</code></pre></div>
+
+<p><strong>稀疏桶化</strong>：</p>
+<p>只为常见的形状组合创建桶：</p>
+<div class="codehilite"><pre><span></span><code><span class="mf">1.</span><span class="w"> </span><span class="n">统计形状组合频率</span>
+<span class="mf">2.</span><span class="w"> </span><span class="n">选择累积频率达到阈值</span><span class="err">（</span><span class="n">如</span><span class="w"> </span><span class="mf">95</span><span class="err">%）</span><span class="n">的组合</span>
+<span class="mf">3.</span><span class="w"> </span><span class="n">为这些组合创建桶</span>
+<span class="mf">4.</span><span class="w"> </span><span class="n">其余使用通用的动态版本</span>
+</code></pre></div>
+
+<h3 id="1754">17.5.4 性能与内存权衡</h3>
+<p>桶化需要在多个目标间权衡：</p>
+<p><strong>性能模型</strong>：
+$$T_{total} = T_{dispatch} + T_{execution} + T_{padding}$$
+其中：</p>
+<ul>
+<li>$T_{dispatch}$：选择桶的开销</li>
+<li>$T_{execution}$：特化代码执行时间</li>
+<li>$T_{padding}$：由于桶化导致的填充开销</li>
+</ul>
+<p><strong>内存模型</strong>：
+$$M_{total} = M_{code} \times N_{buckets} + M_{runtime}$$
+<strong>优化目标</strong>：
+$$\min_{B} \lambda_1 T_{total}(B) + \lambda_2 M_{total}(B)$$</p>
+<p>受约束于：</p>
+<ul>
+<li>$N_{buckets} \leq N_{max}$（桶数量上限）</li>
+<li>$\text{Coverage}(B) \geq \theta$（覆盖率要求）</li>
+</ul>
+<h3 id="1755">17.5.5 运行时桶选择</h3>
+<p>高效的运行时桶选择对性能至关重要：</p>
+<p><strong>决策树方法</strong>：</p>
+<p>构建决策树快速选择桶：</p>
+<div class="codehilite"><pre><span></span><code>       shape[0] &lt; 128?
+          /        \
+        Yes         No
+        /            \
+   shape[1] &lt; 64?   shape[1] &lt; 256?
+      /    \           /      \
+   Bucket1 Bucket2  Bucket3  Bucket4
+</code></pre></div>
+
+<p><strong>哈希表方法</strong>：</p>
+<p>将形状映射到桶索引：</p>
+<div class="codehilite"><pre><span></span><code>bucket_index = hash(quantize(shape)) % num_buckets
+</code></pre></div>
+
+<p><strong>最近邻方法</strong>：</p>
+<p>选择距离最近的桶中心：</p>
+<div class="codehilite"><pre><span></span><code>min_distance = infinity
+selected_bucket = null
+for each bucket in buckets:
+  distance = compute_distance(shape, bucket.center)
+  if distance &lt; min_distance:
+    min_distance = distance
+    selected_bucket = bucket
+</code></pre></div>
+
+<h3 id="1756">17.5.6 桶化的自动调优</h3>
+<p>使用机器学习自动优化桶化策略：</p>
+<p><strong>在线学习框架</strong>：</p>
+<div class="codehilite"><pre><span></span><code><span class="mf">1.</span><span class="w"> </span><span class="n">初始化</span><span class="err">：</span><span class="n">使用默认桶化策略</span>
+<span class="mf">2.</span><span class="w"> </span><span class="n">执行监控</span><span class="err">：</span>
+<span class="w">   </span><span class="o">-</span><span class="w"> </span><span class="n">记录每次执行的形状和性能</span>
+<span class="w">   </span><span class="o">-</span><span class="w"> </span><span class="n">统计桶的命中率和效率</span>
+<span class="mf">3.</span><span class="w"> </span><span class="n">定期优化</span><span class="err">：</span>
+<span class="w">   </span><span class="o">-</span><span class="w"> </span><span class="n">识别性能瓶颈桶</span>
+<span class="w">   </span><span class="o">-</span><span class="w"> </span><span class="n">调整桶边界或增加新桶</span>
+<span class="mf">4.</span><span class="w"> </span><span class="n">增量更新</span><span class="err">：</span>
+<span class="w">   </span><span class="o">-</span><span class="w"> </span><span class="n">只重新编译受影响的桶</span>
+<span class="w">   </span><span class="o">-</span><span class="w"> </span><span class="n">平滑切换到新策略</span>
+</code></pre></div>
+
+<p><strong>反馈驱动优化</strong>：</p>
+<div class="codehilite"><pre><span></span><code>性能反馈循环：
+
+1. 收集运行时统计：
+   - 每个桶的使用频率
+   - 填充开销
+   - 实际执行时间
+
+2. 分析优化机会：
+   - 识别热点桶（需要细分）
+   - 识别冷桶（可以合并）
+   - 发现新的形状模式
+
+3. 调整策略：
+   - 重新分配编译资源
+   - 更新桶边界
+   - 调整特化策略
+</code></pre></div>
+
+<h2 id="176_1">17.6 本章小结</h2>
+<p>本章深入探讨了动态 Shape 编译的核心技术，这是现代 AI 编译器必须解决的关键挑战。我们从符号形状推导开始，建立了处理未知维度的理论基础，然后通过 Shape 函数和约束系统实现了编译时的正确性验证。动态内存管理部分解决了运行时的资源分配问题，而桶化策略提供了实用的性能优化方案。</p>
+<p><strong>关键要点</strong>：</p>
+<ol>
+<li><strong>符号化是基础</strong>：通过符号维度和符号算术，将静态分析扩展到动态场景</li>
+<li><strong>约束是保障</strong>：Shape 函数和约束系统确保程序的正确性</li>
+<li><strong>内存管理需要自适应</strong>：动态场景下需要更智能的内存分配和管理策略</li>
+<li><strong>桶化平衡灵活性与性能</strong>：通过有限的特化版本覆盖无限的形状空间</li>
+<li><strong>运行时与编译时协同</strong>：将工作合理分配到编译时和运行时</li>
+</ol>
+<p><strong>核心公式回顾</strong>：</p>
+<ul>
+<li>符号维度定义：$d ::= n \mid s \mid d_1 + d_2 \mid d_1 \cdot d_2 \mid \lfloor d_1 / d_2 \rfloor$</li>
+<li>Shape 函数：$\mathcal{S}: \text{Shape}^n \rightarrow \text{Shape}^m \times \text{Constraints}$</li>
+<li>峰值内存预测：$M_{peak} = \max_{t \in [0, T]} \sum_{v \in \text{live}(t)} \text{size}_{max}(v)$</li>
+<li>桶化空间划分：$\mathcal{S} = \bigcup_{i=1}^{n} B_i, \quad B_i \cap B_j = \emptyset$</li>
+<li>优化目标：$\min_{B} \lambda_1 T_{total}(B) + \lambda_2 M_{total}(B)$</li>
+</ul>
+<h2 id="177_1">17.7 练习题</h2>
+<h3 id="_5">基础题</h3>
+<p><strong>练习 17.1</strong> 符号维度计算</p>
+<p>给定两个张量 A: [N, 128, K] 和 B: [K, M, 256]，其中 N, K, M 是符号维度。计算以下操作的输出形状：</p>
+<ol>
+<li>C = matmul(A, B)（对最后两维做矩阵乘法）</li>
+<li>D = reshape(A, [N*128, K])</li>
+<li>E = broadcast(A, B)（如果可能）</li>
+</ol>
+<p><em>Hint: 考虑矩阵乘法的维度匹配要求和广播规则。</em></p>
+<details>
+<summary>答案</summary>
+<ol>
+<li>
+<p>C = matmul(A, B): 
+   - A 的形状调整为 [N, 128, K]
+   - B 的形状为 [K, M, 256]
+   - 批量矩阵乘法要求批次维度相同或可广播
+   - 这里需要广播，结果形状为 [N, K, max(128, M), 256]
+   - 添加约束：最后一维的 K 必须相等</p>
+</li>
+<li>
+<p>D = reshape(A, [N<em>128, K]):
+   - 直接重塑，输出形状为 [N</em>128, K]
+   - 约束：总元素数保持不变 N<em>128</em>K = N<em>128</em>K ✓</p>
+</li>
+<li>
+<p>E = broadcast(A, B):
+   - A: [N, 128, K]
+   - B: [K, M, 256]
+   - 无法直接广播，因为 A 的最后维度 K 与 B 的第一维度 K 位置不匹配
+   - 需要先进行维度对齐或转置</p>
+</li>
+</ol>
+</details>
+<p><strong>练习 17.2</strong> 约束求解</p>
+<p>给定以下约束系统，判断是否可满足：</p>
+<div class="codehilite"><pre><span></span><code>s1 + s2 = 100
+s1 &gt; 2 * s2
+s2 ≥ 20
+s1, s2 ∈ ℕ
+</code></pre></div>
+
+<p><em>Hint: 将不等式约束转换为等式形式，使用替换法求解。</em></p>
+<details>
+<summary>答案</summary>
+<p>从约束系统：</p>
+<ol>
+<li>s1 + s2 = 100</li>
+<li>s1 &gt; 2 * s2</li>
+<li>s2 ≥ 20</li>
+</ol>
+<p>从约束 1：s1 = 100 - s2
+代入约束 2：100 - s2 &gt; 2 * s2
+            100 &gt; 3 * s2
+            s2 &lt; 33.33</p>
+<p>结合约束 3：20 ≤ s2 &lt; 33.33</p>
+<p>因此 s2 ∈ {20, 21, ..., 33}
+对应 s1 ∈ {80, 79, ..., 67}</p>
+<p>验证：当 s2 = 20, s1 = 80 时：</p>
+<ul>
+<li>s1 + s2 = 100 ✓</li>
+<li>80 &gt; 40 ✓</li>
+<li>20 ≥ 20 ✓</li>
+</ul>
+<p>系统可满足。</p>
+</details>
+<p><strong>练习 17.3</strong> 内存峰值计算</p>
+<p>某模型有三个张量，生命周期如下：</p>
+<ul>
+<li>T1: [N, 1024]，生命周期 [0, 5]</li>
+<li>T2: [N, 2048]，生命周期 [3, 8]</li>
+<li>T3: [N, 512]，生命周期 [6, 10]</li>
+</ul>
+<p>假设 N ∈ [32, 128]，float32 类型，计算最坏情况下的峰值内存（MB）。</p>
+<p><em>Hint: 找出所有张量同时活跃的时间点。</em></p>
+<details>
+<summary>答案</summary>
+<p>分析各时间点的活跃张量：</p>
+<ul>
+<li>t ∈ [0, 3): 只有 T1</li>
+<li>t ∈ [3, 5]: T1 和 T2</li>
+<li>t ∈ [5, 6): 只有 T2</li>
+<li>t ∈ [6, 8]: T2 和 T3</li>
+<li>t ∈ [8, 10]: 只有 T3</li>
+</ul>
+<p>峰值出现在：</p>
+<ul>
+<li>[3, 5]: T1 + T2 = N × (1024 + 2048) = N × 3072</li>
+<li>[6, 8]: T2 + T3 = N × (2048 + 512) = N × 2560</li>
+</ul>
+<p>最大值为 N × 3072，当 N = 128 时：
+峰值 = 128 × 3072 × 4 bytes = 1,572,864 bytes ≈ 1.5 MB</p>
+</details>
+<p><strong>练习 17.4</strong> 桶化划分</p>
+<p>给定序列长度的历史分布：</p>
+<ul>
+<li>50% 的样本长度在 [64, 128]</li>
+<li>30% 的样本长度在 [128, 256] </li>
+<li>15% 的样本长度在 [256, 512]</li>
+<li>5% 的样本长度在 [512, 1024]</li>
+</ul>
+<p>设计一个 4 桶划分方案，使 95% 的样本能被覆盖。</p>
+<p><em>Hint: 考虑使用不等间隔划分以优化常见情况。</em></p>
+<details>
+<summary>答案</summary>
+<p>基于分布的 4 桶划分：</p>
+<p>桶 1: [64, 96] - 覆盖短序列的前半部分（约 25%）
+桶 2: [96, 160] - 覆盖短序列后半和中等序列前半（约 40%）
+桶 3: [160, 384] - 覆盖中等序列后半和较长序列（约 25%）
+桶 4: [384, 768] - 覆盖长序列的大部分（约 5%）</p>
+<p>这样可以覆盖 95% 的样本，同时对高频区间（64-256）提供更细粒度的划分。</p>
+<p>超过 768 的样本（&lt; 5%）使用通用动态版本处理。</p>
+</details>
+<h3 id="_6">挑战题</h3>
+<p><strong>练习 17.5</strong> 符号简化系统设计</p>
+<p>设计一个符号表达式简化系统，能够处理以下情况：</p>
+<ol>
+<li>(N + M) × K - N × K → M × K</li>
+<li>max(N, N + K) → N + K (当 K ≥ 0)</li>
+<li>⌊(N × M) / N⌋ → M (当 N &gt; 0)</li>
+</ol>
+<p>描述你的简化规则和实现策略。</p>
+<p><em>Hint: 考虑构建一个规则匹配和重写系统。</em></p>
+<details>
+<summary>答案</summary>
+<p>符号简化系统设计：</p>
+<ol>
+<li><strong>规则表示</strong>：</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="nv">Rule</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="nv">Pattern</span><span class="w"> </span>→<span class="w"> </span><span class="nv">Replacement</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nv">Condition</span>
+</code></pre></div>
+
+<ol start="2">
+<li>
+<p><strong>核心规则集</strong>：
+   - 分配律：(a + b) × c → a×c + b×c
+   - 结合律：(a × b) × c → a × (b × c)
+   - 消去律：a × b / a → b (when a ≠ 0)
+   - 吸收律：max(a, a + b) → a + b (when b ≥ 0)</p>
+</li>
+<li>
+<p><strong>实现策略</strong>：
+   - 构建表达式的 AST
+   - 自底向上应用规则
+   - 使用规范形式避免循环
+   - 维护约束上下文</p>
+</li>
+<li>
+<p><strong>优化顺序</strong>：
+   - 先展开（应用分配律）
+   - 再合并（识别公因子）
+   - 最后简化（消去和吸收）</p>
+</li>
+<li>
+<p><strong>约束传播</strong>：
+   - 跟踪变量的范围约束
+   - 在简化时利用约束信息
+   - 生成新的约束</p>
+</li>
+</ol>
+</details>
+<p><strong>练习 17.6</strong> 自适应内存池设计</p>
+<p>设计一个自适应内存池系统，要求：</p>
+<ol>
+<li>支持不同大小类别的分层管理</li>
+<li>能够根据使用模式自动调整池大小</li>
+<li>最小化碎片率（目标 &lt; 20%）</li>
+</ol>
+<p>给出关键数据结构和算法。</p>
+<p><em>Hint: 结合 slab allocator 和 buddy system 的思想。</em></p>
+<details>
+<summary>答案</summary>
+<p>自适应内存池设计：</p>
+<ol>
+<li><strong>数据结构</strong>：</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="n">MemoryPool</span><span class="w"> </span><span class="err">{</span>
+<span class="w">  </span><span class="nl">layers</span><span class="p">:</span><span class="w"> </span><span class="o">[</span><span class="n">SmallPool, MediumPool, LargePool</span><span class="o">]</span>
+<span class="w">  </span><span class="k">statistics</span><span class="err">:</span><span class="w"> </span><span class="n">UsageStats</span>
+<span class="w">  </span><span class="nl">predictor</span><span class="p">:</span><span class="w"> </span><span class="n">SizePredictor</span>
+<span class="err">}</span>
+
+<span class="n">Layer</span><span class="w"> </span><span class="err">{</span>
+<span class="w">  </span><span class="nl">size_class</span><span class="p">:</span><span class="w"> </span><span class="p">(</span><span class="nf">min</span><span class="p">,</span><span class="w"> </span><span class="nf">max</span><span class="p">)</span>
+<span class="w">  </span><span class="nl">free_lists</span><span class="p">:</span><span class="w"> </span><span class="o">[</span><span class="n">FreeList</span><span class="o">]</span>
+<span class="w">  </span><span class="nl">allocation_count</span><span class="p">:</span><span class="w"> </span><span class="nc">int</span>
+<span class="w">  </span><span class="nl">fragmentation</span><span class="p">:</span><span class="w"> </span><span class="nc">float</span>
+<span class="err">}</span>
+</code></pre></div>
+
+<ol start="2">
+<li><strong>分配算法</strong>：</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="mf">1.</span><span class="w"> </span><span class="n">根据请求大小选择层</span>
+<span class="mf">2.</span><span class="w"> </span><span class="n">在层内使用</span><span class="w"> </span><span class="n">best</span><span class="o">-</span><span class="n">fit</span><span class="w"> </span><span class="n">查找</span>
+<span class="mf">3.</span><span class="w"> </span><span class="n">如果失败</span><span class="err">，</span><span class="n">触发扩展或压缩</span>
+<span class="mf">4.</span><span class="w"> </span><span class="n">更新统计信息</span>
+</code></pre></div>
+
+<ol start="3">
+<li><strong>自适应调整</strong>：</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>每 N 次分配后：
+
+1. 计算各层的使用率和碎片率
+2. 如果碎片率 &gt; 20%：
+   - 触发压缩
+   - 调整大小类别边界
+3. 根据历史预测未来需求
+4. 预分配或释放内存
+</code></pre></div>
+
+<ol start="4">
+<li><strong>反碎片策略</strong>：
+   - 延迟合并：批量处理释放操作
+   - 伙伴合并：相邻空闲块自动合并
+   - 迁移压缩：移动小对象创建大空闲块</li>
+</ol>
+</details>
+<p><strong>练习 17.7</strong> 多维桶化优化</p>
+<p>给定一个 Transformer 模型，batch_size ∈ [1, 128]，sequence_length ∈ [1, 2048]。设计一个桶化方案，要求：</p>
+<ol>
+<li>总桶数不超过 16</li>
+<li>覆盖 90% 以上的常见组合</li>
+<li>最小化平均填充开销</li>
+</ol>
+<p><em>Hint: 考虑 batch_size 和 sequence_length 的使用模式差异。</em></p>
+<details>
+<summary>答案</summary>
+<p>多维桶化方案：</p>
+<ol>
+<li>
+<p><strong>分析维度特性</strong>：
+   - batch_size：通常是 2 的幂（1, 2, 4, 8, 16, 32, 64, 128）
+   - sequence_length：集中在特定值（128, 256, 512, 1024, 2048）</p>
+</li>
+<li>
+<p><strong>相关性分析</strong>：
+   - 小 batch 往往配大 sequence（推理）
+   - 大 batch 往往配小 sequence（训练）</p>
+</li>
+<li>
+<p><strong>16 桶方案</strong>：</p>
+</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>推理桶（6个）：
+[1-2, 128-256], [1-2, 256-512], [1-2, 512-1024],
+[1-2, 1024-2048], [4, 128-512], [4, 512-2048]
+
+训练桶（8个）：
+[8, 128-256], [8, 256-512], [16, 128-256], [16, 256-512],
+[32, 128-256], [32, 256-512], [64, 128-256], [128, 128-256]
+
+通用桶（2个）：
+[2-8, 256-1024], [8-128, 512-2048]
+</code></pre></div>
+
+<ol start="4">
+<li><strong>填充开销优化</strong>：
+   - 对 batch_size 使用向上取整到 2 的幂
+   - 对 sequence_length 使用向上取整到 64 的倍数
+   - 平均填充开销 &lt; 15%</li>
+</ol>
+</details>
+<p><strong>练习 17.8</strong> 约束冲突诊断</p>
+<p>设计一个算法，当约束系统不可满足时，找出最小冲突集（Minimal Unsatisfiable Core）。</p>
+<p><em>Hint: 使用二分搜索或增量方法。</em></p>
+<details>
+<summary>答案</summary>
+<p>最小冲突集查找算法：</p>
+<ol>
+<li><strong>删除法（Deletion-based）</strong>：</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>输入：不可满足约束集 C
+输出：最小冲突集 MUC
+
+1. MUC = C
+2. 对每个约束 c in C:
+   temp = MUC - {c}
+   if is_unsatisfiable(temp):
+      MUC = temp
+
+3. 返回 MUC
+</code></pre></div>
+
+<ol start="2">
+<li><strong>增长法（Growth-based）</strong>：</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="mf">1.</span><span class="w"> </span><span class="n">二分搜索找到临界大小</span><span class="w"> </span><span class="n">k</span>
+<span class="mf">2.</span><span class="w"> </span><span class="n">枚举所有大小为</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="n">的子集</span>
+<span class="mf">3.</span><span class="w"> </span><span class="n">返回第一个不可满足的子集</span>
+</code></pre></div>
+
+<ol start="3">
+<li>
+<p><strong>优化策略</strong>：
+   - 使用增量 SMT 求解器
+   - 缓存中间结果
+   - 启发式排序（优先检查相关约束）</p>
+</li>
+<li>
+<p><strong>诊断信息生成</strong>：</p>
+</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>对于 MUC 中的每个约束：
+
+1. 标注来源（哪个算子产生）
+2. 分析冲突类型
+3. 提供修复建议
+</code></pre></div>
+
+<p>示例输出：
+"约束冲突：矩阵乘法要求 K_A = K_B，但 reshape 操作导致 K_A = 2N 而 K_B = N+10"</p>
+</details>
+<h2 id="178_1">17.8 常见陷阱与错误</h2>
+<h3 id="1">1. 符号维度的过度泛化</h3>
+<p><strong>陷阱</strong>：将所有维度都设为符号变量，导致优化机会丧失。</p>
+<p><strong>正确做法</strong>：</p>
+<ul>
+<li>识别真正动态的维度（如 batch_size, sequence_length）</li>
+<li>保持模型结构相关的维度为常量（如 hidden_size, num_heads）</li>
+<li>使用部分特化技术</li>
+</ul>
+<h3 id="2">2. 约束求解的性能问题</h3>
+<p><strong>陷阱</strong>：在关键路径上进行复杂的约束求解，导致编译时间爆炸。</p>
+<p><strong>正确做法</strong>：</p>
+<ul>
+<li>缓存求解结果</li>
+<li>使用增量求解技术</li>
+<li>设置求解超时，失败时回退到保守策略</li>
+</ul>
+<h3 id="3">3. 内存分配的碎片累积</h3>
+<p><strong>陷阱</strong>：频繁的动态分配释放导致严重的内存碎片。</p>
+<p><strong>正确做法</strong>：</p>
+<ul>
+<li>使用内存池而非直接 malloc/free</li>
+<li>定期进行碎片整理</li>
+<li>实现内存重用机制</li>
+</ul>
+<h3 id="4">4. 桶边界选择不当</h3>
+<p><strong>陷阱</strong>：等间隔划分桶，导致热点区域精度不足。</p>
+<p><strong>正确做法</strong>：</p>
+<ul>
+<li>基于实际分布选择边界</li>
+<li>使用自适应调整机制</li>
+<li>为常见 case 提供专门优化</li>
+</ul>
+<h3 id="5">5. 符号简化的无限循环</h3>
+<p><strong>陷阱</strong>：简化规则相互触发，导致无限循环。</p>
+<p><strong>正确做法</strong>：</p>
+<ul>
+<li>定义规范形式</li>
+<li>确保每次简化都向规范形式靠近</li>
+<li>设置最大迭代次数</li>
+</ul>
+<h3 id="6-shape">6. 动态 Shape 信息丢失</h3>
+<p><strong>陷阱</strong>：在 IR 转换过程中丢失符号信息和约束。</p>
+<p><strong>正确做法</strong>：</p>
+<ul>
+<li>在每个 IR 层保留 shape 标注</li>
+<li>传播约束信息</li>
+<li>验证转换的正确性</li>
+</ul>
+<h3 id="7">7. 运行时开销被忽视</h3>
+<p><strong>陷阱</strong>：过于复杂的运行时决策逻辑，抵消了优化收益。</p>
+<p><strong>正确做法</strong>：</p>
+<ul>
+<li>简化运行时检查</li>
+<li>使用快速路径</li>
+<li>预计算决策表</li>
+</ul>
+<h2 id="179_1">17.9 最佳实践检查清单</h2>
+<h3 id="_7">设计阶段</h3>
+<ul>
+<li>[ ] 明确区分静态和动态维度</li>
+<li>[ ] 定义清晰的符号命名规范</li>
+<li>[ ] 设计分层的 Shape 抽象</li>
+<li>[ ] 规划约束的生命周期管理</li>
+<li>[ ] 考虑与现有静态优化的兼容性</li>
+</ul>
+<h3 id="_8">实现阶段</h3>
+<ul>
+<li>[ ] 实现高效的符号算术库</li>
+<li>[ ] 构建可扩展的约束求解框架</li>
+<li>[ ] 设计自适应的内存管理系统</li>
+<li>[ ] 实现智能的桶化策略</li>
+<li>[ ] 添加全面的 Shape 验证</li>
+</ul>
+<h3 id="_9">优化阶段</h3>
+<ul>
+<li>[ ] 识别并消除冗余约束</li>
+<li>[ ] 实施符号表达式简化</li>
+<li>[ ] 优化运行时分发逻辑</li>
+<li>[ ] 减少内存碎片</li>
+<li>[ ] 平衡编译时和运行时开销</li>
+</ul>
+<h3 id="_10">测试阶段</h3>
+<ul>
+<li>[ ] 覆盖边界情况（最小/最大维度）</li>
+<li>[ ] 测试约束冲突处理</li>
+<li>[ ] 验证内存管理正确性</li>
+<li>[ ] 评估桶化效果</li>
+<li>[ ] 进行性能回归测试</li>
+</ul>
+<h3 id="_11">部署阶段</h3>
+<ul>
+<li>[ ] 收集运行时统计信息</li>
+<li>[ ] 监控内存使用模式</li>
+<li>[ ] 跟踪桶命中率</li>
+<li>[ ] 分析性能瓶颈</li>
+<li>[ ] 准备回滚方案</li>
+</ul>
+<h3 id="_12">维护阶段</h3>
+<ul>
+<li>[ ] 定期更新桶化策略</li>
+<li>[ ] 优化热点路径</li>
+<li>[ ] 清理过时的约束</li>
+<li>[ ] 更新文档</li>
+<li>[ ] 分享最佳实践</li>
+</ul>
+            </article>
+            
+            <nav class="page-nav"><a href="chapter16.html" class="nav-link prev">← 第 16 章：NUMA 架构优化（二）</a><a href="chapter18.html" class="nav-link next">第 18 章：动态 Shape 编译（二） →</a></nav>
+        </main>
+    </div>
+</body>
+</html>

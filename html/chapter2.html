@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="./">
+    <title>第 2 章：中间表示（IR）设计</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="assets/highlight.css">
+    <script src="assets/script.js" defer></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']],
+                processEscapes: false,
+                packages: {'[+]': ['noerrors', 'ams']}
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            loader: {
+                load: ['[tex]/noerrors', '[tex]/ams']
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3>目录</h3>
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+            <div class="sidebar-search">
+                <input type="text" id="sidebar-search-input" placeholder="搜索..." autocomplete="off">
+            </div>
+            <div id="tree-container">
+                <nav class="tree-nav" role="tree">
+                    <div class="tree-item " >
+                        <a href="index.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">AI 编译器教程：从理论到 200T 规模实践</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter1.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 1 章：AI 编译器概述</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item active" >
+                        <a href="chapter2.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 2 章：中间表示（IR）设计</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter3.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 3 章：计算图表示与分析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter4.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 4 章：统一缓冲区设计</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter5.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 5 章：内存规划与分配</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter6.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 6 章：数据布局优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter7.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 7 章：算子融合</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter8.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 8 章：自动微分与梯度优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter9.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 9 章：并行化策略</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter11.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 11 章：多维 Stride DMA 利用</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter12.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 12 章：JIT 编译技术</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter13.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 13 章：GPU 编译优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter14.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 14 章：移动端与边缘设备优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter15.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 15 章：NUMA 架构优化（一）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter16.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 16 章：NUMA 架构优化（二）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter17.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 17 章：动态 Shape 编译（一）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter18.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 18 章：动态 Shape 编译（二）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter19.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 19 章：稀疏与变长数据支持</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter20.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 20 章：JIT 编译技术</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter21.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 21 章：高维张量别名分析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter22.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 22 章：投机执行支持</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter23.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 23 章：自动驾驶场景优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter24.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 24 章：具身智能编译挑战</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter25.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 25 章：200T 模型编译实践</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="CLAUDE.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">Untitled</span>
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </nav>
+        
+        <main class="content">
+            <article>
+                <h1 id="2-ir">第 2 章：中间表示（IR）设计</h1>
+<h2 id="_1">章节大纲</h2>
+<h3 id="21-ir-ai">2.1 开篇：IR 在 AI 编译器中的核心地位</h3>
+<ul>
+<li>IR 设计决定编译器能力边界</li>
+<li>自动驾驶与具身智能场景的 IR 需求</li>
+</ul>
+<h3 id="22-ir">2.2 多层 IR 的必要性</h3>
+<ul>
+<li>2.2.1 抽象层次与优化机会</li>
+<li>2.2.2 渐进式降级（Progressive Lowering）</li>
+<li>2.2.3 层间转换的正确性保证</li>
+<li>2.2.4 200T 模型的 IR 层次设计</li>
+</ul>
+<h3 id="23-ir-vs-ir">2.3 图 IR vs 指令 IR</h3>
+<ul>
+<li>2.3.1 数据流图表示的优势与局限</li>
+<li>2.3.2 控制流的表达方式对比</li>
+<li>2.3.3 混合表示：最佳实践</li>
+<li>2.3.4 大规模并行场景的选择策略</li>
+</ul>
+<h3 id="24-ssa-ai">2.4 SSA 形式在 AI 编译器中的应用</h3>
+<ul>
+<li>2.4.1 传统 SSA 与张量 SSA 的区别</li>
+<li>2.4.2 φ 节点在动态控制流中的处理</li>
+<li>2.4.3 内存 SSA 与别名分析</li>
+<li>2.4.4 梯度计算中的 SSA 转换</li>
+</ul>
+<h3 id="25-mlir">2.5 MLIR 方言设计原则</h3>
+<ul>
+<li>2.5.1 方言的层次结构设计</li>
+<li>2.5.2 类型系统与属性设计</li>
+<li>2.5.3 Operation 语义定义</li>
+<li>2.5.4 方言间的转换模式</li>
+<li>2.5.5 自定义方言的设计决策</li>
+</ul>
+<h3 id="26">2.6 本章小结</h3>
+<h3 id="27">2.7 练习题</h3>
+<h3 id="28">2.8 常见陷阱与错误</h3>
+<h3 id="29">2.9 最佳实践检查清单</h3>
+<hr />
+<h2 id="21-ir-ai_1">2.1 开篇：IR 在 AI 编译器中的核心地位</h2>
+<p>中间表示（Intermediate Representation，IR）是 AI 编译器的灵魂。它不仅是前端语言与后端硬件之间的桥梁，更是各种优化变换的操作对象。对于自动驾驶和具身智能等实时 AI 系统，IR 设计的优劣直接决定了模型部署的性能上限、内存效率和功耗表现。本章将深入探讨 AI 编译器 IR 设计的核心原则，特别关注如何通过精心设计的多层 IR 体系支撑 200T 参数级模型的高效编译。</p>
+<p>在传统编译器中，IR 主要关注标量和简单数据结构的操作。而 AI 编译器的 IR 必须原生支持高维张量运算、复杂的并行模式以及异构硬件的特性。以自动驾驶场景为例，感知模块的卷积运算、决策模块的 Transformer 推理、规划模块的图神经网络，每种计算模式对 IR 的要求都不相同。一个优秀的 IR 设计必须在表达能力、优化机会和编译效率之间找到平衡点。</p>
+<h2 id="22-ir_1">2.2 多层 IR 的必要性</h2>
+<h3 id="221">2.2.1 抽象层次与优化机会</h3>
+<p>多层 IR 架构是现代 AI 编译器的标准设计范式。不同抽象层次的 IR 承载着不同的优化责任：</p>
+<p><strong>高层 IR（Graph Level）</strong>：保留完整的语义信息，适合进行算法级优化。在这一层，编译器可以识别：</p>
+<ul>
+<li>算子融合机会：相邻的 element-wise 操作可以合并</li>
+<li>常量折叠：编译时可计算的子图</li>
+<li>代数简化：利用数学恒等式简化计算</li>
+<li>死代码消除：移除不影响输出的计算</li>
+</ul>
+<p><strong>中层 IR（Loop Level）</strong>：暴露循环结构和内存访问模式，适合进行循环优化和内存优化：</p>
+<ul>
+<li>循环分块（tiling）：改善缓存局部性</li>
+<li>循环融合与分裂：平衡并行性和局部性</li>
+<li>向量化：利用 SIMD 指令</li>
+<li>预取优化：隐藏内存延迟</li>
+</ul>
+<p><strong>低层 IR（Instruction Level）</strong>：接近目标硬件，进行特定硬件优化：</p>
+<ul>
+<li>指令选择：选择最优的硬件指令</li>
+<li>寄存器分配：最小化内存访问</li>
+<li>指令调度：利用指令级并行</li>
+<li>硬件特性利用：如 Tensor Core、Matrix Engine</li>
+</ul>
+<h3 id="222-progressive-lowering">2.2.2 渐进式降级（Progressive Lowering）</h3>
+<p>渐进式降级是多层 IR 系统的核心机制。每次降级都是一次信息的精化和特化过程：</p>
+<p>$$\mathcal{IR}_{high} \xrightarrow{\phi_1} \mathcal{IR}_{mid} \xrightarrow{\phi_2} \mathcal{IR}_{low} \xrightarrow{\phi_3} \text{Machine Code}$$
+其中每个转换函数 $\phi_i$ 必须保证语义等价性：
+$$\forall p \in \mathcal{IR}_i, \text{Semantics}(p) = \text{Semantics}(\phi_i(p))$$
+降级过程中的关键决策点包括：</p>
+<ol>
+<li><strong>内存布局确定</strong>：从逻辑张量到物理内存布局</li>
+<li><strong>并行策略选择</strong>：从抽象并行到具体的线程/块映射</li>
+<li><strong>数值精度转换</strong>：从高精度到混合精度</li>
+<li><strong>控制流具体化</strong>：从高级控制流到跳转指令</li>
+</ol>
+<h3 id="223">2.2.3 层间转换的正确性保证</h3>
+<p>确保 IR 转换的正确性是编译器可靠性的基础。主要验证方法包括：</p>
+<p><strong>形式化验证</strong>：通过定理证明器验证转换规则的正确性。设转换前后的程序分别为 $P$ 和 $P'$，需要证明：
+$$\forall \text{input} \in \mathcal{D}, \llbracket P \rrbracket(\text{input}) = \llbracket P' \rrbracket(\text{input})$$
+<strong>差分测试</strong>：通过对比不同优化级别的输出验证正确性。容许数值误差 $\epsilon$：
+$$|output_{opt} - output_{ref}|_{\infty} &lt; \epsilon$$
+<strong>不变量检查</strong>：在转换前后检查关键属性保持不变，如：</p>
+<ul>
+<li>张量形状一致性</li>
+<li>数据依赖关系保持</li>
+<li>内存访问合法性</li>
+<li>数值范围约束</li>
+</ul>
+<h3 id="224-200t-ir">2.2.4 200T 模型的 IR 层次设计</h3>
+<p>超大规模模型对 IR 设计提出了特殊挑战：</p>
+<p><strong>分片表示</strong>：在高层 IR 中需要表示跨节点的张量分片：</p>
+<div class="codehilite"><pre><span></span><code>Tensor&lt;shape=[B, S, H], sharding=[DP:8, TP:4, PP:16]&gt;
+</code></pre></div>
+
+<p>其中 DP、TP、PP 分别表示数据并行、张量并行和流水线并行的分片维度。</p>
+<p><strong>通信原语</strong>：IR 必须原生支持集合通信操作：</p>
+<ul>
+<li>AllReduce：梯度聚合</li>
+<li>AllGather：激活值收集</li>
+<li>ReduceScatter：分布式归约</li>
+</ul>
+<p><strong>内存层级感知</strong>：IR 需要区分不同的内存层级：</p>
+<ul>
+<li>HBM（高带宽内存）</li>
+<li>L2 Cache</li>
+<li>Shared Memory / Local Memory</li>
+<li>Register File</li>
+</ul>
+<p>对于 200T 模型，典型的 IR 层次设计如下：</p>
+<div class="codehilite"><pre><span></span><code>Level 0: Model Definition IR (PyTorch/JAX)
+         ↓
+Level 1: Distributed Graph IR (分片策略已确定)
+         ↓
+Level 2: Kernel Fusion IR (算子已融合)
+         ↓
+Level 3: Memory Planning IR (内存已规划)
+         ↓
+Level 4: Hardware-specific IR (CUDA/XLA HLO)
+         ↓
+Level 5: Assembly/Binary
+</code></pre></div>
+
+<p>每层的内存占用估算模型：
+$$M_{total} = M_{params} + M_{activations} + M_{gradients} + M_{optimizer} + M_{buffer}$$
+其中对于 200T 模型：</p>
+<ul>
+<li>$M_{params} \approx 400TB$ (FP16)</li>
+<li>$M_{activations} \approx O(B \times L \times H)$，B 为批大小，L 为序列长度，H 为隐藏维度</li>
+<li>$M_{gradients} = M_{params}$</li>
+<li>$M_{optimizer} \geq 2 \times M_{params}$ (Adam)</li>
+</ul>
+<h2 id="23-ir-vs-ir_1">2.3 图 IR vs 指令 IR</h2>
+<h3 id="231">2.3.1 数据流图表示的优势与局限</h3>
+<p><strong>图 IR 的核心优势</strong>：</p>
+<p>图 IR 将计算表示为有向无环图（DAG）或更一般的数据流图，节点代表操作，边代表数据依赖。这种表示特别适合 AI 工作负载：</p>
+<ol>
+<li><strong>并行性显式化</strong>：没有数据依赖的节点可以并行执行</li>
+<li><strong>优化机会易识别</strong>：模式匹配算法可以高效识别子图模式</li>
+<li><strong>硬件映射灵活</strong>：易于进行设备分配和算子调度</li>
+<li><strong>可视化友好</strong>：便于调试和性能分析</li>
+</ol>
+<p>图 IR 的数学表示：
+$$\mathcal{G} = (V, E, \psi, \tau)$$
+其中：</p>
+<ul>
+<li>$V$ 是操作节点集合</li>
+<li>$E \subseteq V \times V$ 是数据流边</li>
+<li>$\psi: V \rightarrow \mathcal{O}$ 将节点映射到操作类型</li>
+<li>$\tau: E \rightarrow \mathcal{T}$ 将边映射到张量类型</li>
+</ul>
+<p><strong>图 IR 的局限性</strong>：</p>
+<ol>
+<li><strong>控制流表达困难</strong>：动态控制流需要特殊节点（如 Switch、Merge）</li>
+<li><strong>内存管理不直观</strong>：难以表达精确的内存分配和释放时机</li>
+<li><strong>副作用难处理</strong>：I/O 操作、随机数生成等需要额外的依赖边</li>
+<li><strong>调度约束表达</strong>：难以表达"必须在 X 之后 Y 之前执行"等约束</li>
+</ol>
+<h3 id="232">2.3.2 控制流的表达方式对比</h3>
+<p><strong>图 IR 中的控制流</strong>：</p>
+<p>使用控制依赖边和特殊节点：</p>
+<div class="codehilite"><pre><span></span><code>     Cond
+    /    \
+   T      F
+   |      |
+Switch  Switch
+   |      |
+ Body1  Body2
+   \    /
+    Merge
+</code></pre></div>
+
+<p>条件执行的语义：
+$$\text{If}(c, t, f) = \begin{cases} t() &amp; \text{if } c = \text{true} \\ f() &amp; \text{if } c = \text{false} \end{cases}$$
+<strong>指令 IR 中的控制流</strong>：</p>
+<p>使用基本块和跳转指令：</p>
+<div class="codehilite"><pre><span></span><code><span class="nl">BB0</span><span class="p">:</span>
+<span class="w">  </span><span class="nf">%cond</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">compare</span><span class="w"> </span><span class="nf">%x</span><span class="p">,</span><span class="w"> </span><span class="nf">%y</span>
+<span class="w">  </span><span class="n">br</span><span class="w"> </span><span class="nf">%cond</span><span class="p">,</span><span class="w"> </span><span class="n">BB1</span><span class="p">,</span><span class="w"> </span><span class="n">BB2</span>
+
+<span class="nl">BB1</span><span class="p">:</span><span class="w">  </span><span class="p">;</span><span class="w"> </span><span class="nb">true</span><span class="w"> </span><span class="n">branch</span>
+<span class="w">  </span><span class="nf">%result1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">...</span>
+<span class="w">  </span><span class="n">br</span><span class="w"> </span><span class="n">BB3</span>
+
+<span class="nl">BB2</span><span class="p">:</span><span class="w">  </span><span class="p">;</span><span class="w"> </span><span class="nb">false</span><span class="w"> </span><span class="n">branch</span>
+<span class="w">  </span><span class="nf">%result2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">...</span>
+<span class="w">  </span><span class="n">br</span><span class="w"> </span><span class="n">BB3</span>
+
+<span class="nl">BB3</span><span class="p">:</span><span class="w">  </span><span class="p">;</span><span class="w"> </span><span class="n">merge</span>
+<span class="w">  </span><span class="nf">%result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">phi</span><span class="w"> </span><span class="p">[</span><span class="nf">%result1</span><span class="p">,</span><span class="w"> </span><span class="n">BB1</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="nf">%result2</span><span class="p">,</span><span class="w"> </span><span class="n">BB2</span><span class="p">]</span>
+</code></pre></div>
+
+<h3 id="233">2.3.3 混合表示：最佳实践</h3>
+<p>现代 AI 编译器通常采用混合策略：</p>
+<p><strong>分层混合</strong>：</p>
+<ul>
+<li>高层使用图 IR（如 TensorFlow Graph、PyTorch FX）</li>
+<li>低层使用指令 IR（如 LLVM IR、SPIR-V）</li>
+</ul>
+<p><strong>区域混合</strong>：</p>
+<ul>
+<li>数据并行区域用图 IR</li>
+<li>控制密集区域用指令 IR</li>
+</ul>
+<p><strong>按需转换</strong>：</p>
+<div class="codehilite"><pre><span></span><code><span class="n">Graph</span><span class="w"> </span><span class="n">Region</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nf">%a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Conv2D</span><span class="p">(</span><span class="nf">%input</span><span class="p">,</span><span class="w"> </span><span class="nf">%weight</span><span class="p">)</span>
+<span class="w">  </span><span class="nf">%b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ReLU</span><span class="p">(</span><span class="nf">%a</span><span class="p">)</span>
+
+<span class="w">  </span><span class="n">CFG</span><span class="w"> </span><span class="n">Region</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="n">in</span><span class="w"> </span><span class="n">range</span><span class="p">(</span><span class="n">N</span><span class="p">)</span><span class="o">:</span>
+<span class="w">      </span><span class="nf">%c</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MatMul</span><span class="p">(</span><span class="nf">%b</span><span class="p">,</span><span class="w"> </span><span class="nf">%w</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nf">%output</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Concat</span><span class="p">(</span><span class="nf">%c</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h3 id="234">2.3.4 大规模并行场景的选择策略</h3>
+<p>对于自动驾驶和具身智能的不同模块，IR 选择策略不同：</p>
+<p><strong>感知模块（CNN 为主）</strong>：</p>
+<ul>
+<li>推荐：图 IR</li>
+<li>原因：规则的数据流，少量控制流</li>
+<li>优化重点：算子融合、内存复用</li>
+</ul>
+<p><strong>决策模块（Transformer 为主）</strong>：</p>
+<ul>
+<li>推荐：混合 IR</li>
+<li>原因：注意力机制有动态性，但主体仍是矩阵运算</li>
+<li>优化重点：FlashAttention 类优化、KV Cache 管理</li>
+</ul>
+<p><strong>规划模块（搜索算法）</strong>：</p>
+<ul>
+<li>推荐：指令 IR</li>
+<li>原因：复杂的控制流和递归结构</li>
+<li>优化重点：分支预测、投机执行</li>
+</ul>
+<p>性能模型对比：</p>
+<p>设批处理大小为 $B$，模型深度为 $L$，隐藏维度为 $H$：</p>
+<p>图 IR 调度开销：$O(|V| + |E|)$
+指令 IR 调度开销：$O(|BB| \times |I|)$</p>
+<p>其中 $|BB|$ 是基本块数量，$|I|$ 是平均指令数。</p>
+<p>对于典型的 Transformer 模型：</p>
+<ul>
+<li>图 IR：$|V| = O(L)$，$|E| = O(L)$</li>
+<li>指令 IR：$|BB| = O(L)$，$|I| = O(H^2)$</li>
+</ul>
+<p>因此对于大模型，图 IR 在编译时间上有优势。</p>
+<h2 id="24-ssa-ai_1">2.4 SSA 形式在 AI 编译器中的应用</h2>
+<h3 id="241-ssa-ssa">2.4.1 传统 SSA 与张量 SSA 的区别</h3>
+<p>静态单赋值（Static Single Assignment，SSA）形式是编译器优化的基石。在传统编译器中，SSA 确保每个变量只被赋值一次，极大简化了数据流分析。但在 AI 编译器中，我们处理的是张量而非标量，这带来了新的挑战和机遇。</p>
+<p><strong>传统 SSA</strong>：</p>
+<div class="codehilite"><pre><span></span><code>x = 1           =&gt;    x_0 = 1
+y = x + 2             y_0 = x_0 + 2
+x = y <span class="gs">* 3             x_1 = y_0 *</span> 3
+z = x + y             z_0 = x_1 + y_0
+</code></pre></div>
+
+<p><strong>张量 SSA 的特殊性</strong>：</p>
+<ol>
+<li>
+<p><strong>部分更新问题</strong>：张量经常只更新部分元素
+$$T'[i:j, k:l] = f(T[i:j, k:l])$$
+SSA 表示需要引入特殊的更新操作：
+$$T_1 = \text{update}(T_0, \text{slice}=(i:j, k:l), \text{value}=f(T_0[i:j, k:l]))$$</p>
+</li>
+<li>
+<p><strong>内存别名复杂性</strong>：张量的视图（view）和切片（slice）创建别名关系</p>
+</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>A_0 = allocate([1000, 1000])
+B_0 = view(A_0, [100, 10000])  # B和A共享内存
+B_1 = B_0 + 1                   # 影响A的内容
+</code></pre></div>
+
+<ol start="3">
+<li><strong>生命周期管理</strong>：大张量的生命周期直接影响内存使用
+   - 需要精确的 def-use 链分析
+   - 支持原地操作（in-place operation）优化</li>
+</ol>
+<h3 id="242">2.4.2 φ 节点在动态控制流中的处理</h3>
+<p>φ（phi）节点用于在控制流汇合点选择正确的值。在 AI 编译器中，φ 节点需要处理张量级别的选择：</p>
+<p><strong>标量 φ 节点</strong>：</p>
+<div class="codehilite"><pre><span></span><code><span class="n">BB_merge</span><span class="o">:</span>
+<span class="w">  </span><span class="n">x_2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">φ</span><span class="o">(</span><span class="n">x_0</span><span class="w"> </span><span class="n">from</span><span class="w"> </span><span class="n">BB_then</span><span class="o">,</span><span class="w"> </span><span class="n">x_1</span><span class="w"> </span><span class="n">from</span><span class="w"> </span><span class="n">BB_else</span><span class="o">)</span>
+</code></pre></div>
+
+<p><strong>张量 φ 节点的挑战</strong>：</p>
+<ol>
+<li><strong>内存开销</strong>：简单复制大张量代价高昂</li>
+<li>
+<p><strong>条件写入</strong>：需要支持条件选择写入
+$$T_{out} = \text{where}(condition, T_{true}, T_{false})$$</p>
+</li>
+<li>
+<p><strong>优化机会</strong>：
+   - 如果分支中张量大部分相同，可以只更新差异部分
+   - 可以延迟 φ 节点的实际执行直到真正使用</p>
+</li>
+</ol>
+<p><strong>动态形状下的 φ 节点</strong>：</p>
+<p>当张量形状在运行时才能确定时，φ 节点需要处理形状传播：
+$$\text{shape}(T_{\phi}) = \text{merge}(\text{shape}(T_{branch1}), \text{shape}(T_{branch2}))$$
+合并规则：</p>
+<ul>
+<li>静态维度必须相等</li>
+<li>动态维度取最宽松的约束</li>
+</ul>
+<h3 id="243-ssa">2.4.3 内存 SSA 与别名分析</h3>
+<p>在 AI 编译器中，内存 SSA（Memory SSA）用于跟踪内存状态的演化，这对于优化内存访问至关重要。</p>
+<p><strong>内存 SSA 表示</strong>：</p>
+<p>每个内存操作创建新的内存状态版本：</p>
+<div class="codehilite"><pre><span></span><code><span class="n">mem_0</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">initial_memory</span>
+<span class="p">(</span><span class="n">val_0</span><span class="p">,</span><span class="w"> </span><span class="n">mem_1</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">load</span><span class="p">(</span><span class="n">addr_0</span><span class="p">,</span><span class="w"> </span><span class="n">mem_0</span><span class="p">)</span>
+<span class="n">mem_2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">store</span><span class="p">(</span><span class="n">addr_1</span><span class="p">,</span><span class="w"> </span><span class="n">val_1</span><span class="p">,</span><span class="w"> </span><span class="n">mem_1</span><span class="p">)</span>
+<span class="p">(</span><span class="n">val_2</span><span class="p">,</span><span class="w"> </span><span class="n">mem_3</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">load</span><span class="p">(</span><span class="n">addr_2</span><span class="p">,</span><span class="w"> </span><span class="n">mem_2</span><span class="p">)</span>
+</code></pre></div>
+
+<p><strong>张量别名分析</strong>：</p>
+<p>对于带 stride 的张量，判断两个张量是否有重叠：</p>
+<p>设张量 $A$ 和 $B$ 的访问模式为：</p>
+<ul>
+<li>$A$: base=$b_A$, shape=$(s_1^A, ..., s_n^A)$, stride=$(d_1^A, ..., d_n^A)$</li>
+<li>$B$: base=$b_B$, shape=$(s_1^B, ..., s_n^B)$, stride=$(d_1^B, ..., d_n^B)$</li>
+</ul>
+<p>访问的地址集合：
+$$\text{Addr}_A = \{b_A + \sum_{i=1}^{n} k_i \cdot d_i^A \mid 0 \leq k_i &lt; s_i^A\}$$
+别名条件：$\text{Addr}_A \cap \text{Addr}_B \neq \emptyset$</p>
+<p><strong>依赖性分析</strong>：</p>
+<p>使用 SSA 形式简化依赖性分析：</p>
+<ul>
+<li>Read-After-Write (RAW)：真依赖</li>
+<li>Write-After-Read (WAR)：反依赖（SSA 中自动消除）</li>
+<li>Write-After-Write (WAW)：输出依赖（SSA 中自动消除）</li>
+</ul>
+<h3 id="244-ssa">2.4.4 梯度计算中的 SSA 转换</h3>
+<p>自动微分需要特殊的 SSA 处理，因为反向传播本质上是逆向的数据流：</p>
+<p><strong>前向计算的 SSA</strong>：</p>
+<div class="codehilite"><pre><span></span><code>x_0 = input
+y_0 = W_0 * x_0
+z_0 = activation(y_0)
+loss_0 = loss_fn(z_0, target)
+</code></pre></div>
+
+<p><strong>反向传播的 SSA 构建</strong>：</p>
+<p>反向传播需要构建对偶的 SSA 图：</p>
+<div class="codehilite"><pre><span></span><code>grad_loss_0 = 1.0
+grad_z_0 = d_loss_fn(z_0, target, grad_loss_0)
+grad_y_0 = d_activation(y_0, grad_z_0)
+grad_W_0 = x_0^T <span class="gs">* grad_y_0</span>
+<span class="gs">grad_x_0 = W_0^T *</span> grad_y_0
+</code></pre></div>
+
+<p><strong>梯度累积的 SSA 表示</strong>：</p>
+<p>当同一参数在多处使用时，需要累积梯度：</p>
+<div class="codehilite"><pre><span></span><code>grad_W_partial_1 = compute_grad_1(...)
+grad_W_partial_2 = compute_grad_2(...)
+grad_W_total = grad_W_partial_1 + grad_W_partial_2
+</code></pre></div>
+
+<p><strong>检查点（Checkpointing）的 SSA 影响</strong>：</p>
+<p>为节省内存，部分激活值不保存而是重算：</p>
+<div class="codehilite"><pre><span></span><code><span class="gh">#</span> 前向传播
+x_0 = input
+y_0 = f(x_0)  # 不保存y_0
+z_0 = g(y_0)
+checkpoint(x_0)  # 只保存x_0
+
+<span class="gh">#</span> 反向传播
+x_0&#39; = restore_checkpoint()
+y_0&#39; = f(x_0&#39;)  # 重新计算
+grad_y = backward_g(y_0&#39;, grad_z)
+</code></pre></div>
+
+<p>这需要 SSA 分析来确定：</p>
+<ol>
+<li>哪些值需要保存（活跃在反向传播中）</li>
+<li>哪些值可以重算（计算成本 vs 内存成本权衡）</li>
+<li>重算的调度顺序（最小化峰值内存）</li>
+</ol>
+<h2 id="25-mlir_1">2.5 MLIR 方言设计原则</h2>
+<p>Multi-Level Intermediate Representation (MLIR) 提供了一个可扩展的 IR 框架，通过方言（Dialect）机制支持不同抽象层次的表示。这对于 AI 编译器特别重要，因为需要在同一框架内处理从高级张量操作到低级硬件指令的转换。</p>
+<h3 id="251">2.5.1 方言的层次结构设计</h3>
+<p><strong>方言层次示例</strong>：</p>
+<div class="codehilite"><pre><span></span><code>┌─────────────────┐
+│   Frontend      │ (tf, torch, mhlo)
+├─────────────────┤
+│   High-Level    │ (linalg, tensor)
+├─────────────────┤
+│   Mid-Level     │ (affine, scf)
+├─────────────────┤
+│   Low-Level     │ (llvm, gpu, spirv)
+└─────────────────┘
+</code></pre></div>
+
+<p><strong>层次设计原则</strong>：</p>
+<ol>
+<li><strong>渐进式降级</strong>：每个方言应该只降低一个抽象层次</li>
+<li><strong>正交性</strong>：不同方言负责不同的关注点（计算 vs 控制流 vs 内存）</li>
+<li><strong>可组合性</strong>：方言之间可以混合使用</li>
+<li><strong>往返转换</strong>：某些方言对之间应支持无损转换</li>
+</ol>
+<p><strong>自动驾驶场景的方言设计</strong>：</p>
+<div class="codehilite"><pre><span></span><code>perception_dialect:     // 感知专用
+
+  <span class="k">-</span> conv2d_depthwise
+  <span class="k">-</span> nms (non-maximum suppression)
+  <span class="k">-</span> roi_align
+
+planning_dialect:       // 规划专用
+
+  <span class="k">-</span> graph_search
+  <span class="k">-</span> trajectory_optimize
+  <span class="k">-</span> collision_check
+
+control_dialect:        // 控制专用
+
+  <span class="k">-</span> pid_compute
+  <span class="k">-</span> kalman_filter
+  <span class="k">-</span> safety_check
+</code></pre></div>
+
+<h3 id="252">2.5.2 类型系统与属性设计</h3>
+<p><strong>类型系统设计原则</strong>：</p>
+<ol>
+<li><strong>张量类型参数化</strong>：</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="nx">tensor</span><span class="cp">&lt;?</span><span class="nx">x</span><span class="o">?</span><span class="nx">x</span><span class="o">?</span><span class="nx">xf32</span><span class="p">,</span> <span class="c1">#layout_attr&gt;</span>
+<span class="nx">memref</span><span class="o">&lt;</span><span class="mi">16</span><span class="nx">x32xf16</span><span class="p">,</span> <span class="nx">affine_map</span><span class="o">&lt;</span><span class="p">(</span><span class="nx">d0</span><span class="p">,</span> <span class="nx">d1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="p">(</span><span class="nx">d1</span><span class="p">,</span> <span class="nx">d0</span><span class="p">)</span><span class="o">&gt;&gt;</span>
+</code></pre></div>
+
+<ol start="2">
+<li><strong>量化类型支持</strong>：
+$$\text{QuantizedType} = \text{Scale} \times (\text{StorageType} - \text{ZeroPoint})$$
+表示为：</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="sx">!quant.uniform&lt;i8:f32, 0.5:128&gt;  // scale=0.5, zero_point=128</span>
+</code></pre></div>
+
+<ol start="3">
+<li><strong>稀疏类型表示</strong>：</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="cp">#CSR = #sparse_tensor.encoding&lt;{</span>
+<span class="w">  </span><span class="n">dimLevelType</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s">&quot;dense&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;compressed&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="n">dimOrdering</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">affine_map</span><span class="o">&lt;</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="n">j</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="n">j</span><span class="p">)</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">  </span><span class="n">pointerBitWidth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">32</span><span class="p">,</span>
+<span class="w">  </span><span class="n">indexBitWidth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">32</span>
+<span class="p">}</span><span class="o">&gt;</span>
+<span class="n">tensor</span><span class="o">&lt;</span><span class="mi">1024</span><span class="n">x1024xf32</span><span class="p">,</span><span class="w"> </span><span class="err">#</span><span class="n">CSR</span><span class="o">&gt;</span>
+</code></pre></div>
+
+<p><strong>属性设计最佳实践</strong>：</p>
+<ol>
+<li><strong>编译时常量</strong>：使用属性而非操作数</li>
+<li><strong>硬件约束</strong>：通过属性传递（如 <code>#gpu.block&lt;16,16&gt;</code>）</li>
+<li><strong>优化提示</strong>：如 <code>{parallel, vectorize, unroll_factor=4}</code></li>
+</ol>
+<h3 id="253-operation">2.5.3 Operation 语义定义</h3>
+<p><strong>操作定义的完整性要求</strong>：</p>
+<p>每个操作必须定义：</p>
+<ol>
+<li><strong>操作数和结果类型约束</strong></li>
+<li><strong>语义的数学描述</strong></li>
+<li><strong>副作用标记</strong>（纯函数、内存读写、控制流影响）</li>
+<li><strong>规范化模式</strong>（canonicalization patterns）</li>
+<li><strong>合法性验证</strong>（verification）</li>
+</ol>
+<p><strong>示例：矩阵乘法操作定义</strong>：</p>
+<div class="codehilite"><pre><span></span><code><span class="n">def</span><span class="w"> </span><span class="n">MatMulOp</span><span class="w"> </span><span class="err">:</span><span class="w"> </span><span class="n">Op</span><span class="o">&lt;</span><span class="ss">&quot;matmul&quot;</span><span class="p">,</span><span class="w"> </span><span class="o">[</span><span class="n">NoSideEffect</span><span class="o">]&gt;</span><span class="w"> </span><span class="err">{</span>
+<span class="w">  </span><span class="n">let</span><span class="w"> </span><span class="n">arguments</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">ins</span><span class="w"> </span>
+<span class="w">    </span><span class="nl">Tensor</span><span class="p">:</span><span class="err">$</span><span class="n">lhs</span><span class="p">,</span>
+<span class="w">    </span><span class="nl">Tensor</span><span class="p">:</span><span class="err">$</span><span class="n">rhs</span><span class="p">,</span>
+<span class="w">    </span><span class="n">OptionalAttr</span><span class="o">&lt;</span><span class="n">F32Attr</span><span class="o">&gt;</span><span class="err">:$</span><span class="n">alpha</span><span class="p">,</span>
+<span class="w">    </span><span class="n">OptionalAttr</span><span class="o">&lt;</span><span class="n">BoolAttr</span><span class="o">&gt;</span><span class="err">:$</span><span class="n">transpose_a</span><span class="p">,</span>
+<span class="w">    </span><span class="n">OptionalAttr</span><span class="o">&lt;</span><span class="n">BoolAttr</span><span class="o">&gt;</span><span class="err">:$</span><span class="n">transpose_b</span>
+<span class="w">  </span><span class="p">);</span>
+
+<span class="w">  </span><span class="n">let</span><span class="w"> </span><span class="n">results</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">outs</span><span class="w"> </span><span class="nl">Tensor</span><span class="p">:</span><span class="err">$</span><span class="k">result</span><span class="p">);</span>
+
+<span class="w">  </span><span class="n">let</span><span class="w"> </span><span class="n">verifier</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">[</span><span class="n">{</span>
+<span class="n">    // 验证维度匹配</span>
+<span class="n">    // lhs: [M, K</span><span class="o">]</span><span class="p">,</span><span class="w"> </span><span class="nl">rhs</span><span class="p">:</span><span class="w"> </span><span class="o">[</span><span class="n">K, N</span><span class="o">]</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="k">result</span><span class="err">:</span><span class="w"> </span><span class="o">[</span><span class="n">M, N</span><span class="o">]</span>
+<span class="w">  </span><span class="err">}]</span><span class="p">;</span>
+
+<span class="w">  </span><span class="n">let</span><span class="w"> </span><span class="n">hasCanonicalizer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w">  </span><span class="o">//</span><span class="w"> </span><span class="n">A</span><span class="o">*</span><span class="n">I</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">A</span><span class="p">,</span><span class="w"> </span><span class="n">A</span><span class="o">*</span><span class="mi">0</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span>
+<span class="err">}</span>
+</code></pre></div>
+
+<p><strong>语义的形式化描述</strong>：
+$$\text{MatMul}(A, B)_{ij} = \sum_{k=1}^{K} A_{ik} \cdot B_{kj}$$
+带转置的版本：
+$$\text{MatMul}(A, B, \text{trans}_A, \text{trans}_B)_{ij} = \sum_{k} A'_{ik} \cdot B'_{kj}$$
+其中 $A' = \text{trans}_A ? A^T : A$</p>
+<h3 id="254">2.5.4 方言间的转换模式</h3>
+<p><strong>转换模式类型</strong>：</p>
+<ol>
+<li><strong>1-to-1 转换</strong>：直接映射</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="c">%0 = tensor.extract_slice %arg0[%i, %j][%sz1, %sz2][1, 1]</span>
+<span class="p">=</span><span class="o">&gt;</span>
+<span class="c">%0 = memref.subview %arg0[%i, %j][%sz1, %sz2][1, 1]</span>
+</code></pre></div>
+
+<ol start="2">
+<li><strong>1-to-N 转换</strong>：展开为多个操作</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="o">%</span><span class="mi">0</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">linalg</span><span class="p">.</span><span class="n">matmul</span><span class="w"> </span><span class="n">ins</span><span class="p">(</span><span class="o">%</span><span class="n">A</span><span class="p">,</span><span class="w"> </span><span class="o">%</span><span class="n">B</span><span class="p">)</span><span class="w"> </span><span class="n">outs</span><span class="p">(</span><span class="o">%</span><span class="n">C</span><span class="p">)</span>
+<span class="o">=&gt;</span>
+<span class="n">scf</span><span class="p">.</span><span class="n">parallel</span><span class="w"> </span><span class="p">(</span><span class="nf">%i</span><span class="p">,</span><span class="w"> </span><span class="nf">%j</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="p">(</span><span class="o">%</span><span class="n">M</span><span class="p">,</span><span class="w"> </span><span class="o">%</span><span class="n">N</span><span class="p">)</span><span class="w"> </span><span class="n">step</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nf">%sum</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">scf</span><span class="p">.</span><span class="k">for</span><span class="w"> </span><span class="nf">%k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="o">%</span><span class="n">K</span><span class="w"> </span><span class="n">step</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="n">iter_args</span><span class="p">(</span><span class="nf">%acc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nf">%a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">load</span><span class="w"> </span><span class="o">%</span><span class="n">A</span><span class="p">[</span><span class="nf">%i</span><span class="p">,</span><span class="w"> </span><span class="nf">%k</span><span class="p">]</span>
+<span class="w">    </span><span class="nf">%b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">load</span><span class="w"> </span><span class="o">%</span><span class="n">B</span><span class="p">[</span><span class="nf">%k</span><span class="p">,</span><span class="w"> </span><span class="nf">%j</span><span class="p">]</span>
+<span class="w">    </span><span class="nf">%prod</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mulf</span><span class="w"> </span><span class="nf">%a</span><span class="p">,</span><span class="w"> </span><span class="nf">%b</span>
+<span class="w">    </span><span class="nf">%new_acc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">addf</span><span class="w"> </span><span class="nf">%acc</span><span class="p">,</span><span class="w"> </span><span class="nf">%prod</span>
+<span class="w">    </span><span class="n">scf</span><span class="p">.</span><span class="n">yield</span><span class="w"> </span><span class="nf">%new_acc</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="n">store</span><span class="w"> </span><span class="nf">%sum</span><span class="p">,</span><span class="w"> </span><span class="o">%</span><span class="n">C</span><span class="p">[</span><span class="nf">%i</span><span class="p">,</span><span class="w"> </span><span class="nf">%j</span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<ol start="3">
+<li><strong>N-to-1 融合</strong>：模式匹配与替换</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="o">%</span><span class="mi">0</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">linalg</span><span class="p">.</span><span class="n">generic</span><span class="w"> </span><span class="p">{</span><span class="n">indexing_maps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[...]}</span><span class="w"> </span><span class="n">ins</span><span class="p">(</span><span class="o">%</span><span class="n">A</span><span class="p">)</span><span class="w"> </span><span class="n">outs</span><span class="p">(</span><span class="o">%</span><span class="n">B</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="o">^</span><span class="n">bb0</span><span class="p">(</span><span class="nf">%a</span><span class="o">:</span><span class="w"> </span><span class="n">f32</span><span class="p">,</span><span class="w"> </span><span class="nf">%b</span><span class="o">:</span><span class="w"> </span><span class="n">f32</span><span class="p">)</span><span class="o">:</span>
+<span class="w">    </span><span class="nf">%c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">math</span><span class="p">.</span><span class="n">exp</span><span class="w"> </span><span class="nf">%a</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">f32</span>
+<span class="w">    </span><span class="n">linalg</span><span class="p">.</span><span class="n">yield</span><span class="w"> </span><span class="nf">%c</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">f32</span>
+<span class="p">}</span>
+<span class="o">%</span><span class="mi">1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">linalg</span><span class="p">.</span><span class="n">reduce</span><span class="w"> </span><span class="p">{</span><span class="n">axis</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">}</span><span class="w"> </span><span class="n">ins</span><span class="p">(</span><span class="o">%</span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="n">outs</span><span class="p">(</span><span class="o">%</span><span class="n">C</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="o">^</span><span class="n">bb0</span><span class="p">(</span><span class="nf">%a</span><span class="o">:</span><span class="w"> </span><span class="n">f32</span><span class="p">,</span><span class="w"> </span><span class="nf">%b</span><span class="o">:</span><span class="w"> </span><span class="n">f32</span><span class="p">)</span><span class="o">:</span>
+<span class="w">    </span><span class="nf">%c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">addf</span><span class="w"> </span><span class="nf">%a</span><span class="p">,</span><span class="w"> </span><span class="nf">%b</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">f32</span>
+<span class="w">    </span><span class="n">linalg</span><span class="p">.</span><span class="n">yield</span><span class="w"> </span><span class="nf">%c</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">f32</span>
+<span class="p">}</span>
+<span class="o">=&gt;</span>
+<span class="o">%</span><span class="mi">0</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">custom</span><span class="p">.</span><span class="n">softmax</span><span class="w"> </span><span class="n">ins</span><span class="p">(</span><span class="o">%</span><span class="n">A</span><span class="p">)</span><span class="w"> </span><span class="n">outs</span><span class="p">(</span><span class="o">%</span><span class="n">C</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="n">axis</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">}</span>
+</code></pre></div>
+
+<p><strong>转换正确性保证</strong>：</p>
+<p>使用 Pattern Rewriter 框架确保：</p>
+<ol>
+<li><strong>局部等价性</strong>：每个转换保持局部语义</li>
+<li><strong>终止性</strong>：避免循环转换</li>
+<li><strong>确定性</strong>：转换顺序不影响最终结果</li>
+</ol>
+<h3 id="255">2.5.5 自定义方言的设计决策</h3>
+<p><strong>何时创建新方言</strong>：</p>
+<ol>
+<li><strong>领域特定抽象</strong>：如量子计算、密码学运算</li>
+<li><strong>硬件特定功能</strong>：如 NPU 的特殊指令</li>
+<li><strong>优化边界</strong>：需要保持某些不变量的操作组</li>
+</ol>
+<p><strong>设计检查清单</strong>：</p>
+<ul>
+<li>[ ] 是否与现有方言功能重叠？</li>
+<li>[ ] 抽象层次是否合适？</li>
+<li>[ ] 是否容易降级到下层方言？</li>
+<li>[ ] 类型系统是否完备？</li>
+<li>[ ] 是否提供了足够的优化机会？</li>
+<li>[ ] 验证规则是否完整？</li>
+</ul>
+<p><strong>案例：自动驾驶感知方言</strong>：</p>
+<div class="codehilite"><pre><span></span><code><span class="nx">dialect</span><span class="w"> </span><span class="nx">Perception</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 3D 检测框类型</span>
+<span class="w">  </span><span class="k">type</span><span class="w"> </span><span class="nx">BBox3D</span><span class="p">&lt;</span><span class="kt">f32</span><span class="p">[</span><span class="mi">7</span><span class="p">]&gt;</span><span class="w">  </span><span class="c1">// x,y,z,w,h,d,yaw</span>
+
+<span class="w">  </span><span class="c1">// 点云类型</span>
+<span class="w">  </span><span class="k">type</span><span class="w"> </span><span class="nx">PointCloud</span><span class="p">&lt;</span><span class="nx">n</span><span class="w"> </span><span class="nx">x</span><span class="w"> </span><span class="mi">4</span><span class="w"> </span><span class="nx">x</span><span class="w"> </span><span class="kt">f32</span><span class="p">&gt;</span><span class="w">  </span><span class="c1">// n points, (x,y,z,intensity)</span>
+
+<span class="w">  </span><span class="c1">// 操作定义</span>
+<span class="w">  </span><span class="nx">operation</span><span class="w"> </span><span class="nx">voxelize</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">(</span><span class="nx">PointCloud</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="nx">Tensor</span><span class="p">&lt;</span><span class="nx">X</span><span class="w"> </span><span class="nx">x</span><span class="w"> </span><span class="nx">Y</span><span class="w"> </span><span class="nx">x</span><span class="w"> </span><span class="nx">Z</span><span class="w"> </span><span class="nx">x</span><span class="w"> </span><span class="nx">F</span><span class="p">&gt;</span>
+<span class="w">  </span><span class="nx">operation</span><span class="w"> </span><span class="nx">pillars_encode</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">(</span><span class="nx">PointCloud</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="nx">Tensor</span><span class="p">&lt;</span><span class="nx">P</span><span class="w"> </span><span class="nx">x</span><span class="w"> </span><span class="nx">N</span><span class="w"> </span><span class="nx">x</span><span class="w"> </span><span class="nx">F</span><span class="p">&gt;</span>
+<span class="w">  </span><span class="nx">operation</span><span class="w"> </span><span class="nx">nms_3d</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">(</span><span class="nx">BBox3D</span><span class="p">[],</span><span class="w"> </span><span class="nx">scores</span><span class="p">[])</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="p">(</span><span class="nx">indices</span><span class="p">[])</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>性能建模：
+$$T_{voxelize} = O(N_{points}) + O(X \times Y \times Z)$$
+$$T_{nms} = O(N_{boxes}^2)$$（最坏情况）</p>
+<h2 id="26_1">2.6 本章小结</h2>
+<p>本章深入探讨了 AI 编译器中间表示设计的核心概念和实践原则。关键要点包括：</p>
+<ol>
+<li>
+<p><strong>多层 IR 架构</strong>是现代 AI 编译器的基础，通过渐进式降级在不同抽象层次进行针对性优化。每层 IR 承载不同的优化职责，从高层的算法优化到低层的硬件特定优化。</p>
+</li>
+<li>
+<p><strong>图 IR 与指令 IR</strong> 各有优势，实践中常采用混合策略。图 IR 适合表达数据并行和优化机会识别，指令 IR 适合精确控制和复杂控制流。选择取决于具体的应用场景和优化目标。</p>
+</li>
+<li>
+<p><strong>SSA 形式</strong>在 AI 编译器中需要扩展以处理张量操作。张量 SSA 必须处理部分更新、内存别名和大规模数据的生命周期管理。在自动微分中，SSA 分析对于检查点策略至关重要。</p>
+</li>
+<li>
+<p><strong>MLIR 方言机制</strong>提供了构建可扩展 AI 编译器的框架。通过精心设计的方言层次、类型系统和转换模式，可以在统一框架内处理从前端到硬件的全栈优化。</p>
+</li>
+<li>
+<p><strong>200T 模型编译</strong>对 IR 设计提出了特殊要求，包括分布式表示、通信原语、内存层级感知等。IR 必须原生支持模型并行、数据并行和流水线并行的表达。</p>
+</li>
+</ol>
+<p>核心数学模型总结：</p>
+<ul>
+<li>IR 转换的语义等价性：$\text{Semantics}(P) = \text{Semantics}(\phi(P))$</li>
+<li>内存占用模型：$M_{total} = M_{params} + M_{activations} + M_{gradients} + M_{optimizer} + M_{buffer}$</li>
+<li>张量别名分析：$\text{Addr}_A \cap \text{Addr}_B \neq \emptyset$</li>
+<li>编译时间复杂度：图 IR $O(|V| + |E|)$ vs 指令 IR $O(|BB| \times |I|)$</li>
+</ul>
+<h2 id="27_1">2.7 练习题</h2>
+<h3 id="_2">基础题（理解概念）</h3>
+<p><strong>练习 2.1</strong>：多层 IR 设计
+给定一个简单的神经网络层：$y = \text{ReLU}(Wx + b)$，设计三层 IR 表示（高层、中层、低层），并说明每层的优化机会。</p>
+<details>
+<summary>提示</summary>
+<p>考虑高层的算子融合、中层的循环优化、低层的向量化。</p>
+</details>
+<details>
+<summary>参考答案</summary>
+<p>高层 IR：</p>
+<div class="codehilite"><pre><span></span><code><span class="nf">%y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">nn</span><span class="p">.</span><span class="n">linear</span><span class="p">(</span><span class="nf">%x</span><span class="p">,</span><span class="w"> </span><span class="o">%</span><span class="n">W</span><span class="p">,</span><span class="w"> </span><span class="nf">%b</span><span class="p">)</span>
+<span class="nf">%out</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">nn</span><span class="p">.</span><span class="n">relu</span><span class="p">(</span><span class="nf">%y</span><span class="p">)</span>
+</code></pre></div>
+
+<p>优化机会：融合 linear 和 relu，消除中间结果</p>
+<p>中层 IR：</p>
+<div class="codehilite"><pre><span></span><code><span class="k">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="mf">0.</span><span class="p">.</span><span class="nl">M</span><span class="p">:</span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="mf">0.</span><span class="p">.</span><span class="nl">N</span><span class="p">:</span>
+<span class="w">    </span><span class="nf">sum</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="mf">0.</span><span class="p">.</span><span class="nl">K</span><span class="p">:</span>
+<span class="w">      </span><span class="nf">sum</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">W</span><span class="o">[</span><span class="n">i</span><span class="o">][</span><span class="n">k</span><span class="o">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">x</span><span class="o">[</span><span class="n">k</span><span class="o">][</span><span class="n">j</span><span class="o">]</span>
+<span class="w">    </span><span class="n">y</span><span class="o">[</span><span class="n">i</span><span class="o">][</span><span class="n">j</span><span class="o">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nf">sum</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">b</span><span class="o">[</span><span class="n">i</span><span class="o">]</span><span class="p">)</span>
+</code></pre></div>
+
+<p>优化机会：循环分块、并行化、向量化</p>
+<p>低层 IR：</p>
+<div class="codehilite"><pre><span></span><code><span class="n">vmov</span><span class="w"> </span><span class="n">v0</span><span class="p">,</span><span class="w"> </span><span class="n">#0</span>
+<span class="n">vld1</span><span class="w"> </span><span class="err">{</span><span class="n">v1</span><span class="err">}</span><span class="p">,</span><span class="w"> </span><span class="o">[</span><span class="n">W_ptr</span><span class="o">]</span>
+<span class="n">vld1</span><span class="w"> </span><span class="err">{</span><span class="n">v2</span><span class="err">}</span><span class="p">,</span><span class="w"> </span><span class="o">[</span><span class="n">x_ptr</span><span class="o">]</span>
+<span class="n">vfma</span><span class="w"> </span><span class="n">v3</span><span class="p">,</span><span class="w"> </span><span class="n">v1</span><span class="p">,</span><span class="w"> </span><span class="n">v2</span>
+<span class="n">vmax</span><span class="w"> </span><span class="n">v4</span><span class="p">,</span><span class="w"> </span><span class="n">v3</span><span class="p">,</span><span class="w"> </span><span class="n">v0</span>
+<span class="n">vst1</span><span class="w"> </span><span class="err">{</span><span class="n">v4</span><span class="err">}</span><span class="p">,</span><span class="w"> </span><span class="o">[</span><span class="n">y_ptr</span><span class="o">]</span>
+</code></pre></div>
+
+<p>优化机会：指令调度、寄存器分配</p>
+</details>
+<p><strong>练习 2.2</strong>：图 IR vs 指令 IR
+一个包含动态控制流的模型：如果置信度 &gt; 0.5 执行复杂处理，否则执行简单处理。分别用图 IR 和指令 IR 表示，并分析优缺点。</p>
+<details>
+<summary>提示</summary>
+<p>图 IR 需要 Switch/Merge 节点，指令 IR 使用条件跳转。</p>
+</details>
+<details>
+<summary>参考答案</summary>
+<p>图 IR 表示：</p>
+<div class="codehilite"><pre><span></span><code><span class="w">     </span><span class="o">[</span><span class="n">Input</span><span class="o">]</span>
+<span class="w">        </span><span class="o">|</span>
+<span class="w">    </span><span class="o">[</span><span class="n">Confidence</span><span class="o">]</span>
+<span class="w">        </span><span class="o">|</span>
+<span class="w">     </span><span class="o">[</span><span class="n">Compare &gt; 0.5</span><span class="o">]</span>
+<span class="w">      </span><span class="o">/</span><span class="w">        </span><span class="err">\</span>
+<span class="w">   </span><span class="o">[</span><span class="n">Switch</span><span class="o">]</span><span class="w">  </span><span class="o">[</span><span class="n">Switch</span><span class="o">]</span>
+<span class="w">    </span><span class="o">/</span><span class="w">           </span><span class="err">\</span>
+<span class="o">[</span><span class="n">Complex</span><span class="o">]</span><span class="w">    </span><span class="o">[</span><span class="n">Simple</span><span class="o">]</span>
+<span class="w">    </span><span class="err">\</span><span class="w">           </span><span class="o">/</span>
+<span class="w">     </span><span class="o">[</span><span class="n">Merge</span><span class="o">]</span>
+<span class="w">        </span><span class="o">|</span>
+<span class="w">     </span><span class="o">[</span><span class="n">Output</span><span class="o">]</span>
+</code></pre></div>
+
+<p>优点：数据流清晰，易于识别并行机会
+缺点：控制流表达复杂，需要特殊节点</p>
+<p>指令 IR 表示：</p>
+<div class="codehilite"><pre><span></span><code><span class="w">  </span><span class="nf">%conf</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">compute_confidence</span><span class="p">(</span><span class="nf">%input</span><span class="p">)</span>
+<span class="w">  </span><span class="nf">%cond</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fcmp</span><span class="w"> </span><span class="n">ogt</span><span class="w"> </span><span class="nf">%conf</span><span class="p">,</span><span class="w"> </span><span class="mf">0.5</span>
+<span class="w">  </span><span class="n">br</span><span class="w"> </span><span class="n">i1</span><span class="w"> </span><span class="nf">%cond</span><span class="p">,</span><span class="w"> </span><span class="n">label</span><span class="w"> </span><span class="nf">%complex</span><span class="p">,</span><span class="w"> </span><span class="n">label</span><span class="w"> </span><span class="nf">%simple</span>
+
+<span class="nl">complex</span><span class="p">:</span>
+<span class="w">  </span><span class="nf">%res1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">call</span><span class="w"> </span><span class="err">@</span><span class="n">complex_process</span><span class="p">(</span><span class="nf">%input</span><span class="p">)</span>
+<span class="w">  </span><span class="n">br</span><span class="w"> </span><span class="n">label</span><span class="w"> </span><span class="nf">%merge</span>
+
+<span class="nl">simple</span><span class="p">:</span>
+<span class="w">  </span><span class="nf">%res2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">call</span><span class="w"> </span><span class="err">@</span><span class="n">simple_process</span><span class="p">(</span><span class="nf">%input</span><span class="p">)</span>
+<span class="w">  </span><span class="n">br</span><span class="w"> </span><span class="n">label</span><span class="w"> </span><span class="nf">%merge</span>
+
+<span class="nl">merge</span><span class="p">:</span>
+<span class="w">  </span><span class="nf">%result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">phi</span><span class="w"> </span><span class="p">[</span><span class="nf">%res1</span><span class="p">,</span><span class="w"> </span><span class="nf">%complex</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="nf">%res2</span><span class="p">,</span><span class="w"> </span><span class="nf">%simple</span><span class="p">]</span>
+<span class="w">  </span><span class="n">ret</span><span class="w"> </span><span class="nf">%result</span>
+</code></pre></div>
+
+<p>优点：控制流自然，易于实现分支预测
+缺点：数据依赖不直观，优化机会难识别</p>
+</details>
+<p><strong>练习 2.3</strong>：SSA 形式转换
+将下面的张量操作转换为 SSA 形式，考虑内存别名：</p>
+<div class="codehilite"><pre><span></span><code><span class="n">A</span> <span class="o">=</span> <span class="n">zeros</span><span class="p">([</span><span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="p">])</span>
+<span class="n">B</span> <span class="o">=</span> <span class="n">A</span><span class="p">[</span><span class="mi">10</span><span class="p">:</span><span class="mi">20</span><span class="p">,</span> <span class="p">:]</span>  <span class="c1"># B 是 A 的视图</span>
+<span class="n">B</span> <span class="o">=</span> <span class="n">B</span> <span class="o">+</span> <span class="mi">1</span>
+<span class="n">C</span> <span class="o">=</span> <span class="n">A</span><span class="p">[</span><span class="mi">15</span><span class="p">:</span><span class="mi">25</span><span class="p">,</span> <span class="p">:]</span>  <span class="c1"># C 与 B 有重叠</span>
+</code></pre></div>
+
+<details>
+<summary>提示</summary>
+<p>需要跟踪内存版本，视图操作不创建新内存。</p>
+</details>
+<details>
+<summary>参考答案</summary>
+<p>SSA 形式：</p>
+<div class="codehilite"><pre><span></span><code>A_0 = zeros([100, 100])
+mem_0 = initial_memory_state
+mem_1 = store(A_0, mem_0)
+
+B_0 = view(A_0, slice=[10:20, :])  # 别名关系：B_0 aliases A_0[10:20, :]
+
+<span class="gh">#</span> B = B + 1 影响底层内存
+temp_0 = B_0 + 1
+mem_2 = store_slice(temp_0, mem_1, base=A_0, slice=[10:20, :])
+A_1 = mem_2.get_tensor(A_0.id)  # A 的新版本
+B_1 = view(A_1, slice=[10:20, :])  # B 的新版本
+
+C_0 = view(A_1, slice=[15:25, :])  # C_0 aliases A_1[15:25, :]
+
+<span class="gh">#</span> 别名分析结果：
+<span class="gh">#</span> B_1 和 C_0 有重叠：[15:20, :] 区域
+</code></pre></div>
+
+</details>
+<h3 id="_3">挑战题（深入思考）</h3>
+<p><strong>练习 2.4</strong>：渐进式降级成本模型
+设计一个成本模型来决定何时进行 IR 降级。考虑编译时间 $T_c$、优化机会 $O$、代码质量 $Q$ 之间的权衡。</p>
+<details>
+<summary>提示</summary>
+<p>建立数学模型：$\text{Cost} = \alpha T_c - \beta O - \gamma Q$，需要考虑不同层级的特点。</p>
+</details>
+<details>
+<summary>参考答案</summary>
+<p>成本模型设计：</p>
+<p>设 IR 层级为 $L \in \{0, 1, 2, ..., n\}$，0 为最高层。</p>
+<p>对于层级 $L$：</p>
+<ul>
+<li>编译时间：$T_c(L) = T_{base} \cdot 2^L$（指数增长）</li>
+<li>优化机会：$O(L) = O_{max} \cdot (1 - L/n)$（线性递减）</li>
+<li>代码质量：$Q(L) = Q_{min} + (Q_{max} - Q_{min}) \cdot L/n$（线性递增）</li>
+</ul>
+<p>总成本函数：
+$$\text{Cost}(L) = \alpha T_{base} \cdot 2^L - \beta O_{max} \cdot (1 - L/n) - \gamma (Q_{min} + (Q_{max} - Q_{min}) \cdot L/n)$$
+降级决策：当 $\frac{\partial \text{Cost}}{\partial L} &lt; \theta$ 时触发降级</p>
+<p>实际考虑因素：</p>
+<ol>
+<li>模型大小：大模型增加 $\alpha$（编译时间权重）</li>
+<li>部署场景：实时系统增加 $\gamma$（代码质量权重）</li>
+<li>开发阶段：调试阶段减小 $\alpha$，生产部署增加 $\gamma$</li>
+</ol>
+</details>
+<p><strong>练习 2.5</strong>：MLIR 方言设计
+为具身智能机器人设计一个操作方言，需要支持感知-决策-控制闭环，考虑实时性约束。</p>
+<details>
+<summary>提示</summary>
+<p>考虑传感器融合、运动规划、安全约束等特殊操作。</p>
+</details>
+<details>
+<summary>参考答案</summary>
+<div class="codehilite"><pre><span></span><code><span class="nx">dialect</span><span class="w"> </span><span class="nx">EmbodiedAI</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 类型定义</span>
+<span class="w">  </span><span class="k">type</span><span class="w"> </span><span class="nx">SensorData</span><span class="p">&lt;</span><span class="k">type</span><span class="p">,</span><span class="w"> </span><span class="nx">rate_hz</span><span class="p">,</span><span class="w"> </span><span class="nx">latency_ms</span><span class="p">&gt;</span>
+<span class="w">  </span><span class="k">type</span><span class="w"> </span><span class="nx">Trajectory</span><span class="p">&lt;</span><span class="nx">dims</span><span class="p">,</span><span class="w"> </span><span class="nx">horizon</span><span class="p">,</span><span class="w"> </span><span class="nx">dt</span><span class="p">&gt;</span>
+<span class="w">  </span><span class="k">type</span><span class="w"> </span><span class="nx">SafetyConstraint</span><span class="p">&lt;</span><span class="k">type</span><span class="p">,</span><span class="w"> </span><span class="nx">priority</span><span class="p">&gt;</span>
+
+<span class="w">  </span><span class="c1">// 感知操作</span>
+<span class="w">  </span><span class="nx">operation</span><span class="w"> </span><span class="nx">sensor_fusion</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">args</span><span class="p">:</span><span class="w"> </span><span class="p">(</span><span class="nx">camera</span><span class="p">:</span><span class="w"> </span><span class="nx">SensorData</span><span class="p">&lt;</span><span class="nx">image</span><span class="p">,</span><span class="w"> </span><span class="mi">30</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">&gt;,</span>
+<span class="w">           </span><span class="nx">lidar</span><span class="p">:</span><span class="w"> </span><span class="nx">SensorData</span><span class="p">&lt;</span><span class="nx">pointcloud</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mi">20</span><span class="p">&gt;,</span>
+<span class="w">           </span><span class="nx">imu</span><span class="p">:</span><span class="w"> </span><span class="nx">SensorData</span><span class="p">&lt;</span><span class="nx">motion</span><span class="p">,</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">&gt;)</span>
+<span class="w">    </span><span class="nx">returns</span><span class="p">:</span><span class="w"> </span><span class="p">(</span><span class="nx">state</span><span class="p">:</span><span class="w"> </span><span class="nx">WorldState</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">attributes</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nx">sync_policy</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;latest&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">timeout_ms</span><span class="p">:</span><span class="w"> </span><span class="mi">50</span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="c1">// 决策操作</span>
+<span class="w">  </span><span class="nx">operation</span><span class="w"> </span><span class="nx">plan_trajectory</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">args</span><span class="p">:</span><span class="w"> </span><span class="p">(</span><span class="nx">current</span><span class="p">:</span><span class="w"> </span><span class="nx">WorldState</span><span class="p">,</span><span class="w"> </span><span class="nx">goal</span><span class="p">:</span><span class="w"> </span><span class="nx">Pose</span><span class="p">,</span><span class="w"> </span><span class="nx">constraints</span><span class="p">:</span><span class="w"> </span><span class="nx">SafetyConstraint</span><span class="p">[])</span>
+<span class="w">    </span><span class="nx">returns</span><span class="p">:</span><span class="w"> </span><span class="p">(</span><span class="nx">traj</span><span class="p">:</span><span class="w"> </span><span class="nx">Trajectory</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">attributes</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nx">algorithm</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;rrt_star&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">max_time_ms</span><span class="p">:</span><span class="w"> </span><span class="mi">100</span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="c1">// 控制操作</span>
+<span class="w">  </span><span class="nx">operation</span><span class="w"> </span><span class="nx">compute_control</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">args</span><span class="p">:</span><span class="w"> </span><span class="p">(</span><span class="nx">traj</span><span class="p">:</span><span class="w"> </span><span class="nx">Trajectory</span><span class="p">,</span><span class="w"> </span><span class="nx">feedback</span><span class="p">:</span><span class="w"> </span><span class="nx">State</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">returns</span><span class="p">:</span><span class="w"> </span><span class="p">(</span><span class="nx">control</span><span class="p">:</span><span class="w"> </span><span class="nx">ControlCommand</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">attributes</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nx">controller</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;mpc&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">hz</span><span class="p">:</span><span class="w"> </span><span class="mi">50</span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="c1">// 安全检查操作</span>
+<span class="w">  </span><span class="nx">operation</span><span class="w"> </span><span class="nx">safety_monitor</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">args</span><span class="p">:</span><span class="w"> </span><span class="p">(</span><span class="nx">state</span><span class="p">:</span><span class="w"> </span><span class="nx">WorldState</span><span class="p">,</span><span class="w"> </span><span class="nx">cmd</span><span class="p">:</span><span class="w"> </span><span class="nx">ControlCommand</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">returns</span><span class="p">:</span><span class="w"> </span><span class="p">(</span><span class="nx">safe_cmd</span><span class="p">:</span><span class="w"> </span><span class="nx">ControlCommand</span><span class="p">,</span><span class="w"> </span><span class="nx">emergency</span><span class="p">:</span><span class="w"> </span><span class="kt">bool</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">attributes</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nx">redundancy</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="nx">fail_safe</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;stop&quot;</span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="c1">// 实时约束表达</span>
+<span class="w">  </span><span class="nx">operation</span><span class="w"> </span><span class="nx">deadline_scope</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">args</span><span class="p">:</span><span class="w"> </span><span class="p">(</span><span class="nx">ops</span><span class="p">:</span><span class="w"> </span><span class="nx">Operation</span><span class="p">[],</span><span class="w"> </span><span class="nx">deadline_ms</span><span class="p">:</span><span class="w"> </span><span class="nx">int</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">returns</span><span class="p">:</span><span class="w"> </span><span class="p">(</span><span class="nx">results</span><span class="p">:</span><span class="w"> </span><span class="nx">Any</span><span class="p">[])</span>
+<span class="w">    </span><span class="nx">semantics</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Execute ops within deadline or trigger fallback&quot;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>性能约束建模：</p>
+<ul>
+<li>感知延迟：$T_{perception} \leq 100ms$</li>
+<li>决策周期：$T_{planning} \leq 200ms$</li>
+<li>控制频率：$f_{control} \geq 50Hz$</li>
+<li>端到端延迟：$T_{e2e} \leq 300ms$</li>
+</ul>
+</details>
+<p><strong>练习 2.6</strong>：张量别名分析
+两个 4D 张量 A[N, C, H, W] 和 B[N', C', H', W'] 通过 stride 访问内存。设计算法判断是否存在重叠，考虑 stride 可能为负数的情况。</p>
+<details>
+<summary>提示</summary>
+<p>将多维索引映射到一维地址空间，使用区间重叠判断。</p>
+</details>
+<details>
+<summary>参考答案</summary>
+<p>算法设计：</p>
+<ol>
+<li>
+<p>地址计算函数：
+对于张量 T 的索引 $(i_0, i_1, i_2, i_3)$：
+$$\text{addr}(i_0, i_1, i_2, i_3) = base + \sum_{k=0}^{3} i_k \cdot stride_k$$</p>
+</li>
+<li>
+<p>地址范围计算：
+考虑 stride 可能为负：
+$$\text{min_addr}_k = \begin{cases}
+base + 0 &amp; \text{if } stride_k \geq 0 \\
+base + (shape_k - 1) \cdot stride_k &amp; \text{if } stride_k &lt; 0
+\end{cases}$$</p>
+</li>
+</ol>
+<p>$$\text{max_addr}_k = \begin{cases}
+base + (shape_k - 1) \cdot stride_k &amp; \text{if } stride_k \geq 0 \\
+base + 0 &amp; \text{if } stride_k &lt; 0
+\end{cases}$$</p>
+<ol start="3">
+<li>
+<p>总地址范围：
+$$\text{Range}_T = [\sum_k \text{min_addr}_k, \sum_k \text{max_addr}_k]$$</p>
+</li>
+<li>
+<p>重叠判断：
+$$\text{Overlap}(A, B) = \text{Range}_A \cap \text{Range}_B \neq \emptyset$$</p>
+</li>
+<li>
+<p>精确重叠检测（可选）：
+如果范围重叠，进一步检查是否存在整数解：
+$$\exists (i_0^A, ..., i_3^A, i_0^B, ..., i_3^B) : \text{addr}_A(...) = \text{addr}_B(...)$$
+这是一个整数线性规划问题。</p>
+</li>
+</ol>
+</details>
+<p><strong>练习 2.7</strong>：梯度检查点策略
+给定计算图，内存限制 M，设计最优检查点策略。每个操作有计算成本 $c_i$ 和内存占用 $m_i$。</p>
+<details>
+<summary>提示</summary>
+<p>这是一个动态规划问题，需要权衡重计算成本和内存节省。</p>
+</details>
+<details>
+<summary>参考答案</summary>
+<p>动态规划解法：</p>
+<p>状态定义：$dp[i][j]$ = 从操作 i 到操作 j 的最小成本</p>
+<p>递归关系：
+$$dp[i][j] = \min_{i \leq k &lt; j} \{dp[i][k] + dp[k+1][j] + \text{merge_cost}(k)\}$$
+其中 merge_cost 考虑：</p>
+<ol>
+<li>内存峰值：$\max(M_{forward}[i:k], M_{forward}[k+1:j], M_{backward}[j:k+1], M_{backward}[k:i])$</li>
+<li>重计算成本：$\sum_{op \in recompute} c_{op}$</li>
+</ol>
+<p>算法步骤：</p>
+<ol>
+<li>构建依赖图</li>
+<li>计算每个子图的内存需求</li>
+<li>枚举检查点位置</li>
+<li>选择满足内存约束的最小成本方案</li>
+</ol>
+<p>优化目标函数：
+$$\min \sum_{i \in checkpoints} c_i^{recompute} \\
+s.t. \quad M_{peak} \leq M_{limit}$$
+实际考虑：</p>
+<ul>
+<li>优先检查点低成本高内存的操作</li>
+<li>考虑操作的并行性</li>
+<li>权衡编译时间和运行时性能</li>
+</ul>
+</details>
+<p><strong>练习 2.8</strong>：200T 模型的 IR 分片表示
+设计 IR 表示来支持 200T 参数模型的 3D 并行（DP=8, TP=8, PP=16）。考虑通信模式和内存布局。</p>
+<details>
+<summary>提示</summary>
+<p>需要在 IR 中编码分片信息、通信操作和同步点。</p>
+</details>
+<details>
+<summary>参考答案</summary>
+<p>IR 设计方案：</p>
+<ol>
+<li>分片张量类型：</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="k">type</span><span class="w"> </span><span class="nx">ShardedTensor</span><span class="p">&lt;</span>
+<span class="w">  </span><span class="nx">shape</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="nx">d0</span><span class="p">,</span><span class="w"> </span><span class="nx">d1</span><span class="p">,</span><span class="w"> </span><span class="o">...</span><span class="p">,</span><span class="w"> </span><span class="nx">dn</span><span class="p">],</span>
+<span class="w">  </span><span class="nx">dtype</span><span class="p">:</span><span class="w"> </span><span class="k">type</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">sharding</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">mesh</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="nx">DP</span><span class="p">:</span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="nx">TP</span><span class="p">:</span><span class="mi">8</span><span class="p">,</span><span class="w"> </span><span class="nx">PP</span><span class="p">:</span><span class="mi">16</span><span class="p">],</span><span class="w">  </span><span class="c1">// 3D mesh</span>
+<span class="w">    </span><span class="nx">dim_sharding</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="nx">DP</span><span class="p">,</span><span class="w"> </span><span class="nx">TP</span><span class="p">,</span><span class="w"> </span><span class="nx">None</span><span class="p">,</span><span class="w"> </span><span class="nx">None</span><span class="p">],</span><span class="w">  </span><span class="c1">// 每个维度的分片方式</span>
+<span class="w">    </span><span class="nx">replica_groups</span><span class="p">:</span><span class="w"> </span><span class="p">[[</span><span class="mi">0</span><span class="o">-</span><span class="mi">7</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="mi">8</span><span class="o">-</span><span class="mi">15</span><span class="p">],</span><span class="w"> </span><span class="o">...</span><span class="p">]</span><span class="w">  </span><span class="c1">// 副本组</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">&gt;</span>
+</code></pre></div>
+
+<ol start="2">
+<li>通信原语：</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>operation all_reduce {
+  args: (tensor: ShardedTensor, groups: ReplicaGroups)
+  returns: (result: ShardedTensor)
+  attributes: {op: &quot;sum&quot;, async: true}
+}
+
+operation all_to_all {
+  args: (tensor: ShardedTensor, 
+         split_dim: int, 
+         concat_dim: int)
+  returns: (result: ShardedTensor)
+}
+
+operation pipeline_send_recv {
+  args: (send_tensor: ShardedTensor,
+         recv_shape: Shape)
+  returns: (recv_tensor: ShardedTensor)
+  attributes: {stage_id: int, micro_batch: int}
+}
+</code></pre></div>
+
+<ol start="3">
+<li>内存估算：
+每个设备的内存需求：
+$$M_{device} = \frac{M_{params}}{DP \times TP \times PP} + \frac{M_{activations}}{DP} + M_{buffer}$$
+对于 200T 模型：</li>
+</ol>
+<ul>
+<li>参数：$\frac{400TB}{8 \times 8 \times 16} = 390GB$ per device</li>
+<li>激活：取决于批大小和序列长度</li>
+<li>通信缓冲：~10% 额外开销</li>
+</ul>
+<ol start="4">
+<li>同步点表示：</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="nx">operation</span><span class="w"> </span><span class="nx">sync_point</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">args</span><span class="p">:</span><span class="w"> </span><span class="p">(</span><span class="nx">deps</span><span class="p">:</span><span class="w"> </span><span class="nx">Operation</span><span class="p">[])</span>
+<span class="w">  </span><span class="nx">attributes</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">type</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;pipeline_flush&quot;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s">&quot;gradient_sync&quot;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s">&quot;param_update&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">timeout_ms</span><span class="p">:</span><span class="w"> </span><span class="nx">int</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<ol start="5">
+<li>性能模型：
+通信时间：
+$$T_{comm} = \frac{Data_size}{Bandwidth} + Latency \times Hops$$
+计算/通信重叠：
+$$T_{total} = \max(T_{compute}, T_{comm}) + T_{sync}$$</li>
+</ol>
+</details>
+<h2 id="28_1">2.8 常见陷阱与错误</h2>
+<h3 id="1">陷阱 1：过早降级</h3>
+<p><strong>问题</strong>：过早将高层 IR 降级到低层，丢失优化机会。
+<strong>症状</strong>：编译后代码性能不如预期，明显的优化机会被错过。
+<strong>解决</strong>：保持在高层 IR 尽可能长时间，只在必要时降级。</p>
+<h3 id="2ir">陷阱 2：IR 层次过多</h3>
+<p><strong>问题</strong>：设计过多的 IR 层次，增加维护成本和编译时间。
+<strong>症状</strong>：编译时间过长，调试困难，转换规则复杂。
+<strong>解决</strong>：通常 3-4 层 IR 足够，每层应有明确的职责。</p>
+<h3 id="3">陷阱 3：忽视内存别名</h3>
+<p><strong>问题</strong>：在 SSA 转换时未正确处理张量别名关系。
+<strong>症状</strong>：优化后结果错误，特别是涉及 in-place 操作时。
+<strong>解决</strong>：维护精确的别名信息，使用内存 SSA 跟踪内存状态。</p>
+<h3 id="4">陷阱 4：动态形状处理不当</h3>
+<p><strong>问题</strong>：假设所有形状在编译时已知。
+<strong>症状</strong>：运行时崩溃或性能严重下降。
+<strong>解决</strong>：使用符号形状，设计形状推导规则，支持运行时特化。</p>
+<h3 id="5">陷阱 5：控制流与数据流混淆</h3>
+<p><strong>问题</strong>：在图 IR 中强行表达复杂控制流。
+<strong>症状</strong>：IR 结构复杂，难以理解和优化。
+<strong>解决</strong>：使用混合 IR，控制密集区域用指令 IR。</p>
+<h3 id="6">陷阱 6：方言设计过于特化</h3>
+<p><strong>问题</strong>：为每个小功能创建新方言。
+<strong>症状</strong>：方言数量爆炸，转换规则组合爆炸。
+<strong>解决</strong>：方言应该代表一个抽象层次，不是一个功能。</p>
+<h3 id="7">陷阱 7：忽视验证</h3>
+<p><strong>问题</strong>：IR 转换缺乏正确性验证。
+<strong>症状</strong>：间歇性错误，难以调试的问题。
+<strong>解决</strong>：每个转换都应有验证规则，使用差分测试。</p>
+<h3 id="8">陷阱 8：性能模型缺失</h3>
+<p><strong>问题</strong>：没有成本模型指导优化决策。
+<strong>症状</strong>：优化可能导致性能下降。
+<strong>解决</strong>：建立准确的性能模型，基于实际测量校准。</p>
+<h2 id="29_1">2.9 最佳实践检查清单</h2>
+<h3 id="ir">IR 设计审查</h3>
+<ul>
+<li>[ ] <strong>分层合理性</strong></li>
+<li>每层 IR 是否有明确的抽象级别？</li>
+<li>层次之间的转换是否清晰定义？</li>
+<li>
+<p>是否避免了层次过多或过少？</p>
+</li>
+<li>
+<p>[ ] <strong>类型系统完备性</strong></p>
+</li>
+<li>是否支持所有必要的数据类型？</li>
+<li>类型转换规则是否明确？</li>
+<li>
+<p>是否支持自定义类型扩展？</p>
+</li>
+<li>
+<p>[ ] <strong>语义保持</strong></p>
+</li>
+<li>每个 IR 转换是否保持语义等价？</li>
+<li>是否有形式化验证或测试？</li>
+<li>数值精度损失是否在可接受范围？</li>
+</ul>
+<h3 id="_4">性能考虑</h3>
+<ul>
+<li>[ ] <strong>编译时间</strong></li>
+<li>IR 转换的时间复杂度是否合理？</li>
+<li>是否有增量编译支持？</li>
+<li>
+<p>大模型编译时间是否可接受？</p>
+</li>
+<li>
+<p>[ ] <strong>内存效率</strong></p>
+</li>
+<li>IR 表示的内存开销是否合理？</li>
+<li>是否支持内存复用分析？</li>
+<li>
+<p>是否有内存泄漏风险？</p>
+</li>
+<li>
+<p>[ ] <strong>优化机会</strong></p>
+</li>
+<li>高层 IR 是否保留足够的语义信息？</li>
+<li>是否容易识别常见优化模式？</li>
+<li>是否支持跨层优化？</li>
+</ul>
+<h3 id="_5">可扩展性</h3>
+<ul>
+<li>[ ] <strong>硬件适配</strong></li>
+<li>是否容易添加新硬件后端？</li>
+<li>硬件特性是否能在 IR 中表达？</li>
+<li>
+<p>是否支持异构计算？</p>
+</li>
+<li>
+<p>[ ] <strong>模型支持</strong></p>
+</li>
+<li>是否支持主流模型结构？</li>
+<li>动态模型是否能高效处理？</li>
+<li>
+<p>是否支持自定义算子？</p>
+</li>
+<li>
+<p>[ ] <strong>并行扩展</strong></p>
+</li>
+<li>是否原生支持各种并行模式？</li>
+<li>通信原语是否完备？</li>
+<li>是否支持大规模分布式？</li>
+</ul>
+<h3 id="_6">工程实践</h3>
+<ul>
+<li>[ ] <strong>可调试性</strong></li>
+<li>IR 是否易于理解和调试？</li>
+<li>是否有可视化工具？</li>
+<li>
+<p>错误信息是否有用？</p>
+</li>
+<li>
+<p>[ ] <strong>文档完整性</strong></p>
+</li>
+<li>每个 IR 操作是否有清晰文档？</li>
+<li>转换规则是否有文档？</li>
+<li>
+<p>是否有使用示例？</p>
+</li>
+<li>
+<p>[ ] <strong>测试覆盖</strong></p>
+</li>
+<li>是否有完整的单元测试？</li>
+<li>是否有端到端测试？</li>
+<li>是否有性能回归测试？</li>
+</ul>
+<h3 id="_7">特殊场景</h3>
+<ul>
+<li>[ ] <strong>实时系统</strong></li>
+<li>是否支持确定性执行？</li>
+<li>最坏情况执行时间是否可预测？</li>
+<li>
+<p>是否支持优先级调度？</p>
+</li>
+<li>
+<p>[ ] <strong>安全关键</strong></p>
+</li>
+<li>是否有安全性验证？</li>
+<li>是否支持故障恢复？</li>
+<li>
+<p>是否有冗余检查？</p>
+</li>
+<li>
+<p>[ ] <strong>资源受限</strong></p>
+</li>
+<li>是否支持内存受限设备？</li>
+<li>是否有功耗优化？</li>
+<li>是否支持模型压缩？</li>
+</ul>
+<hr />
+<p><em>下一章：<a href="chapter3.html">第 3 章：计算图表示与分析</a></em></p>
+            </article>
+            
+            <nav class="page-nav"><a href="chapter1.html" class="nav-link prev">← 第 1 章：AI 编译器概述</a><a href="chapter3.html" class="nav-link next">第 3 章：计算图表示与分析 →</a></nav>
+        </main>
+    </div>
+</body>
+</html>

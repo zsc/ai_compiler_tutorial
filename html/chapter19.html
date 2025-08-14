@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="./">
+    <title>第 19 章：稀疏与变长数据支持</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="assets/highlight.css">
+    <script src="assets/script.js" defer></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']],
+                processEscapes: false,
+                packages: {'[+]': ['noerrors', 'ams']}
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            loader: {
+                load: ['[tex]/noerrors', '[tex]/ams']
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3>目录</h3>
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+            <div class="sidebar-search">
+                <input type="text" id="sidebar-search-input" placeholder="搜索..." autocomplete="off">
+            </div>
+            <div id="tree-container">
+                <nav class="tree-nav" role="tree">
+                    <div class="tree-item " >
+                        <a href="index.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">AI 编译器教程：从理论到 200T 规模实践</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter1.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 1 章：AI 编译器概述</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter2.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 2 章：中间表示（IR）设计</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter3.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 3 章：计算图表示与分析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter4.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 4 章：统一缓冲区设计</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter5.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 5 章：内存规划与分配</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter6.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 6 章：数据布局优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter7.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 7 章：算子融合</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter8.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 8 章：自动微分与梯度优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter9.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 9 章：并行化策略</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter11.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 11 章：多维 Stride DMA 利用</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter12.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 12 章：JIT 编译技术</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter13.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 13 章：GPU 编译优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter14.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 14 章：移动端与边缘设备优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter15.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 15 章：NUMA 架构优化（一）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter16.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 16 章：NUMA 架构优化（二）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter17.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 17 章：动态 Shape 编译（一）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter18.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 18 章：动态 Shape 编译（二）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item active" >
+                        <a href="chapter19.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 19 章：稀疏与变长数据支持</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter20.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 20 章：JIT 编译技术</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter21.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 21 章：高维张量别名分析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter22.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 22 章：投机执行支持</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter23.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 23 章：自动驾驶场景优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter24.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 24 章：具身智能编译挑战</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter25.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 25 章：200T 模型编译实践</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="CLAUDE.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">Untitled</span>
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </nav>
+        
+        <main class="content">
+            <article>
+                <h1 id="19">第 19 章：稀疏与变长数据支持</h1>
+<p>在现实世界的 AI 应用中，特别是自动驾驶和具身智能场景，数据往往呈现出高度的稀疏性和变长特性。激光雷达点云在三维空间中极度稀疏，视觉 Transformer 的注意力矩阵在推理时表现出结构化稀疏模式，而自然语言序列和传感器数据流本质上就是变长的。本章深入探讨 AI 编译器如何高效支持这些非规则数据结构，实现性能与内存效率的最优权衡。</p>
+<h2 id="_1">学习目标</h2>
+<p>完成本章学习后，你将能够：</p>
+<ol>
+<li>理解并选择合适的稀疏张量表示格式</li>
+<li>设计高效的稀疏算子实现策略</li>
+<li>优化变长序列的批处理性能</li>
+<li>实现动态稀疏模式的自适应编译</li>
+<li>将稀疏优化技术应用于实际场景</li>
+</ol>
+<h2 id="_2">本章大纲</h2>
+<h3 id="191">19.1 稀疏张量表示</h3>
+<ul>
+<li>19.1.1 COO（Coordinate）格式</li>
+<li>19.1.2 CSR（Compressed Sparse Row）格式  </li>
+<li>19.1.3 CSC（Compressed Sparse Column）格式</li>
+<li>19.1.4 格式选择与转换策略</li>
+</ul>
+<h3 id="192">19.2 稀疏算子实现</h3>
+<ul>
+<li>19.2.1 稀疏矩阵乘法（SpMM）</li>
+<li>19.2.2 稀疏矩阵向量乘法（SpMV）</li>
+<li>19.2.3 稀疏卷积优化</li>
+<li>19.2.4 稀疏注意力机制</li>
+</ul>
+<h3 id="193">19.3 变长序列批处理</h3>
+<ul>
+<li>19.3.1 序列打包与填充策略</li>
+<li>19.3.2 动态批处理</li>
+<li>19.3.3 序列并行优化</li>
+<li>19.3.4 内存管理挑战</li>
+</ul>
+<h3 id="194">19.4 动态稀疏模式</h3>
+<ul>
+<li>19.4.1 运行时稀疏性检测</li>
+<li>19.4.2 自适应稀疏化策略</li>
+<li>19.4.3 混合稠密-稀疏执行</li>
+<li>19.4.4 稀疏性预测模型</li>
+</ul>
+<h3 id="195">19.5 自动驾驶与具身智能中的应用</h3>
+<ul>
+<li>19.5.1 点云数据的稀疏表示</li>
+<li>19.5.2 视觉Transformer的稀疏优化</li>
+<li>19.5.3 动态障碍物检测的变长处理</li>
+</ul>
+<h2 id="191_1">19.1 稀疏张量表示</h2>
+<p>稀疏张量的高效表示是实现稀疏计算优化的基础。不同的稀疏格式在存储效率、访问模式和计算性能上各有权衡。编译器需要根据稀疏模式特征和目标硬件特性选择最优表示。</p>
+<h3 id="1911-coocoordinate">19.1.1 COO（Coordinate）格式</h3>
+<p>COO 格式是最直观的稀疏表示方法，通过显式存储每个非零元素的坐标和值。对于一个 $m \times n$ 的稀疏矩阵 $A$ 包含 $nnz$ 个非零元素，COO 格式使用三个数组：</p>
+<ul>
+<li><strong>行索引数组</strong> $I[nnz]$：存储每个非零元素的行坐标</li>
+<li><strong>列索引数组</strong> $J[nnz]$：存储每个非零元素的列坐标  </li>
+<li><strong>值数组</strong> $V[nnz]$：存储非零元素的值</li>
+</ul>
+<p>存储复杂度为 $O(3 \cdot nnz)$，其中索引通常使用 32 位或 64 位整数。</p>
+<div class="codehilite"><pre><span></span><code>矩阵 A:           COO 表示:
+[5  0  0  7]      I = [0, 0, 1, 2, 2]
+[0  8  0  0]      J = [0, 3, 1, 1, 3]
+[0  3  0  9]      V = [5, 7, 8, 3, 9]
+</code></pre></div>
+
+<p><strong>COO 格式的优势</strong>：</p>
+<ul>
+<li>构造简单，易于并行插入新元素</li>
+<li>不需要预先排序，支持随机访问模式</li>
+<li>格式转换灵活，可高效转换为其他格式</li>
+<li>适合极度稀疏的矩阵（稀疏度 &gt; 99%）</li>
+</ul>
+<p><strong>COO 格式的劣势</strong>：</p>
+<ul>
+<li>存储开销大，每个元素需要两个索引</li>
+<li>缓存局部性差，随机内存访问模式</li>
+<li>不利于向量化和 SIMD 优化</li>
+<li>矩阵运算需要额外的索引匹配开销</li>
+</ul>
+<p><strong>编译器优化策略</strong>：</p>
+<ol>
+<li><strong>索引压缩</strong>：对于小矩阵使用 16 位索引减少内存带宽</li>
+<li><strong>排序优化</strong>：按行列顺序排序提高缓存命中率</li>
+<li><strong>分块存储</strong>：将矩阵分块，每块独立 COO 表示</li>
+<li><strong>混合精度</strong>：索引使用低精度，值使用高精度</li>
+</ol>
+<h3 id="1912-csrcompressed-sparse-row">19.1.2 CSR（Compressed Sparse Row）格式</h3>
+<p>CSR 格式通过压缩行索引信息，显著减少存储开销。对于 $m \times n$ 矩阵：</p>
+<ul>
+<li><strong>行指针数组</strong> $row_ptr[m+1]$：第 $i$ 行的非零元素在 $col_ind$ 中的起始位置</li>
+<li><strong>列索引数组</strong> $col_ind[nnz]$：非零元素的列坐标</li>
+<li><strong>值数组</strong> $values[nnz]$：非零元素值</li>
+</ul>
+<p>存储复杂度降至 $O(m + 2 \cdot nnz)$。</p>
+<div class="codehilite"><pre><span></span><code>矩阵 A:                CSR 表示:
+[5  0  0  7]           row_ptr = [0, 2, 3, 5]
+[0  8  0  0]           col_ind = [0, 3, 1, 1, 3]
+[0  3  0  9]           values  = [5, 7, 8, 3, 9]
+</code></pre></div>
+
+<p>行 $i$ 的非零元素存储在 $values[row_ptr[i]:row_ptr[i+1]]$，对应列索引为 $col_ind[row_ptr[i]:row_ptr[i+1]]$。</p>
+<p><strong>CSR 的计算优势</strong>：</p>
+<ul>
+<li><strong>行遍历高效</strong>：$O(1)$ 时间定位任意行</li>
+<li><strong>SpMV 优化</strong>：天然适合稀疏矩阵向量乘法</li>
+<li><strong>内存连续</strong>：同一行元素连续存储，缓存友好</li>
+<li><strong>并行友好</strong>：不同行可独立并行处理</li>
+</ul>
+<p><strong>CSR 的编译优化</strong>：</p>
+<ol>
+<li>
+<p><strong>向量化优化</strong>：
+   - 利用 SIMD 指令处理连续的行数据
+   - 对齐内存访问提高带宽利用率</p>
+</li>
+<li>
+<p><strong>负载均衡</strong>：
+   - 根据 $row_ptr[i+1] - row_ptr[i]$ 动态分配线程
+   - 采用工作窃取策略处理不均匀分布</p>
+</li>
+<li>
+<p><strong>预取优化</strong>：
+   - 基于 $row_ptr$ 预取下一行数据
+   - 软件流水线隐藏内存延迟</p>
+</li>
+<li>
+<p><strong>分层 CSR</strong>：
+   - 热点行使用稠密表示
+   - 稀疏行使用压缩表示</p>
+</li>
+</ol>
+<h3 id="1913-csccompressed-sparse-column">19.1.3 CSC（Compressed Sparse Column）格式</h3>
+<p>CSC 格式是 CSR 的列优先版本，适合列遍历操作：</p>
+<ul>
+<li><strong>列指针数组</strong> $col_ptr[n+1]$：第 $j$ 列的起始位置</li>
+<li><strong>行索引数组</strong> $row_ind[nnz]$：非零元素的行坐标</li>
+<li><strong>值数组</strong> $values[nnz]$：非零元素值</li>
+</ul>
+<p>CSC 格式在以下场景优于 CSR：</p>
+<ul>
+<li>频繁的列访问操作（如 $A^T x$ 计算）</li>
+<li>列并行算法（如某些分解算法）</li>
+<li>与列主序存储系统（如 Fortran）交互</li>
+</ul>
+<h3 id="1914">19.1.4 格式选择与转换策略</h3>
+<p>编译器需要根据计算模式动态选择最优格式：</p>
+<p><strong>格式选择决策树</strong>：</p>
+<div class="codehilite"><pre><span></span><code>稀疏度评估
+├─ 极度稀疏 (&gt;99%)
+│  └─ COO（构造阶段）→ CSR/CSC（计算阶段）
+├─ 中度稀疏 (90-99%)
+│  ├─ 行操作为主 → CSR
+│  └─ 列操作为主 → CSC
+└─ 轻度稀疏 (&lt;90%)
+   └─ 考虑块稀疏格式（BCSR）或稠密表示
+</code></pre></div>
+
+<p><strong>格式转换开销模型</strong>：</p>
+<p>设转换开销为 $C_{convert}$，计算收益为 $B_{compute}$，只有当：
+$$B_{compute} &gt; \alpha \cdot C_{convert}$$
+其中 $\alpha$ 是安全系数（通常取 1.5-2.0），才执行格式转换。</p>
+<p>转换开销估算：</p>
+<ul>
+<li>COO → CSR：$O(nnz \cdot \log(nnz))$（需要排序）</li>
+<li>CSR → CSC：$O(nnz + m + n)$（转置操作）</li>
+<li>CSR → COO：$O(nnz)$（直接展开）</li>
+</ul>
+<p><strong>多格式缓存策略</strong>：</p>
+<p>编译器可维护多格式缓存，避免重复转换：</p>
+<div class="codehilite"><pre><span></span><code>稀疏张量 S
+├─ native_format: CSR（原生格式）
+├─ cached_formats: {
+│     COO: (data, timestamp, access_count),
+│     CSC: (data, timestamp, access_count)
+│  }
+└─ format_predictor: 基于历史访问模式预测
+</code></pre></div>
+
+<p><strong>自动格式选择的编译指示</strong>：
+编译器通过分析访问模式自动插入格式转换：</p>
+<ul>
+<li>静态分析：识别循环中的访问模式</li>
+<li>动态分析：运行时收集访问统计</li>
+<li>混合策略：JIT 编译时根据实际稀疏度调整</li>
+</ul>
+<h2 id="192_1">19.2 稀疏算子实现</h2>
+<p>稀疏算子的高效实现是 AI 编译器的核心挑战。不同于稠密算子的规则计算模式，稀疏算子需要处理不规则的内存访问、动态的计算负载和复杂的索引匹配。本节深入分析关键稀疏算子的编译优化技术。</p>
+<h3 id="1921-spmm">19.2.1 稀疏矩阵乘法（SpMM）</h3>
+<p>稀疏矩阵与稠密矩阵乘法 $C = A \times B$，其中 $A$ 是 $m \times k$ 的稀疏矩阵，$B$ 是 $k \times n$ 的稠密矩阵。</p>
+<p><strong>基础算法复杂度分析</strong>：</p>
+<ul>
+<li>稠密实现：$O(m \cdot k \cdot n)$</li>
+<li>稀疏实现：$O(nnz_A \cdot n)$</li>
+<li>加速比：$\frac{m \cdot k}{nnz_A}$</li>
+</ul>
+<p><strong>CSR 格式的 SpMM 核心循环</strong>：</p>
+<div class="codehilite"><pre><span></span><code><span class="k">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="mf">0.</span><span class="p">.</span><span class="nl">m</span><span class="p">:</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">row_ptr</span><span class="o">[</span><span class="n">i</span><span class="o">]</span><span class="p">..</span><span class="n">row_ptr</span><span class="o">[</span><span class="n">i+1</span><span class="o">]</span><span class="err">:</span>
+<span class="w">        </span><span class="n">col</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">col_ind</span><span class="o">[</span><span class="n">j</span><span class="o">]</span>
+<span class="w">        </span><span class="n">val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">values</span><span class="o">[</span><span class="n">j</span><span class="o">]</span>
+<span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="mf">0.</span><span class="p">.</span><span class="nl">n</span><span class="p">:</span>
+<span class="w">            </span><span class="n">C</span><span class="o">[</span><span class="n">i,k</span><span class="o">]</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">val</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">B</span><span class="o">[</span><span class="n">col,k</span><span class="o">]</span>
+</code></pre></div>
+
+<p><strong>编译器优化技术</strong>：</p>
+<ol>
+<li><strong>寄存器分块（Register Blocking）</strong>：
+   将 $B$ 矩阵分成 $r \times c$ 的小块，充分利用寄存器：
+$$C_{i,[k:k+c]} += \sum_{j \in row_i} A_{ij} \cdot B_{j,[k:k+c]}$$
+优化参数选择：</li>
+</ol>
+<ul>
+<li>$r$：通常取 SIMD 宽度（如 AVX-512 取 16）</li>
+<li>$c$：根据可用寄存器数量，典型值 4-8</li>
+</ul>
+<ol start="2">
+<li>
+<p><strong>内存访问优化</strong>：
+   - <strong>行缓冲</strong>：预取整行 $A$ 的非零元素到 L1 缓存
+   - <strong>列打包</strong>：将 $B$ 的访问列打包成连续内存
+   - <strong>流式存储</strong>：使用非临时存储指令写入 $C$</p>
+</li>
+<li>
+<p><strong>负载均衡策略</strong>：
+   基于 $row_ptr$ 的工作量估算：
+$$W_i = (row_ptr[i+1] - row_ptr[i]) \cdot n$$
+动态调度策略：</p>
+</li>
+</ol>
+<ul>
+<li>静态分块：将行按 $W_i$ 累积和均匀分配</li>
+<li>动态调度：使用工作队列，粒度自适应</li>
+<li>混合策略：大行独立处理，小行批量处理</li>
+</ul>
+<ol start="4">
+<li><strong>向量化优化</strong>：
+   利用 SIMD 指令并行处理多个输出元素：</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="err">向量寄存器</span><span class="w"> </span><span class="n">v_val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">broadcast</span><span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">])</span>
+<span class="k">for</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="mf">0.</span><span class="o">.</span><span class="n">n</span><span class="w"> </span><span class="n">step</span><span class="w"> </span><span class="n">SIMD_WIDTH</span><span class="p">:</span>
+<span class="w">    </span><span class="n">v_B</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">load</span><span class="p">(</span><span class="n">B</span><span class="p">[</span><span class="n">j</span><span class="p">,</span><span class="w"> </span><span class="n">k</span><span class="p">:</span><span class="n">k</span><span class="o">+</span><span class="n">SIMD_WIDTH</span><span class="p">])</span>
+<span class="w">    </span><span class="n">v_C</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">load</span><span class="p">(</span><span class="n">C</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="n">k</span><span class="p">:</span><span class="n">k</span><span class="o">+</span><span class="n">SIMD_WIDTH</span><span class="p">])</span>
+<span class="w">    </span><span class="n">v_C</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">v_val</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">v_B</span>
+<span class="w">    </span><span class="n">store</span><span class="p">(</span><span class="n">C</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="n">k</span><span class="p">:</span><span class="n">k</span><span class="o">+</span><span class="n">SIMD_WIDTH</span><span class="p">],</span><span class="w"> </span><span class="n">v_C</span><span class="p">)</span>
+</code></pre></div>
+
+<h3 id="1922-spmv">19.2.2 稀疏矩阵向量乘法（SpMV）</h3>
+<p>SpMV 是许多迭代算法的核心：$y = A \cdot x$，其中 $A$ 是稀疏矩阵。</p>
+<p><strong>性能瓶颈分析</strong>：</p>
+<ul>
+<li>计算密度低：$\frac{2 \cdot nnz}{sizeof(val) \cdot nnz + sizeof(idx) \cdot nnz}$</li>
+<li>内存带宽受限：典型只能达到峰值带宽的 10-20%</li>
+<li>不规则访问：$x[col_ind[j]]$ 缺乏局部性</li>
+</ul>
+<p><strong>优化技术</strong>：</p>
+<ol>
+<li><strong>分段优化（Segmented Optimization）</strong>：
+   根据行长度分类处理：</li>
+</ol>
+<ul>
+<li><strong>短行</strong>（$\leq 4$ 个元素）：标量处理，减少开销</li>
+<li><strong>中等行</strong>（5-32 个元素）：SIMD 向量化</li>
+<li><strong>长行</strong>（$&gt; 32$ 个元素）：分块并行</li>
+</ul>
+<ol start="2">
+<li><strong>预取策略</strong>：</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="n">距离自适应预取</span><span class="err">：</span>
+<span class="n">prefetch_distance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">min</span><span class="p">(</span><span class="n">L2_size</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">avg_row_length</span><span class="p">,</span><span class="w"> </span><span class="mi">8</span><span class="p">)</span>
+<span class="k">for</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="k">current</span><span class="p">..</span><span class="k">current</span><span class="o">+</span><span class="nl">prefetch_distance</span><span class="p">:</span>
+<span class="w">    </span><span class="n">prefetch</span><span class="p">(</span><span class="n">x</span><span class="o">[</span><span class="n">col_ind[row_ptr[i</span><span class="o">]</span><span class="err">]]</span><span class="p">)</span>
+</code></pre></div>
+
+<ol start="3">
+<li><strong>坐标重排序</strong>：
+   通过重排序减少 $x$ 向量的缓存失效：</li>
+</ol>
+<ul>
+<li>Cuthill-McKee 算法：最小化带宽</li>
+<li>嵌套剖分：改善局部性</li>
+<li>基于访问频率的贪心重排</li>
+</ul>
+<h3 id="1923">19.2.3 稀疏卷积优化</h3>
+<p>稀疏卷积在点云处理和稀疏 3D 网络中广泛应用。</p>
+<p><strong>稀疏卷积的特殊性</strong>：</p>
+<ul>
+<li>输入输出均可能稀疏</li>
+<li>卷积核的有效位置动态变化</li>
+<li>需要构建输入-输出映射表</li>
+</ul>
+<p><strong>基于哈希表的稀疏卷积</strong>：</p>
+<p>对于 3D 稀疏卷积，使用哈希表管理活跃体素：
+$$H: (x, y, z) \rightarrow index$$
+卷积计算分两阶段：</p>
+<ol>
+<li><strong>规则生成阶段</strong>：确定输出位置和对应的输入位置</li>
+<li><strong>聚合阶段</strong>：执行实际的乘累加操作</li>
+</ol>
+<p><strong>编译优化</strong>：</p>
+<ol>
+<li>
+<p><strong>规则表压缩</strong>：
+   使用增量编码减少索引存储：
+$$\Delta_{ij} = index_j - index_i$$</p>
+</li>
+<li>
+<p><strong>kernel 分组</strong>：
+   将卷积核按稀疏模式分组，相同模式共享计算路径</p>
+</li>
+<li>
+<p><strong>输出驱动 vs 输入驱动</strong>：
+   - 输出驱动：遍历输出位置，收集输入
+   - 输入驱动：遍历输入位置，散布到输出
+   - 自适应选择：基于稀疏度比 $\frac{nnz_{out}}{nnz_{in}}$</p>
+</li>
+</ol>
+<h3 id="1924">19.2.4 稀疏注意力机制</h3>
+<p>Transformer 模型中的注意力矩阵常表现出结构化稀疏性。</p>
+<p><strong>稀疏模式类型</strong>：</p>
+<ol>
+<li><strong>局部注意力</strong>：每个 token 只关注固定窗口</li>
+<li><strong>跨步注意力</strong>：固定间隔的全局注意力</li>
+<li><strong>学习稀疏</strong>：通过阈值或 top-k 动态稀疏化</li>
+</ol>
+<p><strong>Flash Attention 的稀疏扩展</strong>：</p>
+<p>将注意力计算分块，只计算非零块：
+$$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}} \odot M\right)V$$
+其中 $M$ 是稀疏掩码矩阵。</p>
+<p><strong>块稀疏优化</strong>：</p>
+<ol>
+<li>
+<p><strong>块大小选择</strong>：
+$$b_{opt} = \min\left(\sqrt{\frac{SRAM_{size}}{3 \cdot d_{model}}}, warp_{size}\right)$$</p>
+</li>
+<li>
+<p><strong>块调度</strong>：
+   - 静态调度：预计算块依赖关系
+   - 动态调度：运行时根据稀疏度调整</p>
+</li>
+<li>
+<p><strong>混合精度策略</strong>：
+   - 注意力分数：FP16/BF16
+   - Softmax 累加：FP32
+   - 输出投影：FP16/BF16</p>
+</li>
+</ol>
+<p><strong>编译器的模式识别</strong>：</p>
+<p>编译器通过模式匹配识别可优化的稀疏注意力：</p>
+<div class="codehilite"><pre><span></span><code>识别模式：
+
+<span class="k">-</span> 对角带状：|i-j| &lt; window_size
+<span class="k">-</span> 块对角：block_id(i) == block_id(j)
+<span class="k">-</span> 混合模式：局部 + 全局锚点
+</code></pre></div>
+
+<p>基于识别的模式生成专门化代码，避免通用稀疏开销。</p>
+<h2 id="193_1">19.3 变长序列批处理</h2>
+<p>变长序列是自然语言处理和时序数据分析的常见输入形式。高效的批处理策略对于提升硬件利用率和降低推理延迟至关重要。</p>
+<h3 id="1931">19.3.1 序列打包与填充策略</h3>
+<p><strong>填充（Padding）策略</strong>：</p>
+<p>将所有序列填充到批次内最大长度 $L_{max}$：
+$$\text{Efficiency} = \frac{\sum_{i=1}^{B} L_i}{B \cdot L_{max}}$$
+其中 $B$ 是批大小，$L_i$ 是第 $i$ 个序列的实际长度。</p>
+<p><strong>填充开销分析</strong>：</p>
+<ul>
+<li>计算开销：$(L_{max} - L_{avg}) \cdot B \cdot C_{op}$</li>
+<li>内存开销：$(L_{max} - L_{avg}) \cdot B \cdot d_{model} \cdot sizeof(dtype)$</li>
+<li>典型效率：50-70%（自然语言场景）</li>
+</ul>
+<p><strong>动态打包（Dynamic Packing）</strong>：</p>
+<p>将多个短序列打包成一个长序列：</p>
+<div class="codehilite"><pre><span></span><code>原始序列：[A1, A2, A3], [B1, B2], [C1, C2, C3, C4]
+打包结果：[A1, A2, A3, B1, B2, C1, C2, C3, C4]
+位置编码：[0,  1,  2,  0,  1,  0,  1,  2,  3]
+序列 ID： [0,  0,  0,  1,  1,  2,  2,  2,  2]
+</code></pre></div>
+
+<p><strong>最优打包算法</strong>：</p>
+<p>装箱问题的在线近似算法：</p>
+<ol>
+<li><strong>First Fit Decreasing</strong>：序列按长度降序排列，贪心打包</li>
+<li><strong>Best Fit</strong>：选择剩余空间最小的箱子</li>
+<li><strong>动态规划</strong>：对小批量求解最优打包</li>
+</ol>
+<p>打包效率目标：
+$$\min \sum_{j=1}^{M} \max(L_j) \quad \text{s.t.} \quad \sum_{i \in bin_j} L_i \leq L_{target}$$</p>
+<h3 id="1932">19.3.2 动态批处理</h3>
+<p><strong>连续批处理（Continuous Batching）</strong>：</p>
+<p>允许不同序列在不同时间加入和离开批次：</p>
+<div class="codehilite"><pre><span></span><code>时刻 t0: [Seq1, Seq2, Seq3, ----]
+时刻 t1: [Seq1, Seq2, ----, Seq4]  # Seq3 完成，Seq4 加入
+时刻 t2: [----, Seq2, Seq5, Seq4]  # Seq1 完成，Seq5 加入
+</code></pre></div>
+
+<p><strong>编译器支持</strong>：</p>
+<ol>
+<li>
+<p><strong>动态形状推导</strong>：
+$$shape_{t+1} = update(shape_t, completions_t, arrivals_t)$$</p>
+</li>
+<li>
+<p><strong>内存池管理</strong>：
+   - 预分配最大批次的内存
+   - 使用环形缓冲区管理序列槽位
+   - 碎片整理策略</p>
+</li>
+<li>
+<p><strong>调度优化</strong>：
+   - 优先级队列管理等待序列
+   - 批次组装的贪心/启发式算法
+   - 延迟敏感的抢占机制</p>
+</li>
+</ol>
+<h3 id="1933">19.3.3 序列并行优化</h3>
+<p><strong>序列维度的并行切分</strong>：</p>
+<p>对于超长序列（如长文档），在序列维度并行：
+$$X[L, D] \rightarrow X_1[L/P, D], X_2[L/P, D], ..., X_P[L/P, D]$$
+<strong>Ring Attention 机制</strong>：</p>
+<p>将注意力计算分布到多个设备：</p>
+<ol>
+<li>每个设备持有 Q、K、V 的一部分</li>
+<li>K、V 在设备间循环传递</li>
+<li>每轮计算局部注意力并累积</li>
+</ol>
+<p>通信复杂度：$O(P \cdot L \cdot d_{model})$
+计算复杂度：$O(L^2 \cdot d_{model} / P)$</p>
+<p><strong>编译器的自动并行化</strong>：</p>
+<p>检测可并行化的维度：</p>
+<div class="codehilite"><pre><span></span><code>并行化决策：
+if seq_length &gt; threshold_length:
+    if num_devices &gt; 1 and seq_length &gt; batch_size * 64:
+        选择序列并行
+    else:
+        选择张量并行
+else:
+    选择数据并行
+</code></pre></div>
+
+<h3 id="1934">19.3.4 内存管理挑战</h3>
+<p><strong>变长序列的内存碎片问题</strong>：</p>
+<p>碎片率定义：
+$$\text{Fragmentation} = 1 - \frac{\text{Used Memory}}{\text{Allocated Memory}}$$
+<strong>内存管理策略</strong>：</p>
+<ol>
+<li>
+<p><strong>固定槽位分配</strong>：
+   - 预定义几种长度规格（如 128, 256, 512, 1024）
+   - 序列分配到最近的规格
+   - 内部碎片 vs 外部碎片权衡</p>
+</li>
+<li>
+<p><strong>伙伴系统（Buddy System）</strong>：
+   - 内存块大小为 2 的幂
+   - 分裂与合并操作 O(log n)
+   - 适合频繁的分配释放</p>
+</li>
+<li>
+<p><strong>内存池化</strong>：</p>
+</li>
+</ol>
+<div class="codehilite"><pre><span></span><code>内存池结构：
+Pool = {
+    small: [size &lt;= 256],
+    medium: [256 &lt; size &lt;= 1024],
+    large: [size &gt; 1024]
+}
+</code></pre></div>
+
+<p><strong>PagedAttention 优化</strong>：</p>
+<p>将 KV 缓存按页管理，支持非连续存储：</p>
+<ul>
+<li>页大小：通常 16 或 32 个 token</li>
+<li>页表：映射逻辑地址到物理地址</li>
+<li>优势：减少 40-50% 的内存浪费</li>
+</ul>
+<h2 id="194_1">19.4 动态稀疏模式</h2>
+<p>实际应用中的稀疏性往往是动态的，编译器需要支持运行时自适应优化。</p>
+<h3 id="1941">19.4.1 运行时稀疏性检测</h3>
+<p><strong>稀疏性度量</strong>：</p>
+<ol>
+<li>
+<p><strong>全局稀疏度</strong>：
+$$\rho = 1 - \frac{nnz}{m \times n}$$</p>
+</li>
+<li>
+<p><strong>结构化稀疏度</strong>：
+   - 块稀疏度：$\rho_{block} = 1 - \frac{\text{非零块数}}{\text{总块数}}$
+   - 行/列稀疏度：$\rho_{row} = \frac{\text{全零行数}}{m}$</p>
+</li>
+<li>
+<p><strong>模式稀疏度</strong>：
+   - 对角带宽：$bandwidth = \max_{A_{ij} \neq 0} |i - j|$
+   - 聚类系数：非零元素的空间聚集程度</p>
+</li>
+</ol>
+<p><strong>在线检测算法</strong>：</p>
+<div class="codehilite"><pre><span></span><code>采样检测（开销 O(sample_size)）：
+sample_indices = random_sample(total_elements, sample_size)
+estimated_sparsity = count_zeros(sample_indices) / sample_size
+
+if estimated_sparsity &gt; threshold:
+    切换到稀疏kernel
+</code></pre></div>
+
+<h3 id="1942">19.4.2 自适应稀疏化策略</h3>
+<p><strong>magnitude pruning</strong>：</p>
+<p>动态阈值剪枝：
+$$A_{sparse} = A \odot (|A| &gt; \tau)$$
+其中阈值 $\tau$ 可以是：</p>
+<ul>
+<li>固定值：$\tau = constant$</li>
+<li>百分位数：$\tau = \text{percentile}(|A|, p)$</li>
+<li>自适应：$\tau = \alpha \cdot \text{std}(A)$</li>
+</ul>
+<p><strong>结构化剪枝</strong>：</p>
+<p>保持硬件友好的稀疏模式：</p>
+<ul>
+<li>2:4 稀疏（NVIDIA Ampere）：每 4 个元素保留 2 个</li>
+<li>块稀疏：$b \times b$ 块为单位</li>
+<li>通道剪枝：整个通道置零</li>
+</ul>
+<p>编译器需要生成对应的专门化kernel。</p>
+<h3 id="1943-">19.4.3 混合稠密-稀疏执行</h3>
+<p><strong>双路径执行策略</strong>：</p>
+<div class="codehilite"><pre><span></span><code>执行路径选择：
+<span class="k">if</span><span class="w"> </span><span class="nv">sparsity</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">0</span>.<span class="mi">5</span>:
+<span class="w">    </span>使用稠密<span class="nv">kernel</span>（优化的<span class="w"> </span><span class="nv">GEMM</span>）
+<span class="nv">elif</span><span class="w"> </span><span class="nv">sparsity</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">0</span>.<span class="mi">9</span>:
+<span class="w">    </span>使用半结构化稀疏<span class="nv">kernel</span>
+<span class="k">else</span>:
+<span class="w">    </span>使用高度稀疏<span class="nv">kernel</span>（<span class="nv">COO</span><span class="o">/</span><span class="nv">CSR</span>）
+</code></pre></div>
+
+<p><strong>渐进式稀疏化</strong>：</p>
+<p>训练过程中逐步增加稀疏度：
+$$\rho_t = \rho_{final} \cdot \left(1 - \left(1 - \frac{t}{T}\right)^3\right)$$
+编译器支持：</p>
+<ul>
+<li>JIT 重编译触发</li>
+<li>kernel 缓存管理</li>
+<li>平滑过渡机制</li>
+</ul>
+<h3 id="1944">19.4.4 稀疏性预测模型</h3>
+<p><strong>基于历史的预测</strong>：</p>
+<p>使用滑动窗口预测未来稀疏度：
+$$\hat{\rho}_{t+1} = \alpha \cdot \rho_t + (1-\alpha) \cdot \hat{\rho}_t$$
+<strong>基于模型的预测</strong>：</p>
+<p>训练轻量级预测器：</p>
+<div class="codehilite"><pre><span></span><code>输入特征：
+
+- 层类型和位置
+- 输入数据统计（均值、方差）
+- 之前层的稀疏度
+
+输出：
+
+- 预测稀疏度
+- 推荐的执行策略
+</code></pre></div>
+
+<p><strong>预测器的编译集成</strong>：</p>
+<ol>
+<li><strong>离线训练</strong>：收集profiling数据训练预测器</li>
+<li><strong>在线部署</strong>：预测器作为运行时组件</li>
+<li><strong>反馈更新</strong>：实际稀疏度更新预测模型</li>
+</ol>
+<p>预测准确率要求：&gt; 90% 才能带来净收益。</p>
+<h2 id="195_1">19.5 自动驾驶与具身智能中的应用</h2>
+<h3 id="1951">19.5.1 点云数据的稀疏表示</h3>
+<p>激光雷达点云在 3D 空间中极度稀疏（通常 &lt; 0.01% 占用率）。</p>
+<p><strong>体素化表示</strong>：</p>
+<p>将 3D 空间划分为体素网格：
+$$V_{ijk} = \{p \in P : i \leq x_p &lt; i+1, j \leq y_p &lt; j+1, k \leq z_p &lt; k+1\}$$
+<strong>哈希表加速</strong>：</p>
+<p>使用空间哈希避免存储空体素：
+$$h(i, j, k) = (i \cdot p_1 + j \cdot p_2 + k \cdot p_3) \mod M$$
+其中 $p_1, p_2, p_3$ 是大质数。</p>
+<p><strong>编译优化</strong>：</p>
+<ul>
+<li>动态体素分配</li>
+<li>邻域查询优化</li>
+<li>稀疏卷积的规则生成</li>
+</ul>
+<h3 id="1952-transformer">19.5.2 视觉 Transformer 的稀疏优化</h3>
+<p><strong>Token 剪枝</strong>：</p>
+<p>动态移除不重要的 token：
+$$importance_i = |\text{Attention}[:, i]|_1$$
+保留 top-k 重要的 token，减少 50-70% 计算量。</p>
+<p><strong>注意力稀疏化</strong>：</p>
+<p>利用注意力的局部性：</p>
+<ul>
+<li>近邻注意力：物体检测中的空间局部性</li>
+<li>层次注意力：不同分辨率的特征交互</li>
+</ul>
+<h3 id="1953">19.5.3 动态障碍物检测的变长处理</h3>
+<p><strong>时序数据的变长特性</strong>：</p>
+<p>不同传感器采样率不同：</p>
+<ul>
+<li>相机：30 FPS</li>
+<li>激光雷达：10 Hz</li>
+<li>毫米波雷达：20 Hz</li>
+</ul>
+<p><strong>多速率融合</strong>：</p>
+<p>编译器需要处理不同速率的数据流：</p>
+<div class="codehilite"><pre><span></span><code>融合策略：
+
+- 同步融合：等待所有传感器
+- 异步融合：使用最新可用数据
+- 预测补偿：推断缺失时刻数据
+</code></pre></div>
+
+<p><strong>动态批处理优化</strong>：</p>
+<p>根据场景复杂度调整批大小：</p>
+<ul>
+<li>高速公路：大批量，简单场景</li>
+<li>城市街道：小批量，复杂场景</li>
+<li>紧急情况：单样本，最低延迟</li>
+</ul>
+<h2 id="_3">本章小结</h2>
+<p>本章系统地探讨了 AI 编译器对稀疏与变长数据的支持技术。我们学习了三种主要的稀疏张量表示格式（COO、CSR、CSC）及其适用场景，深入分析了稀疏矩阵乘法、稀疏卷积和稀疏注意力等关键算子的优化策略。对于变长序列处理，我们讨论了序列打包、动态批处理和内存管理的挑战与解决方案。动态稀疏模式部分介绍了运行时检测、自适应执行和性能预测技术。最后，我们将这些技术应用于自动驾驶和具身智能的实际场景。</p>
+<p><strong>关键要点</strong>：</p>
+<ol>
+<li>稀疏格式选择需要权衡存储效率、访问模式和计算性能</li>
+<li>稀疏算子优化的核心是减少不规则内存访问和改善负载均衡</li>
+<li>变长序列批处理需要在硬件利用率和内存效率间找到平衡</li>
+<li>动态稀疏性要求编译器支持运行时自适应和 JIT 重编译</li>
+<li>实际应用中的稀疏优化需要领域特定知识和硬件协同设计</li>
+</ol>
+<h2 id="_4">练习题</h2>
+<h3 id="_5">基础题</h3>
+<p><strong>练习 19.1</strong>：给定一个 $1000 \times 1000$ 的矩阵，包含 10,000 个非零元素，计算使用 COO、CSR、CSC 格式的存储开销（假设值为 float32，索引为 int32）。</p>
+<details>
+<summary>提示</summary>
+<p>考虑每种格式需要存储的数组数量和大小。</p>
+</details>
+<details>
+<summary>答案</summary>
+<ul>
+<li>COO 格式：</li>
+<li>行索引：10,000 × 4 字节 = 40,000 字节</li>
+<li>列索引：10,000 × 4 字节 = 40,000 字节</li>
+<li>值数组：10,000 × 4 字节 = 40,000 字节</li>
+<li>
+<p>总计：120,000 字节</p>
+</li>
+<li>
+<p>CSR 格式：</p>
+</li>
+<li>行指针：1,001 × 4 字节 = 4,004 字节</li>
+<li>列索引：10,000 × 4 字节 = 40,000 字节</li>
+<li>值数组：10,000 × 4 字节 = 40,000 字节</li>
+<li>
+<p>总计：84,004 字节</p>
+</li>
+<li>
+<p>CSC 格式：</p>
+</li>
+<li>列指针：1,001 × 4 字节 = 4,004 字节</li>
+<li>行索引：10,000 × 4 字节 = 40,000 字节</li>
+<li>值数组：10,000 × 4 字节 = 40,000 字节</li>
+<li>总计：84,004 字节</li>
+</ul>
+<p>CSR/CSC 比 COO 节省约 30% 的存储空间。</p>
+</details>
+<p><strong>练习 19.2</strong>：对于批大小为 32 的变长序列批次，序列长度分别为 [10, 20, 30, ..., 320]，计算填充策略的效率。</p>
+<details>
+<summary>提示</summary>
+<p>效率 = 实际token数 / (批大小 × 最大长度)</p>
+</details>
+<details>
+<summary>答案</summary>
+<ul>
+<li>实际 token 数：$\sum_{i=1}^{32} 10i = 10 \times \frac{32 \times 33}{2} = 5,280$</li>
+<li>填充后总 token 数：$32 \times 320 = 10,240$</li>
+<li>效率：$\frac{5,280}{10,240} = 51.56\%$</li>
+</ul>
+<p>这表明简单填充策略浪费了近一半的计算资源。</p>
+</details>
+<p><strong>练习 19.3</strong>：如果一个稀疏矩阵的稀疏度为 95%，使用 CSR 格式进行 SpMV 运算相比稠密实现的理论加速比是多少？</p>
+<details>
+<summary>提示</summary>
+<p>比较稠密和稀疏实现的运算次数。</p>
+</details>
+<details>
+<summary>答案</summary>
+<ul>
+<li>稀疏度 95% 意味着 5% 的元素非零</li>
+<li>稠密 SpMV：$m \times n$ 次乘加运算</li>
+<li>稀疏 SpMV：$0.05 \times m \times n$ 次乘加运算</li>
+<li>理论加速比：$\frac{1}{0.05} = 20$ 倍</li>
+</ul>
+<p>实际加速比会因内存访问模式和硬件特性而低于理论值。</p>
+</details>
+<h3 id="_6">挑战题</h3>
+<p><strong>练习 19.4</strong>：设计一个算法，将 COO 格式的稀疏矩阵转换为 CSR 格式，要求时间复杂度为 $O(nnz \log nnz + m)$。描述算法步骤和关键数据结构。</p>
+<details>
+<summary>提示</summary>
+<p>需要先对 COO 格式的元素按行列顺序排序。</p>
+</details>
+<details>
+<summary>答案</summary>
+<p>算法步骤：</p>
+<ol>
+<li>对 COO 三元组 (row, col, val) 按 (row, col) 字典序排序，$O(nnz \log nnz)$</li>
+<li>初始化 row_ptr[m+1]，所有元素为 0，$O(m)$</li>
+<li>遍历排序后的 COO 数组：
+   - 统计每行的非零元素数量
+   - 构建 col_ind 和 values 数组</li>
+<li>计算 row_ptr 的累积和</li>
+</ol>
+<p>关键优化：</p>
+<ul>
+<li>使用基数排序可将复杂度降至 $O(nnz + m)$</li>
+<li>如果 COO 已部分有序，可使用归并排序</li>
+<li>并行化：不同行的处理可以并行</li>
+</ul>
+</details>
+<p><strong>练习 19.5</strong>：推导 PagedAttention 中，给定页大小 $P$ 和序列长度分布，计算期望的内存浪费率。假设序列长度服从均值为 $\mu$、方差为 $\sigma^2$ 的正态分布。</p>
+<details>
+<summary>提示</summary>
+<p>内存浪费来自最后一页的未使用部分。</p>
+</details>
+<details>
+<summary>答案</summary>
+<p>设序列长度为 $L$，需要的页数为 $\lceil L/P \rceil$。</p>
+<p>最后一页的浪费：
+$$W(L) = P - (L \mod P) = P - L + P \lfloor L/P \rfloor$$
+当 $L \mod P \neq 0$ 时，期望浪费：
+$$E[W] = \frac{P}{2}$$
+总体内存浪费率：
+$$\text{浪费率} = \frac{E[W]}{E[\lceil L/P \rceil] \cdot P} \approx \frac{P/2}{\mu + P/2} = \frac{P}{2\mu + P}$$
+对于 $\mu = 512$，$P = 32$：
+$$\text{浪费率} \approx \frac{32}{1024 + 32} \approx 3\%$$</p>
+<p>这比简单填充的 40-50% 浪费率显著降低。</p>
+</details>
+<p><strong>练习 19.6</strong>：分析在 3D 点云稀疏卷积中，使用哈希表 vs 八叉树（Octree）数据结构的时空复杂度权衡。</p>
+<details>
+<summary>提示</summary>
+<p>考虑构建时间、查询时间和内存占用。</p>
+</details>
+<details>
+<summary>答案</summary>
+<p><strong>哈希表</strong>：</p>
+<ul>
+<li>构建：$O(N)$，N 为非空体素数</li>
+<li>查询：期望 $O(1)$，最坏 $O(N)$</li>
+<li>内存：$O(N)$</li>
+<li>优势：快速随机访问，实现简单</li>
+<li>劣势：无空间层次信息，冲突处理开销</li>
+</ul>
+<p><strong>八叉树</strong>：</p>
+<ul>
+<li>构建：$O(N \log D)$，D 为树深度</li>
+<li>查询：$O(\log D)$</li>
+<li>内存：$O(N)$ 到 $O(8^D)$</li>
+<li>优势：自然的空间层次，支持多分辨率查询</li>
+<li>劣势：树遍历开销，指针追逐</li>
+</ul>
+<p>选择建议：</p>
+<ul>
+<li>均匀分布 + 频繁随机访问 → 哈希表</li>
+<li>聚集分布 + 邻域查询 → 八叉树</li>
+<li>混合方案：顶层八叉树 + 叶节点哈希表</li>
+</ul>
+</details>
+<p><strong>练习 19.7</strong>：设计一个自适应的稀疏度预测器，基于前 k 层的稀疏度预测第 k+1 层的稀疏度。给出特征工程和模型选择的建议。</p>
+<details>
+<summary>提示</summary>
+<p>考虑时序特征和网络结构信息。</p>
+</details>
+<details>
+<summary>答案</summary>
+<p><strong>特征工程</strong>：</p>
+<ol>
+<li>
+<p>历史特征：
+   - 前 3 层的稀疏度：$\rho_{k}, \rho_{k-1}, \rho_{k-2}$
+   - 稀疏度变化率：$\Delta\rho_k = \rho_k - \rho_{k-1}$
+   - 移动平均：$\bar{\rho} = \frac{1}{w}\sum_{i=k-w+1}^{k} \rho_i$</p>
+</li>
+<li>
+<p>结构特征：
+   - 层类型编码（卷积/全连接/注意力）
+   - 相对位置：$k / \text{total_layers}$
+   - 层参数量：$\log(\text{num_params})$</p>
+</li>
+<li>
+<p>数据特征：
+   - 输入激活值统计：均值、标准差、峰度
+   - 梯度范数（训练时）</p>
+</li>
+</ol>
+<p><strong>模型选择</strong>：</p>
+<ul>
+<li>轻量级：线性回归或决策树（&lt; 1μs 推理）</li>
+<li>中等：随机森林或 XGBoost（&lt; 10μs 推理）</li>
+<li>高精度：小型 MLP（&lt; 100μs 推理）</li>
+</ul>
+<p><strong>在线更新策略</strong>：</p>
+<ul>
+<li>使用指数加权移动平均更新模型参数</li>
+<li>维护预测误差的置信区间</li>
+<li>误差超过阈值时触发重训练</li>
+</ul>
+</details>
+<p><strong>练习 19.8</strong>：对于自动驾驶场景，设计一个多传感器数据的变长序列融合策略，处理不同采样率和延迟的问题。</p>
+<details>
+<summary>提示</summary>
+<p>考虑时间对齐、插值和优先级。</p>
+</details>
+<details>
+<summary>答案</summary>
+<p><strong>多速率融合框架</strong>：</p>
+<ol>
+<li><strong>时间戳对齐</strong>：</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="n">基准时间</span><span class="w"> </span><span class="n">t_base</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">当前系统时间</span>
+<span class="n">对每个传感器</span><span class="w"> </span><span class="n">s</span><span class="err">：</span>
+<span class="w">    </span><span class="n">t_aligned</span><span class="o">[</span><span class="n">s</span><span class="o">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">round</span><span class="p">(</span><span class="n">t_raw</span><span class="o">[</span><span class="n">s</span><span class="o">]</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">t_resolution</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">t_resolution</span>
+</code></pre></div>
+
+<ol start="2">
+<li>
+<p><strong>缓冲区管理</strong>：
+   - 每个传感器维护环形缓冲区
+   - 大小：$\text{buffer_size} = 2 \times \frac{\text{max_latency}}{\text{sample_rate}}$</p>
+</li>
+<li>
+<p><strong>插值策略</strong>：
+   - 激光雷达：最近邻（避免创造虚假点）
+   - 相机：双线性插值（平滑视觉特征）
+   - IMU：线性插值（保持连续性）</p>
+</li>
+<li>
+<p><strong>优先级融合</strong>：</p>
+</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="err">优先级权重：</span>
+<span class="n">w_lidar</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">freshness</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.3</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">reliability</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.2</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">coverage</span>
+<span class="n">w_camera</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.3</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">freshness</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.4</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">reliability</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.3</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">coverage</span>
+<span class="n">w_radar</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.4</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">freshness</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.3</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">reliability</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.3</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">coverage</span>
+</code></pre></div>
+
+<ol start="5">
+<li><strong>编译器优化</strong>：
+   - 静态调度：编译时确定融合顺序
+   - 动态批处理：根据数据到达情况调整
+   - SIMD 加速：向量化插值运算</li>
+</ol>
+</details>
+<h2 id="_7">常见陷阱与错误</h2>
+<h3 id="1">1. 稀疏格式选择错误</h3>
+<ul>
+<li><strong>错误</strong>：盲目使用 CSR 格式处理所有稀疏矩阵</li>
+<li><strong>后果</strong>：列操作性能极差，转置开销大</li>
+<li><strong>正确做法</strong>：分析访问模式，必要时维护多种格式</li>
+</ul>
+<h3 id="2">2. 忽视负载不均衡</h3>
+<ul>
+<li><strong>错误</strong>：按行均匀分配稀疏矩阵计算任务</li>
+<li><strong>后果</strong>：某些线程早早完成，其他线程成为瓶颈</li>
+<li><strong>正确做法</strong>：基于非零元素数量进行工作量估算和动态调度</li>
+</ul>
+<h3 id="3">3. 过度的格式转换</h3>
+<ul>
+<li><strong>错误</strong>：每次操作都转换到"最优"格式</li>
+<li><strong>后果</strong>：转换开销超过计算收益</li>
+<li><strong>正确做法</strong>：建立转换代价模型，只在收益明确时转换</li>
+</ul>
+<h3 id="4">4. 变长序列的内存泄漏</h3>
+<ul>
+<li><strong>错误</strong>：动态分配后忘记释放，或释放时机不当</li>
+<li><strong>后果</strong>：长时间运行导致内存耗尽</li>
+<li><strong>正确做法</strong>：使用内存池，明确生命周期管理</li>
+</ul>
+<h3 id="5">5. 稀疏度预测过于激进</h3>
+<ul>
+<li><strong>错误</strong>：基于少量样本就切换到稀疏 kernel</li>
+<li><strong>后果</strong>：预测错误导致性能退化</li>
+<li><strong>正确做法</strong>：设置保守的阈值，逐步调整</li>
+</ul>
+<h3 id="6">6. 忽略硬件特性</h3>
+<ul>
+<li><strong>错误</strong>：不考虑缓存行大小和 SIMD 宽度</li>
+<li><strong>后果</strong>：缓存利用率低，向量化效果差</li>
+<li><strong>正确做法</strong>：根据目标硬件调整数据布局和算法参数</li>
+</ul>
+<h2 id="_8">最佳实践检查清单</h2>
+<h3 id="_9">设计阶段</h3>
+<ul>
+<li>[ ] 分析数据的稀疏模式（随机/结构化/块状）</li>
+<li>[ ] 评估稀疏度的动态范围和变化频率</li>
+<li>[ ] 确定性能目标和内存约束</li>
+<li>[ ] 选择合适的稀疏表示格式组合</li>
+</ul>
+<h3 id="_10">实现阶段</h3>
+<ul>
+<li>[ ] 实现高效的格式转换例程</li>
+<li>[ ] 设计负载均衡的并行策略</li>
+<li>[ ] 优化内存访问模式（预取、缓存友好）</li>
+<li>[ ] 支持混合精度计算</li>
+</ul>
+<h3 id="_11">优化阶段</h3>
+<ul>
+<li>[ ] 使用 profiling 工具识别瓶颈</li>
+<li>[ ] 针对目标硬件进行特化（SIMD、GPU）</li>
+<li>[ ] 实现自适应的运行时策略选择</li>
+<li>[ ] 建立性能模型指导优化决策</li>
+</ul>
+<h3 id="_12">测试阶段</h3>
+<ul>
+<li>[ ] 覆盖不同稀疏度级别（0%-99%）</li>
+<li>[ ] 测试各种稀疏模式（对角、带状、随机）</li>
+<li>[ ] 验证数值稳定性和精度</li>
+<li>[ ] 压力测试内存管理（长时间运行）</li>
+</ul>
+<h3 id="_13">部署阶段</h3>
+<ul>
+<li>[ ] 监控实际稀疏度分布</li>
+<li>[ ] 收集性能指标和异常</li>
+<li>[ ] 支持在线参数调优</li>
+<li>[ ] 准备回退策略（稠密计算）</li>
+</ul>
+            </article>
+            
+            <nav class="page-nav"><a href="chapter18.html" class="nav-link prev">← 第 18 章：动态 Shape 编译（二）</a><a href="chapter20.html" class="nav-link next">第 20 章：JIT 编译技术 →</a></nav>
+        </main>
+    </div>
+</body>
+</html>

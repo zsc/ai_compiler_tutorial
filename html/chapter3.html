@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="./">
+    <title>第 3 章：计算图表示与分析</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="assets/highlight.css">
+    <script src="assets/script.js" defer></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']],
+                processEscapes: false,
+                packages: {'[+]': ['noerrors', 'ams']}
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            loader: {
+                load: ['[tex]/noerrors', '[tex]/ams']
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3>目录</h3>
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+            <div class="sidebar-search">
+                <input type="text" id="sidebar-search-input" placeholder="搜索..." autocomplete="off">
+            </div>
+            <div id="tree-container">
+                <nav class="tree-nav" role="tree">
+                    <div class="tree-item " >
+                        <a href="index.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">AI 编译器教程：从理论到 200T 规模实践</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter1.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 1 章：AI 编译器概述</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter2.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 2 章：中间表示（IR）设计</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item active" >
+                        <a href="chapter3.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 3 章：计算图表示与分析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter4.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 4 章：统一缓冲区设计</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter5.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 5 章：内存规划与分配</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter6.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 6 章：数据布局优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter7.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 7 章：算子融合</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter8.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 8 章：自动微分与梯度优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter9.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 9 章：并行化策略</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter11.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 11 章：多维 Stride DMA 利用</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter12.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 12 章：JIT 编译技术</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter13.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 13 章：GPU 编译优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter14.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 14 章：移动端与边缘设备优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter15.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 15 章：NUMA 架构优化（一）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter16.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 16 章：NUMA 架构优化（二）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter17.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 17 章：动态 Shape 编译（一）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter18.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 18 章：动态 Shape 编译（二）</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter19.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 19 章：稀疏与变长数据支持</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter20.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 20 章：JIT 编译技术</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter21.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 21 章：高维张量别名分析</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter22.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 22 章：投机执行支持</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter23.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 23 章：自动驾驶场景优化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter24.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 24 章：具身智能编译挑战</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter25.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第 25 章：200T 模型编译实践</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="CLAUDE.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">Untitled</span>
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </nav>
+        
+        <main class="content">
+            <article>
+                <h1 id="3">第 3 章：计算图表示与分析</h1>
+<p>计算图是 AI 编译器的核心数据结构，它将神经网络模型转化为可分析、可优化的中间表示。本章深入探讨计算图的构建方法、依赖关系分析、生命周期管理以及别名分析技术。这些技术是后续优化（如算子融合、内存规划、并行化）的基础。对于自动驾驶和具身智能场景，我们特别关注动态控制流、多模态数据流以及超大规模模型的图表示挑战。</p>
+<h2 id="31">3.1 数据流图构建</h2>
+<h3 id="311">3.1.1 节点与边的定义</h3>
+<p>在 AI 编译器中，计算图 $\mathcal{G} = (V, E)$ 由节点集 $V$ 和边集 $E$ 构成。每个节点 $v \in V$ 表示一个算子（operator），每条边 $e \in E$ 表示数据依赖关系。</p>
+<p><strong>节点属性</strong>：</p>
+<ul>
+<li>算子类型：$op_type(v) \in \{Conv, MatMul, Add, ReLU, ...\}$</li>
+<li>输入张量形状：$input_shapes(v) = \{s_1, s_2, ..., s_n\}$</li>
+<li>输出张量形状：$output_shapes(v) = \{s'_1, s'_2, ..., s'_m\}$  </li>
+<li>设备放置：$device(v) \in \{CPU, GPU_0, GPU_1, ..., NPU\}$</li>
+<li>精度要求：$dtype(v) \in \{fp32, fp16, int8, ...\}$</li>
+</ul>
+<p><strong>边属性</strong>：</p>
+<ul>
+<li>张量元数据：$tensor(e) = (shape, dtype, layout)$</li>
+<li>数据量：$size(e) = \prod_{i} shape_i \times sizeof(dtype)$</li>
+<li>传输开销：$cost(e) = f(size(e), bandwidth(src, dst))$</li>
+</ul>
+<div class="codehilite"><pre><span></span><code><span class="w">     </span><span class="o">[</span><span class="n">Input: Image</span><span class="o">]</span>
+<span class="w">           </span><span class="o">|</span>
+<span class="w">           </span><span class="n">v</span>
+<span class="w">      </span><span class="o">[</span><span class="n">Conv2D_1</span><span class="o">]</span>
+<span class="w">           </span><span class="o">|</span>
+<span class="w">           </span><span class="n">v</span>
+<span class="w">       </span><span class="o">[</span><span class="n">ReLU_1</span><span class="o">]</span>
+<span class="w">           </span><span class="o">|</span>
+<span class="w">           </span><span class="n">v</span>
+<span class="w">      </span><span class="o">[</span><span class="n">Conv2D_2</span><span class="o">]</span>
+<span class="w">          </span><span class="o">/</span><span class="w"> </span><span class="err">\</span>
+<span class="w">         </span><span class="o">/</span><span class="w">   </span><span class="err">\</span>
+<span class="w">        </span><span class="n">v</span><span class="w">     </span><span class="n">v</span>
+<span class="w">   </span><span class="o">[</span><span class="n">MaxPool</span><span class="o">]</span><span class="w"> </span><span class="o">[</span><span class="n">AvgPool</span><span class="o">]</span>
+<span class="w">        </span><span class="err">\</span><span class="w">     </span><span class="o">/</span>
+<span class="w">         </span><span class="err">\</span><span class="w">   </span><span class="o">/</span>
+<span class="w">          </span><span class="n">v</span><span class="w"> </span><span class="n">v</span>
+<span class="w">       </span><span class="o">[</span><span class="n">Concat</span><span class="o">]</span>
+<span class="w">           </span><span class="o">|</span>
+<span class="w">           </span><span class="n">v</span>
+<span class="w">       </span><span class="o">[</span><span class="n">Output</span><span class="o">]</span>
+</code></pre></div>
+
+<h3 id="312-ssa">3.1.2 静态单赋值（SSA）在计算图中的应用</h3>
+<p>SSA 形式确保每个变量只被赋值一次，这在计算图中天然成立——每个节点产生新的输出张量。SSA 带来的优势：</p>
+<ol>
+<li><strong>简化依赖分析</strong>：每个张量有唯一的定义点</li>
+<li><strong>便于优化</strong>：常量传播、死代码消除变得直观</li>
+<li><strong>并行化友好</strong>：无需考虑写后写（WAW）冲突</li>
+</ol>
+<p>对于需要原地更新的操作（如 BatchNorm 的 running_mean 更新），我们引入 $\phi$ 节点：</p>
+<p>$$\phi(t_{old}, t_{new}) = \begin{cases}
+t_{old} &amp; \text{if not training} \\
+t_{new} &amp; \text{if training}
+\end{cases}$$</p>
+<h3 id="313">3.1.3 常见算子的图表示</h3>
+<p><strong>线性算子</strong>（矩阵乘法）：
+$$Y = XW + b$$
+图表示：</p>
+<div class="codehilite"><pre><span></span><code><span class="w">    </span><span class="o">[</span><span class="n">X</span><span class="o">]</span><span class="w">   </span><span class="o">[</span><span class="n">W</span><span class="o">]</span><span class="w">   </span><span class="o">[</span><span class="n">b</span><span class="o">]</span>
+<span class="w">      </span><span class="err">\</span><span class="w">    </span><span class="o">|</span><span class="w">    </span><span class="o">/</span>
+<span class="w">       </span><span class="err">\</span><span class="w">   </span><span class="o">|</span><span class="w">   </span><span class="o">/</span>
+<span class="w">        </span><span class="o">[</span><span class="n">MatMul</span><span class="o">]</span>
+<span class="w">           </span><span class="o">|</span>
+<span class="w">         </span><span class="o">[</span><span class="n">Add</span><span class="o">]</span>
+<span class="w">           </span><span class="o">|</span>
+<span class="w">          </span><span class="o">[</span><span class="n">Y</span><span class="o">]</span>
+</code></pre></div>
+
+<p><strong>卷积算子</strong>：
+$$Y_{n,c,h,w} = \sum_{k,r,s} X_{n,k,h+r,w+s} \cdot W_{c,k,r,s} + b_c$$
+其中考虑 padding、stride、dilation 等参数。</p>
+<p><strong>注意力机制</strong>（Transformer 核心）：
+$$Attention(Q,K,V) = softmax\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
+图表示需要展开为多个基础算子：</p>
+<div class="codehilite"><pre><span></span><code><span class="w">    </span><span class="o">[</span><span class="n">Q</span><span class="o">]</span><span class="w">    </span><span class="o">[</span><span class="n">K</span><span class="o">]</span><span class="w">    </span><span class="o">[</span><span class="n">V</span><span class="o">]</span>
+<span class="w">     </span><span class="o">|</span><span class="w">      </span><span class="o">|</span><span class="w">      </span><span class="o">|</span>
+<span class="w">     </span><span class="o">|</span><span class="w">   </span><span class="o">[</span><span class="n">Trans</span><span class="o">]</span><span class="w">   </span><span class="o">|</span>
+
+<span class="w">     </span><span class="o">|</span><span class="w">   </span><span class="o">[</span><span class="n">Trans</span><span class="o">]</span><span class="w">   </span><span class="o">|</span>
+<span class="w">     </span><span class="o">|</span><span class="w">      </span><span class="o">|</span><span class="w">      </span><span class="o">|</span>
+<span class="w">      </span><span class="err">\</span><span class="w">    </span><span class="o">/</span><span class="w">       </span><span class="o">|</span>
+<span class="w">      </span><span class="o">[</span><span class="n">MatMul</span><span class="o">]</span><span class="w">     </span><span class="o">|</span>
+<span class="w">         </span><span class="o">|</span><span class="w">         </span><span class="o">|</span>
+<span class="w">      </span><span class="o">[</span><span class="n">Scale</span><span class="o">]</span><span class="w">      </span><span class="o">|</span>
+<span class="w">         </span><span class="o">|</span><span class="w">         </span><span class="o">|</span>
+<span class="w">     </span><span class="o">[</span><span class="n">Softmax</span><span class="o">]</span><span class="w">     </span><span class="o">|</span>
+
+<span class="w">         </span><span class="err">\</span><span class="w">        </span><span class="o">/</span>
+<span class="w">          </span><span class="err">\</span><span class="w">      </span><span class="o">/</span>
+<span class="w">          </span><span class="o">[</span><span class="n">MatMul</span><span class="o">]</span>
+<span class="w">             </span><span class="o">|</span>
+<span class="w">         </span><span class="o">[</span><span class="n">Output</span><span class="o">]</span>
+</code></pre></div>
+
+<h3 id="314">3.1.4 自动驾驶场景的多模态输入建模</h3>
+<p>自动驾驶系统通常融合多种传感器数据：</p>
+<div class="codehilite"><pre><span></span><code><span class="w">   </span><span class="o">[</span><span class="n">Camera</span><span class="o">]</span><span class="w">  </span><span class="o">[</span><span class="n">LiDAR</span><span class="o">]</span><span class="w">  </span><span class="o">[</span><span class="n">Radar</span><span class="o">]</span><span class="w">  </span><span class="o">[</span><span class="n">IMU</span><span class="o">]</span>
+<span class="w">       </span><span class="o">|</span><span class="w">        </span><span class="o">|</span><span class="w">        </span><span class="o">|</span><span class="w">       </span><span class="o">|</span>
+<span class="w">   </span><span class="o">[</span><span class="n">CNN_Enc</span><span class="o">]</span><span class="w"> </span><span class="o">[</span><span class="n">PC_Enc</span><span class="o">]</span><span class="w"> </span><span class="o">[</span><span class="n">FFT</span><span class="o">]</span><span class="w">  </span><span class="o">[</span><span class="n">LSTM</span><span class="o">]</span>
+<span class="w">       </span><span class="o">|</span><span class="w">        </span><span class="o">|</span><span class="w">        </span><span class="o">|</span><span class="w">       </span><span class="o">|</span>
+<span class="w">       </span><span class="o">+--------+--------+-------+</span>
+<span class="w">                </span><span class="o">|</span>
+<span class="w">          </span><span class="o">[</span><span class="n">Fusion_Net</span><span class="o">]</span>
+<span class="w">                </span><span class="o">|</span>
+<span class="w">         </span><span class="o">[</span><span class="n">Detection_Head</span><span class="o">]</span>
+<span class="w">              </span><span class="o">/</span><span class="w">   </span><span class="err">\</span>
+<span class="w">             </span><span class="o">/</span><span class="w">     </span><span class="err">\</span>
+<span class="w">    </span><span class="o">[</span><span class="n">Trajectory</span><span class="o">]</span><span class="w">  </span><span class="o">[</span><span class="n">Control</span><span class="o">]</span>
+</code></pre></div>
+
+<p><strong>时序对齐挑战</strong>：不同传感器的采样率不同</p>
+<ul>
+<li>Camera: 30 Hz</li>
+<li>LiDAR: 10 Hz  </li>
+<li>Radar: 20 Hz</li>
+<li>IMU: 100 Hz</li>
+</ul>
+<p>需要在图中插入缓冲和插值节点：
+$$X_{aligned}(t) = \sum_{i} w_i(t) \cdot X_{sensor_i}(t_i)$$
+其中 $w_i(t)$ 是时间权重函数。</p>
+<h2 id="32">3.2 控制流与数据依赖</h2>
+<h3 id="321">3.2.1 条件分支的表示</h3>
+<p>AI 模型中的条件执行（如 Gated 机制、动态路由）需要特殊的图结构。我们采用 If-Then-Else 子图：</p>
+<div class="codehilite"><pre><span></span><code><span class="w">        </span><span class="o">[</span><span class="n">Condition</span><span class="o">]</span>
+<span class="w">           </span><span class="o">/</span><span class="w">    </span><span class="err">\</span>
+<span class="w">          </span><span class="o">/</span><span class="w">      </span><span class="err">\</span>
+<span class="w">    </span><span class="o">[</span><span class="n">True_Branch</span><span class="o">]</span><span class="w"> </span><span class="o">[</span><span class="n">False_Branch</span><span class="o">]</span>
+<span class="w">          </span><span class="err">\</span><span class="w">      </span><span class="o">/</span>
+<span class="w">           </span><span class="err">\</span><span class="w">    </span><span class="o">/</span>
+<span class="w">          </span><span class="o">[</span><span class="n">Merge</span><span class="o">]</span>
+</code></pre></div>
+
+<p><strong>谓词执行优化</strong>：对于简单条件，可以转换为无分支形式：
+$$Y = condition \cdot Y_{true} + (1 - condition) \cdot Y_{false}$$
+这避免了控制流开销，但增加了计算量。需要根据分支概率 $p_{true}$ 和分支计算成本 $C_{true}, C_{false}$ 权衡：
+$$Cost_{branch} = p_{true} \cdot C_{true} + (1-p_{true}) \cdot C_{false} + C_{control}$$
+$$Cost_{predicate} = C_{true} + C_{false} + C_{merge}$$</p>
+<h3 id="322">3.2.2 循环结构的处理</h3>
+<p>循环在 RNN、迭代式算法中普遍存在。循环展开（unrolling）是常见优化：</p>
+<p><strong>完全展开</strong>（适用于固定迭代次数）：</p>
+<div class="codehilite"><pre><span></span><code><span class="nl">Original</span><span class="p">:</span>
+<span class="w">    </span><span class="o">[</span><span class="n">Init</span><span class="o">]</span>
+<span class="w">      </span><span class="o">|</span>
+<span class="w">    </span><span class="o">[</span><span class="n">Loop_Body</span><span class="o">]</span><span class="w"> </span><span class="o">&lt;--+</span>
+<span class="w">      </span><span class="o">|</span><span class="w">           </span><span class="o">|</span>
+<span class="w">    </span><span class="o">[</span><span class="n">Update</span><span class="o">]------+</span>
+<span class="w">      </span><span class="o">|</span>
+<span class="w">    </span><span class="o">[</span><span class="n">Output</span><span class="o">]</span>
+
+<span class="nl">Unrolled</span><span class="p">:</span>
+<span class="w">    </span><span class="o">[</span><span class="n">Init</span><span class="o">]</span>
+<span class="w">      </span><span class="o">|</span>
+<span class="w">    </span><span class="o">[</span><span class="n">Body_1</span><span class="o">]</span>
+<span class="w">      </span><span class="o">|</span>
+<span class="w">    </span><span class="o">[</span><span class="n">Body_2</span><span class="o">]</span>
+<span class="w">      </span><span class="o">|</span>
+<span class="w">     </span><span class="p">...</span>
+<span class="w">      </span><span class="o">|</span>
+<span class="w">    </span><span class="o">[</span><span class="n">Body_N</span><span class="o">]</span>
+<span class="w">      </span><span class="o">|</span>
+<span class="w">    </span><span class="o">[</span><span class="n">Output</span><span class="o">]</span>
+</code></pre></div>
+
+<p><strong>部分展开</strong>（平衡代码膨胀与性能）：
+展开因子 $k$ 的选择依据：</p>
+<ul>
+<li>寄存器压力：$R_{available} \geq k \cdot R_{per_iteration}$</li>
+<li>缓存容量：$L1_{size} \geq k \cdot Code_{size}$</li>
+<li>指令级并行度：$ILP_{potential} = min(k, IssueWidth)$</li>
+</ul>
+<h3 id="323">3.2.3 依赖关系分类</h3>
+<p><strong>真依赖（RAW - Read After Write）</strong>：
+$$v_j \text{ uses output of } v_i \Rightarrow (v_i, v_j) \in E_{true}$$
+<strong>反依赖（WAR - Write After Read）</strong>：
+在原地操作中需要考虑：
+$$v_j \text{ overwrites input of } v_i \Rightarrow \text{需要额外约束}$$
+<strong>输出依赖（WAW - Write After Write）</strong>：
+SSA 形式自动消除，但在内存复用时需要考虑。</p>
+<p><strong>依赖距离分析</strong>：
+对于循环中的依赖，定义依赖距离向量：
+$$\vec{d} = (d_1, d_2, ..., d_n)$$
+其中 $d_i$ 表示第 $i$ 维循环的迭代距离。</p>
+<h3 id="324">3.2.4 具身智能中的动态控制流</h3>
+<p>具身智能系统的感知-决策-控制循环具有高度动态性：</p>
+<div class="codehilite"><pre><span></span><code><span class="w">    </span><span class="o">[</span><span class="n">Perception</span><span class="o">]</span>
+<span class="w">         </span><span class="o">|</span>
+<span class="w">    </span><span class="o">[</span><span class="n">World_Model</span><span class="o">]</span>
+<span class="w">         </span><span class="o">|</span>
+<span class="w">    </span><span class="o">[</span><span class="n">Policy_Net</span><span class="o">]</span>
+<span class="w">       </span><span class="o">/</span><span class="w">   </span><span class="err">\</span>
+<span class="w">      </span><span class="o">/</span><span class="w">     </span><span class="err">\</span>
+<span class="o">[</span><span class="n">Explore</span><span class="o">]</span><span class="w"> </span><span class="o">[</span><span class="n">Exploit</span><span class="o">]</span><span class="w">  </span><span class="o">&lt;--</span><span class="w"> </span><span class="n">动态选择</span>
+<span class="w">      </span><span class="err">\</span><span class="w">     </span><span class="o">/</span>
+<span class="w">       </span><span class="err">\</span><span class="w">   </span><span class="o">/</span>
+<span class="w">    </span><span class="o">[</span><span class="n">Action_Gen</span><span class="o">]</span>
+<span class="w">         </span><span class="o">|</span>
+<span class="w">    </span><span class="o">[</span><span class="n">Safety_Check</span><span class="o">]</span>
+<span class="w">       </span><span class="o">/</span><span class="w">   </span><span class="err">\</span>
+<span class="w">      </span><span class="o">/</span><span class="w">     </span><span class="err">\</span>
+<span class="o">[</span><span class="n">Execute</span><span class="o">]</span><span class="w"> </span><span class="o">[</span><span class="n">Fallback</span><span class="o">]</span>
+</code></pre></div>
+
+<p><strong>编译挑战</strong>：</p>
+<ol>
+<li>分支预测困难：行为依赖于环境状态</li>
+<li>延迟约束严格：控制频率通常 &gt; 100 Hz</li>
+<li>安全性要求：需要保证 worst-case 执行时间</li>
+</ol>
+<p><strong>解决方案</strong>：</p>
+<ul>
+<li>投机编译多个可能路径</li>
+<li>运行时特化（JIT）</li>
+<li>保守的内存预分配</li>
+</ul>
+<h2 id="33">3.3 活性分析与生命周期</h2>
+<h3 id="331-">3.3.1 定义-使用链</h3>
+<p>定义-使用链（def-use chain）连接张量的产生点和所有使用点：
+$$DU(t) = \{v \in V | v \text{ uses tensor } t\}$$
+使用-定义链（use-def chain）反向追溯：
+$$UD(v, i) = \text{节点 } v \text{ 第 } i \text{ 个输入的来源}$$
+<strong>链的构建算法</strong>：</p>
+<ol>
+<li>遍历计算图，记录每个张量的定义节点</li>
+<li>对每个节点的输入，建立到定义节点的链接</li>
+<li>维护引用计数用于后续内存管理</li>
+</ol>
+<h3 id="332">3.3.2 活性区间计算</h3>
+<p>张量 $t$ 的活性区间 $[birth(t), death(t)]$ 定义为：</p>
+<ul>
+<li>$birth(t)$：产生 $t$ 的节点的拓扑序号</li>
+<li>$death(t)$：最后使用 $t$ 的节点的拓扑序号</li>
+</ul>
+<p><strong>扩展活性分析</strong>（考虑并行执行）：
+$$LiveInterval(t) = [earliest_start(def(t)), latest_end(uses(t))]$$
+其中考虑了节点的并行调度可能性。</p>
+<p><strong>活性密度图</strong>：</p>
+<div class="codehilite"><pre><span></span><code>Tensor  |-------- Lifetime --------|
+  A     |████████████░░░░░░░░░░░░░░|
+  B     |░░░░████████████░░░░░░░░░░|
+  C     |░░░░░░░░████████████░░░░░░|
+  D     |░░████████░░░░████████░░░░|
+        +---------------------------+
+        0                          Time
+</code></pre></div>
+
+<h3 id="333">3.3.3 内存压力分析</h3>
+<p>在时刻 $t$ 的内存压力：
+$$M(t) = \sum_{tensor \in Live(t)} size(tensor)$$
+<strong>峰值内存</strong>：
+$$M_{peak} = \max_t M(t)$$
+<strong>内存压力缓解策略</strong>：</p>
+<ol>
+<li>
+<p><strong>重计算</strong>：丢弃中间结果，需要时重新计算
+   - 收益：$\Delta M = size(tensor)$
+   - 代价：$\Delta T = compute_time(tensor)$</p>
+</li>
+<li>
+<p><strong>异步传输</strong>：利用 DMA 重叠计算与传输
+   - 条件：$transfer_time &lt; compute_time_{next}$</p>
+</li>
+<li>
+<p><strong>算子融合</strong>：减少中间张量
+   - 示例：$Conv \rightarrow BN \rightarrow ReLU$ 融合可省去两个中间张量</p>
+</li>
+</ol>
+<h3 id="334-200t">3.3.4 200T 模型的生命周期优化</h3>
+<p>超大规模模型的特殊挑战：</p>
+<p><strong>分层生命周期管理</strong>：</p>
+<ul>
+<li>L0：寄存器（~KB）- 单算子内</li>
+<li>L1：片上缓存（~MB）- 算子间</li>
+<li>L2：HBM（~GB）- 层间</li>
+<li>L3：主存（~TB）- 模型分片间</li>
+<li>L4：SSD（~PB）- 检查点</li>
+</ul>
+<p><strong>生命周期策略</strong>：</p>
+<div class="codehilite"><pre><span></span><code><span class="k">if</span><span class="w"> </span><span class="n">size</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">L1_threshold</span><span class="p">:</span>
+<span class="w">    </span><span class="n">keep_in_cache</span><span class="p">()</span>
+<span class="k">elif</span><span class="w"> </span><span class="n">size</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">L2_threshold</span><span class="w"> </span><span class="ow">and</span><span class="w"> </span><span class="n">reuse_distance</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">threshold</span><span class="p">:</span>
+<span class="w">    </span><span class="n">keep_in_HBM</span><span class="p">()</span>
+<span class="k">elif</span><span class="w"> </span><span class="n">is_checkpoint</span><span class="p">(</span><span class="n">tensor</span><span class="p">):</span>
+<span class="w">    </span><span class="n">offload_to_SSD</span><span class="p">()</span>
+<span class="k">else</span><span class="p">:</span>
+<span class="w">    </span><span class="n">recompute_when_needed</span><span class="p">()</span>
+</code></pre></div>
+
+<p><strong>混合精度生命周期</strong>：
+不同精度张量的生命周期管理：</p>
+<ul>
+<li>FP32 权重：长生命周期，常驻内存</li>
+<li>FP16 激活：中等生命周期，可重计算</li>
+<li>INT8 中间结果：短生命周期，积极回收</li>
+</ul>
+<h2 id="34">3.4 别名分析基础</h2>
+<h3 id="341">3.4.1 张量视图与切片</h3>
+<p>张量视图（view）共享底层存储但具有不同的逻辑形状或步长：
+$$View(T, shape', stride') = \{T_{base}, offset, shape', stride'\}$$
+<strong>视图操作分类</strong>：</p>
+<ol>
+<li>
+<p><strong>Reshape</strong>：改变形状但保持元素顺序
+   - 条件：$\prod shape = \prod shape'$
+   - 连续性要求：原张量必须连续</p>
+</li>
+<li>
+<p><strong>Transpose</strong>：改变轴顺序
+   - 新步长：$stride'[i] = stride[perm[i]]$</p>
+</li>
+<li>
+<p><strong>Slice</strong>：提取子张量
+   - 新偏移：$offset' = offset + \sum_i start_i \times stride_i$</p>
+</li>
+<li>
+<p><strong>Broadcast</strong>：扩展维度
+   - 零步长维度：$stride'[i] = 0$ for broadcasted dims</p>
+</li>
+</ol>
+<h3 id="342-stride">3.4.2 Stride 张量的别名判定</h3>
+<p>两个张量 $T_1$ 和 $T_2$ 存在别名当且仅当它们的内存区间有重叠：
+$$Alias(T_1, T_2) \Leftrightarrow [base_1, base_1 + size_1) \cap [base_2, base_2 + size_2) \neq \emptyset$$
+<strong>精确别名分析</strong>（适用于规则步长）：</p>
+<p>对于多维张量，需要分析索引空间的重叠：
+$$\exists (i_1, ..., i_n), (j_1, ..., j_m): addr(T_1, i_1, ..., i_n) = addr(T_2, j_1, ..., j_m)$$
+其中地址计算：
+$$addr(T, i_1, ..., i_n) = base + \sum_{k=1}^n i_k \times stride_k$$
+<strong>区间分析方法</strong>：</p>
+<ol>
+<li>计算每个张量的地址范围</li>
+<li>检查范围重叠</li>
+<li>对于重叠区域，验证是否存在有效索引</li>
+</ol>
+<h3 id="343-ai">3.4.3 指向分析在 AI 编译器中的应用</h3>
+<p>AI 编译器的指向分析相对简化，因为：</p>
+<ul>
+<li>无指针算术</li>
+<li>张量生命周期明确</li>
+<li>无递归数据结构</li>
+</ul>
+<p><strong>别名类别</strong>：</p>
+<ol>
+<li><strong>Must-Alias</strong>：确定别名（如显式 view）</li>
+<li><strong>May-Alias</strong>：可能别名（如动态索引）</li>
+<li><strong>No-Alias</strong>：确定无别名（不同基址）</li>
+</ol>
+<p><strong>别名图构建</strong>：</p>
+<div class="codehilite"><pre><span></span><code><span class="n">AliasGraph</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">tensor_id</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;base&#39;</span><span class="p">:</span> <span class="n">base_tensor</span><span class="p">,</span>
+        <span class="s1">&#39;may_alias&#39;</span><span class="p">:</span> <span class="nb">set</span><span class="p">(),</span>
+        <span class="s1">&#39;must_alias&#39;</span><span class="p">:</span> <span class="nb">set</span><span class="p">(),</span>
+        <span class="s1">&#39;no_alias&#39;</span><span class="p">:</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h3 id="344">3.4.4 原地操作的安全性检查</h3>
+<p>原地操作 $T = op(T, ...)$ 需要满足：</p>
+<ol>
+<li><strong>无其他引用</strong>：$refcount(T) = 1$</li>
+<li><strong>无活跃视图</strong>：$\forall V \in Views(T): dead(V)$</li>
+<li><strong>依赖满足</strong>：所有读操作在写之前完成</li>
+</ol>
+<p><strong>安全性验证算法</strong>：</p>
+<div class="codehilite"><pre><span></span><code><span class="k">function</span><span class="w"> </span><span class="nf">is_safe_inplace</span><span class="p">(</span>op, tensor<span class="p">):</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="n">refcount</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">1</span><span class="p">:</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">False</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="nb">view</span><span class="w"> </span><span class="n">in</span><span class="w"> </span><span class="n">get_views</span><span class="p">(</span><span class="n">tensor</span><span class="p">):</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="n">is_live</span><span class="p">(</span><span class="nb">view</span><span class="p">):</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">False</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">user</span><span class="w"> </span><span class="n">in</span><span class="w"> </span><span class="n">get_users</span><span class="p">(</span><span class="n">tensor</span><span class="p">):</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="n">not</span><span class="w"> </span><span class="n">is_scheduled_before</span><span class="p">(</span><span class="n">user</span><span class="p">,</span><span class="w"> </span><span class="n">op</span><span class="p">):</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">False</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">True</span>
+</code></pre></div>
+
+<p><strong>自动驾驶场景的特殊考虑</strong>：</p>
+<ul>
+<li>传感器数据缓冲区的循环使用</li>
+<li>历史帧的引用管理</li>
+<li>安全关键路径的数据隔离</li>
+</ul>
+<h2 id="_1">本章小结</h2>
+<p>本章系统介绍了 AI 编译器中计算图的表示与分析技术：</p>
+<p><strong>核心概念</strong>：</p>
+<ol>
+<li>计算图 $\mathcal{G} = (V, E)$ 是模型的中间表示</li>
+<li>SSA 形式简化了依赖分析和优化</li>
+<li>控制流需要特殊的图结构处理</li>
+<li>活性分析决定了内存分配策略</li>
+<li>别名分析确保了优化的正确性</li>
+</ol>
+<p><strong>关键公式</strong>：</p>
+<ul>
+<li>内存压力：$M(t) = \sum_{tensor \in Live(t)} size(tensor)$</li>
+<li>依赖距离：$\vec{d} = (d_1, d_2, ..., d_n)$</li>
+<li>地址计算：$addr(T, i_1, ..., i_n) = base + \sum_{k=1}^n i_k \times stride_k$</li>
+<li>别名条件：$[base_1, base_1 + size_1) \cap [base_2, base_2 + size_2) \neq \emptyset$</li>
+</ul>
+<p><strong>实践要点</strong>：</p>
+<ul>
+<li>多模态融合需要考虑时序对齐</li>
+<li>动态控制流需要运行时特化</li>
+<li>超大模型需要分层生命周期管理</li>
+<li>原地操作需要严格的安全性检查</li>
+</ul>
+<p>这些分析技术为后续的内存优化、算子融合、并行化等高级优化奠定了基础。</p>
+<h2 id="_2">练习题</h2>
+<h3 id="_3">基础题</h3>
+<p><strong>练习 3.1</strong>：给定如下计算序列，构建对应的数据流图并标注张量形状。</p>
+<div class="codehilite"><pre><span></span><code>X: [32, 3, 224, 224]  # 批量大小32，3通道，224x224图像
+W1: [64, 3, 7, 7]     # 64个7x7卷积核
+Y1 = Conv2D(X, W1, stride=2, padding=3)
+Y2 = BatchNorm(Y1)
+Y3 = ReLU(Y2)
+Y4 = MaxPool2D(Y3, kernel=3, stride=2)
+</code></pre></div>
+
+<p><em>Hint</em>: 注意计算每步输出的形状变化，特别是 stride 和 padding 的影响。</p>
+<details>
+<summary>答案</summary>
+<p>数据流图：</p>
+<div class="codehilite"><pre><span></span><code><span class="k">[X] → [Conv2D] → [Y1] → [BatchNorm] → [Y2] → [ReLU] → [Y3] → [MaxPool2D] → [Y4]</span>
+<span class="w">        </span><span class="na">↑</span>
+<span class="w">      </span><span class="k">[W1]</span>
+</code></pre></div>
+
+<p>形状推导：</p>
+<ul>
+<li>Y1: Conv2D 输出 = $\lfloor \frac{224 + 2 \times 3 - 7}{2} \rfloor + 1 = 112$，形状 [32, 64, 112, 112]</li>
+<li>Y2: BatchNorm 不改变形状，[32, 64, 112, 112]</li>
+<li>Y3: ReLU 不改变形状，[32, 64, 112, 112]</li>
+<li>Y4: MaxPool 输出 = $\lfloor \frac{112 - 3}{2} \rfloor + 1 = 55$，形状 [32, 64, 55, 55]</li>
+</ul>
+</details>
+<p><strong>练习 3.2</strong>：计算下列张量操作序列的峰值内存占用（假设 FP32）。</p>
+<div class="codehilite"><pre><span></span><code>A = torch.randn(1024, 1024)  # 4MB
+B = torch.randn(1024, 1024)  # 4MB
+C = A @ B                     # 4MB
+D = C + A                     # 4MB
+E = D.sum(dim=0)             # 4KB
+del A, B                     # 释放A、B
+F = D @ C                     # 4MB
+</code></pre></div>
+
+<p><em>Hint</em>: 画出每个张量的生命周期，找出同时存活的最大集合。</p>
+<details>
+<summary>答案</summary>
+<p>生命周期分析：</p>
+<div class="codehilite"><pre><span></span><code><span class="n">时刻</span><span class="w">  </span><span class="n">操作</span><span class="w">        </span><span class="n">存活张量</span><span class="w">        </span><span class="n">内存占用</span>
+<span class="mi">1</span><span class="w">    </span><span class="n">创建A</span><span class="w">       </span><span class="err">{</span><span class="n">A</span><span class="err">}</span><span class="w">             </span><span class="mi">4</span><span class="n">MB</span>
+<span class="mi">2</span><span class="w">    </span><span class="n">创建B</span><span class="w">       </span><span class="err">{</span><span class="n">A</span><span class="p">,</span><span class="n">B</span><span class="err">}</span><span class="w">           </span><span class="mi">8</span><span class="n">MB</span>
+<span class="mi">3</span><span class="w">    </span><span class="n">C</span><span class="o">=</span><span class="n">A</span><span class="nv">@B</span><span class="w">       </span><span class="err">{</span><span class="n">A</span><span class="p">,</span><span class="n">B</span><span class="p">,</span><span class="n">C</span><span class="err">}</span><span class="w">         </span><span class="mi">12</span><span class="n">MB</span>
+<span class="mi">4</span><span class="w">    </span><span class="n">D</span><span class="o">=</span><span class="n">C</span><span class="o">+</span><span class="n">A</span><span class="w">       </span><span class="err">{</span><span class="n">A</span><span class="p">,</span><span class="n">B</span><span class="p">,</span><span class="n">C</span><span class="p">,</span><span class="n">D</span><span class="err">}</span><span class="w">       </span><span class="mi">16</span><span class="n">MB</span><span class="w">  </span><span class="err">←</span><span class="w"> </span><span class="n">峰值</span>
+<span class="mi">5</span><span class="w">    </span><span class="n">E</span><span class="o">=</span><span class="n">D</span><span class="p">.</span><span class="nf">sum</span><span class="w">     </span><span class="err">{</span><span class="n">A</span><span class="p">,</span><span class="n">B</span><span class="p">,</span><span class="n">C</span><span class="p">,</span><span class="n">D</span><span class="p">,</span><span class="n">E</span><span class="err">}</span><span class="w">     </span><span class="mi">16</span><span class="n">MB</span><span class="o">+</span><span class="mi">4</span><span class="n">KB</span><span class="w"> </span><span class="err">≈</span><span class="w"> </span><span class="mi">16</span><span class="n">MB</span>
+<span class="mi">6</span><span class="w">    </span><span class="n">del</span><span class="w"> </span><span class="n">A</span><span class="p">,</span><span class="n">B</span><span class="w">     </span><span class="err">{</span><span class="n">C</span><span class="p">,</span><span class="n">D</span><span class="p">,</span><span class="n">E</span><span class="err">}</span><span class="w">         </span><span class="mi">8</span><span class="n">MB</span><span class="o">+</span><span class="mi">4</span><span class="n">KB</span>
+<span class="mi">7</span><span class="w">    </span><span class="n">F</span><span class="o">=</span><span class="n">D</span><span class="nv">@C</span><span class="w">       </span><span class="err">{</span><span class="n">C</span><span class="p">,</span><span class="n">D</span><span class="p">,</span><span class="n">E</span><span class="p">,</span><span class="n">F</span><span class="err">}</span><span class="w">       </span><span class="mi">12</span><span class="n">MB</span><span class="o">+</span><span class="mi">4</span><span class="n">KB</span>
+</code></pre></div>
+
+<p>峰值内存：16MB（时刻4）</p>
+</details>
+<p><strong>练习 3.3</strong>：判断以下张量对是否可能存在别名关系。</p>
+<div class="codehilite"><pre><span></span><code><span class="n">base</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>  <span class="c1"># 基础张量</span>
+<span class="n">a</span> <span class="o">=</span> <span class="n">base</span><span class="p">[</span><span class="mi">10</span><span class="p">:</span><span class="mi">20</span><span class="p">,</span> <span class="p">:]</span>            <span class="c1"># 切片</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">base</span><span class="p">[</span><span class="mi">15</span><span class="p">:</span><span class="mi">25</span><span class="p">,</span> <span class="p">:]</span>            <span class="c1"># 切片</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">T</span>                    <span class="c1"># 转置</span>
+<span class="n">d</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>    <span class="c1"># 重塑</span>
+<span class="n">e</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>     <span class="c1"># 新张量</span>
+</code></pre></div>
+
+<p><em>Hint</em>: 切片操作共享底层存储，reshape 需要连续性。</p>
+<details>
+<summary>答案</summary>
+<p>别名关系分析：</p>
+<ul>
+<li>(a, b): <strong>Must-Alias</strong> - 两个切片区间 [10:20] 和 [15:25] 有重叠 [15:20]</li>
+<li>(a, c): <strong>Must-Alias</strong> - 都引用 base 的数据</li>
+<li>(a, d): <strong>Must-Alias</strong> - reshape 返回视图（base 连续）</li>
+<li>(b, c): <strong>Must-Alias</strong> - 都引用 base 的数据</li>
+<li>(b, d): <strong>Must-Alias</strong> - 都引用 base 的数据</li>
+<li>(c, d): <strong>Must-Alias</strong> - 都引用 base 的数据</li>
+<li>(e, 其他): <strong>No-Alias</strong> - e 是独立分配的新张量</li>
+</ul>
+</details>
+<h3 id="_4">挑战题</h3>
+<p><strong>练习 3.4</strong>：设计一个算法，检测计算图中的循环依赖。给定邻接表表示的有向图，返回是否存在循环以及循环路径。</p>
+<p><em>Hint</em>: 使用 DFS 配合三色标记（白、灰、黑）。</p>
+<details>
+<summary>答案</summary>
+<p>算法设计：</p>
+<ol>
+<li>白色：未访问</li>
+<li>灰色：正在访问（在当前 DFS 路径上）</li>
+<li>黑色：已完成访问</li>
+</ol>
+<p>检测算法：</p>
+<div class="codehilite"><pre><span></span><code><span class="k">function</span><span class="w"> </span><span class="nf">detect_cycle</span><span class="p">(</span>graph<span class="p">):</span>
+<span class="w">    </span><span class="n">color</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">{</span><span class="n">v</span><span class="p">:</span><span class="w"> </span><span class="n">WHITE</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="n">in</span><span class="w"> </span><span class="nb">graph</span><span class="p">}</span>
+<span class="w">    </span><span class="n">parent</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">{</span><span class="n">v</span><span class="p">:</span><span class="w"> </span><span class="n">None</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="n">in</span><span class="w"> </span><span class="nb">graph</span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">function</span><span class="w"> </span><span class="nf">dfs</span><span class="p">(</span>v<span class="p">):</span>
+<span class="w">        </span><span class="n">color</span><span class="p">[</span><span class="n">v</span><span class="p">]</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="n">GRAY</span>
+<span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="n">u</span><span class="w"> </span><span class="n">in</span><span class="w"> </span><span class="nb">graph</span><span class="p">[</span><span class="n">v</span><span class="p">]:</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="n">color</span><span class="p">[</span><span class="n">u</span><span class="p">]</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">GRAY</span><span class="p">:</span>
+<span class="w">                </span>#<span class="w"> </span>找到循环，回溯路径
+<span class="w">                </span><span class="n">cycle</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="n">u</span><span class="p">,</span><span class="w"> </span><span class="n">v</span><span class="p">]</span>
+<span class="w">                </span><span class="n">p</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="n">parent</span><span class="p">[</span><span class="n">v</span><span class="p">]</span>
+<span class="w">                </span><span class="k">while</span><span class="w"> </span><span class="n">p</span><span class="w"> </span>!<span class="p">=</span><span class="w"> </span><span class="n">u</span><span class="p">:</span>
+<span class="w">                    </span><span class="n">cycle</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+<span class="w">                    </span><span class="n">p</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="n">parent</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
+<span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="n">cycle</span>
+<span class="w">            </span><span class="n">elif</span><span class="w"> </span><span class="n">color</span><span class="p">[</span><span class="n">u</span><span class="p">]</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">WHITE</span><span class="p">:</span>
+<span class="w">                </span><span class="n">parent</span><span class="p">[</span><span class="n">u</span><span class="p">]</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="n">v</span>
+<span class="w">                </span><span class="n">result</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="n">dfs</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+<span class="w">                </span><span class="k">if</span><span class="w"> </span><span class="n">result</span><span class="p">:</span>
+<span class="w">                    </span><span class="k">return</span><span class="w"> </span><span class="n">result</span>
+<span class="w">        </span><span class="n">color</span><span class="p">[</span><span class="n">v</span><span class="p">]</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="n">BLACK</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">None</span>
+
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="n">in</span><span class="w"> </span><span class="nb">graph</span><span class="p">:</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="n">color</span><span class="p">[</span><span class="n">v</span><span class="p">]</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">WHITE</span><span class="p">:</span>
+<span class="w">            </span><span class="n">cycle</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="n">dfs</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="n">cycle</span><span class="p">:</span>
+<span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="n">True</span><span class="p">,</span><span class="w"> </span><span class="n">cycle</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">False</span><span class="p">,</span><span class="w"> </span><span class="n">None</span>
+</code></pre></div>
+
+<p>时间复杂度：O(V + E)</p>
+</details>
+<p><strong>练习 3.5</strong>：推导 Transformer 注意力机制的内存占用公式，考虑序列长度 $n$、批量大小 $b$、隐藏维度 $d$。分析 FlashAttention 如何减少内存占用。</p>
+<p><em>Hint</em>: 标准注意力需要存储 $QK^T$ 矩阵，FlashAttention 使用分块计算。</p>
+<details>
+<summary>答案</summary>
+<p>标准注意力内存分析：</p>
+<p>输入：</p>
+<ul>
+<li>Q, K, V: 各 $b \times n \times d$</li>
+</ul>
+<p>中间结果：</p>
+<ul>
+<li>$QK^T$: $b \times n \times n$</li>
+<li>Softmax 输出: $b \times n \times n$</li>
+<li>最终输出: $b \times n \times d$</li>
+</ul>
+<p>总内存（FP32）：
+$$M_{standard} = 4 \times (3bnd + 2bn^2 + bnd) = 4b(4nd + 2n^2)$$
+当 $n &gt;&gt; d$ 时，$2bn^2$ 项主导，内存复杂度 $O(bn^2)$。</p>
+<p>FlashAttention 优化：</p>
+<ul>
+<li>将 Q, K, V 分块：块大小 $B_r \times B_c$</li>
+<li>每次只计算一个块的注意力</li>
+<li>使用在线 softmax 避免存储完整矩阵</li>
+</ul>
+<p>分块内存：
+$$M_{flash} = 4b(4nd + 2B_r B_c)$$
+内存减少比例：
+$$\frac{M_{standard}}{M_{flash}} \approx \frac{n^2}{B_r B_c}$$
+典型配置 $B_r = B_c = 64$，对于 $n = 2048$，内存减少 $\frac{2048^2}{64^2} = 1024$ 倍。</p>
+</details>
+<p><strong>练习 3.6</strong>：分析在多 GPU 训练中，如何确定张量的最优放置策略。给定计算图和通信成本模型，形式化为优化问题。</p>
+<p><em>Hint</em>: 考虑计算负载均衡和通信最小化的权衡。</p>
+<details>
+<summary>答案</summary>
+<p>优化问题形式化：</p>
+<p>决策变量：</p>
+<ul>
+<li>$x_{v,d} \in \{0,1\}$：节点 $v$ 是否放置在设备 $d$</li>
+</ul>
+<p>目标函数：
+$$\min \alpha T_{comp} + \beta T_{comm}$$</p>
+<p>其中：</p>
+<ul>
+<li>计算时间：$T_{comp} = \max_d \sum_v x_{v,d} \cdot t_v$</li>
+<li>通信时间：$T_{comm} = \sum_{(u,v) \in E} \sum_{d_1 \neq d_2} x_{u,d_1} \cdot x_{v,d_2} \cdot c_{u,v}$</li>
+</ul>
+<p>约束条件：</p>
+<ol>
+<li>每个节点恰好放置在一个设备：$\sum_d x_{v,d} = 1, \forall v$</li>
+<li>内存约束：$\sum_v x_{v,d} \cdot m_v \leq M_d, \forall d$</li>
+<li>依赖约束：关键路径节点优先级</li>
+</ol>
+<p>这是一个整数线性规划（ILP）问题，NP-hard。</p>
+<p>实践解法：</p>
+<ol>
+<li>贪心算法：基于计算/通信比率</li>
+<li>动态规划：对于链式结构</li>
+<li>启发式搜索：模拟退火、遗传算法</li>
+<li>强化学习：学习放置策略</li>
+</ol>
+</details>
+<p><strong>练习 3.7</strong>：设计一个内存分配算法，给定张量生命周期，最小化内存碎片。考虑不同大小的张量和对齐要求。</p>
+<p><em>Hint</em>: 可以借鉴操作系统的内存管理算法，如 Best-Fit、Buddy System。</p>
+<details>
+<summary>答案</summary>
+<p>算法设计：混合策略内存分配器</p>
+<p>数据结构：</p>
+<div class="codehilite"><pre><span></span><code><span class="k">class</span> <span class="nc">MemoryAllocator</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">total_size</span><span class="p">,</span> <span class="n">alignment</span><span class="o">=</span><span class="mi">64</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">free_lists</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>  <span class="c1"># size_class -&gt; [blocks]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">allocated</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># tensor_id -&gt; (offset, size)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alignment</span> <span class="o">=</span> <span class="n">alignment</span>
+</code></pre></div>
+
+<p>分配策略：</p>
+<ol>
+<li>
+<p><strong>大小分类</strong>：将张量分为小（&lt;1MB）、中（1-16MB）、大（&gt;16MB）</p>
+</li>
+<li>
+<p><strong>小张量</strong>：使用固定大小池
+   - 预定义大小：64KB, 128KB, 256KB, 512KB
+   - 减少碎片，快速分配</p>
+</li>
+<li>
+<p><strong>中张量</strong>：Best-Fit with Coalescing</p>
+</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">allocate_medium</span><span class="p">(</span><span class="n">size</span><span class="p">):</span>
+    <span class="n">aligned_size</span> <span class="o">=</span> <span class="n">align_up</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">alignment</span><span class="p">)</span>
+    <span class="n">best_block</span> <span class="o">=</span> <span class="n">find_best_fit</span><span class="p">(</span><span class="n">free_lists</span><span class="p">,</span> <span class="n">aligned_size</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">best_block</span><span class="p">:</span>
+        <span class="n">split_if_needed</span><span class="p">(</span><span class="n">best_block</span><span class="p">,</span> <span class="n">aligned_size</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">compact_memory</span><span class="p">()</span>  <span class="c1"># 碎片整理</span>
+        <span class="n">best_block</span> <span class="o">=</span> <span class="n">find_best_fit</span><span class="p">(</span><span class="n">free_lists</span><span class="p">,</span> <span class="n">aligned_size</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">best_block</span>
+</code></pre></div>
+
+<ol start="4">
+<li>
+<p><strong>大张量</strong>：直接映射
+   - 使用 mmap 风格的大页分配
+   - 避免碎片化主内存池</p>
+</li>
+<li>
+<p><strong>碎片整理</strong>：
+   - 延迟整理：碎片率 &gt; 25% 时触发
+   - 增量整理：每次移动有限数量块</p>
+</li>
+</ol>
+<p>性能指标：</p>
+<ul>
+<li>外部碎片率：$\frac{总空闲内存 - 最大可分配块}{总空闲内存}$</li>
+<li>内部碎片率：$\frac{分配内存 - 请求内存}{分配内存}$</li>
+<li>分配延迟：O(log n) with balanced trees</li>
+</ul>
+</details>
+<p><strong>练习 3.8</strong>：给定一个包含动态控制流的模型（如 Neural Architecture Search），设计编译时的形状推导算法，处理形状的符号表达式。</p>
+<p><em>Hint</em>: 使用符号数学库，建立约束求解系统。</p>
+<details>
+<summary>答案</summary>
+<p>符号形状推导系统：</p>
+<ol>
+<li><strong>符号表示</strong>：</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="k">class</span> <span class="nc">SymbolicDim</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>  <span class="c1"># e.g., &quot;batch_size&quot;, &quot;seq_len&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min</span> <span class="o">=</span> <span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;min&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max</span> <span class="o">=</span> <span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;max&#39;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;inf&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">divisible_by</span> <span class="o">=</span> <span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;divisible_by&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</code></pre></div>
+
+<ol start="2">
+<li><strong>形状代数</strong>：</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 卷积输出形状</span>
+<span class="k">def</span> <span class="nf">conv_shape</span><span class="p">(</span><span class="n">input_shape</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">stride</span><span class="p">,</span> <span class="n">padding</span><span class="p">):</span>
+    <span class="n">H_in</span> <span class="o">=</span> <span class="n">input_shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">H_out</span> <span class="o">=</span> <span class="n">SymbolicExpr</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">H_in</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">padding</span> <span class="o">-</span> <span class="n">kernel</span><span class="p">)</span> <span class="o">//</span> <span class="n">stride</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">input_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">num_filters</span><span class="p">,</span> <span class="n">H_out</span><span class="p">,</span> <span class="n">W_out</span><span class="p">]</span>
+</code></pre></div>
+
+<ol start="3">
+<li><strong>约束传播</strong>：</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="k">class</span> <span class="nc">ConstraintSystem</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">add_equality</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr1</span><span class="p">,</span> <span class="n">expr2</span><span class="p">):</span>
+        <span class="c1"># MatMul: (M, K) @ (K, N) -&gt; (M, N)</span>
+        <span class="c1"># 约束: expr1.shape[1] == expr2.shape[0]</span>
+
+    <span class="k">def</span> <span class="nf">add_inequality</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">,</span> <span class="n">bound</span><span class="p">):</span>
+        <span class="c1"># 内存约束: prod(shape) * dtype_size &lt;= memory_limit</span>
+
+    <span class="k">def</span> <span class="nf">solve</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># 使用 Z3 或类似求解器</span>
+        <span class="n">solver</span> <span class="o">=</span> <span class="n">z3</span><span class="o">.</span><span class="n">Solver</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">:</span>
+            <span class="n">solver</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">solver</span><span class="o">.</span><span class="n">check</span><span class="p">()</span> <span class="o">==</span> <span class="n">z3</span><span class="o">.</span><span class="n">sat</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">solver</span><span class="o">.</span><span class="n">model</span><span class="p">()</span>
+</code></pre></div>
+
+<ol start="4">
+<li><strong>动态分支处理</strong>：</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">analyze_conditional</span><span class="p">(</span><span class="n">cond</span><span class="p">,</span> <span class="n">true_branch</span><span class="p">,</span> <span class="n">false_branch</span><span class="p">):</span>
+    <span class="c1"># 收集两个分支的形状约束</span>
+    <span class="n">true_shapes</span> <span class="o">=</span> <span class="n">analyze_branch</span><span class="p">(</span><span class="n">true_branch</span><span class="p">)</span>
+    <span class="n">false_shapes</span> <span class="o">=</span> <span class="n">analyze_branch</span><span class="p">(</span><span class="n">false_branch</span><span class="p">)</span>
+
+    <span class="c1"># 合并约束（输出形状必须兼容）</span>
+    <span class="n">output_shape</span> <span class="o">=</span> <span class="n">unify_shapes</span><span class="p">(</span><span class="n">true_shapes</span><span class="p">,</span> <span class="n">false_shapes</span><span class="p">)</span>
+
+    <span class="c1"># 生成运行时检查</span>
+    <span class="n">runtime_checks</span> <span class="o">=</span> <span class="n">generate_shape_checks</span><span class="p">(</span><span class="n">output_shape</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">output_shape</span><span class="p">,</span> <span class="n">runtime_checks</span>
+</code></pre></div>
+
+<ol start="5">
+<li><strong>实例：NAS 中的动态深度</strong></li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="n">depth</span> <span class="o">=</span> <span class="n">SymbolicDim</span><span class="p">(</span><span class="s2">&quot;depth&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">})</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">depth</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">search_space</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>  <span class="c1"># 动态选择</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">conv_block</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">identity</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+<span class="c1"># 推导：输出形状依赖于 depth 和 search_space</span>
+<span class="c1"># 编译策略：</span>
+<span class="c1"># 1. 为每个可能的深度生成代码</span>
+<span class="c1"># 2. 运行时根据实际深度选择</span>
+</code></pre></div>
+
+<p>关键技术：</p>
+<ul>
+<li>区间算术：处理形状范围</li>
+<li>模运算：处理对齐约束</li>
+<li>不动点迭代：处理循环结构</li>
+<li>概率推理：基于 profile 预测常见形状</li>
+</ul>
+</details>
+<h2 id="_5">常见陷阱与错误</h2>
+<h3 id="1">1. 图构建陷阱</h3>
+<p><strong>陷阱</strong>：忽略隐式依赖</p>
+<div class="codehilite"><pre><span></span><code><span class="gh">#</span> 错误：未考虑 BatchNorm 的 running_mean 更新
+bn_output = BatchNorm(input)  # 还有 running_mean 的副作用
+</code></pre></div>
+
+<p><strong>解决</strong>：显式建模所有状态更新为图中的边。</p>
+<h3 id="2">2. 内存分析错误</h3>
+<p><strong>陷阱</strong>：低估峰值内存</p>
+<div class="codehilite"><pre><span></span><code><span class="gh">#</span> 错误：只考虑输入输出，忽略中间梯度
+peak_memory = input_size + output_size
+</code></pre></div>
+
+<p><strong>正确</strong>：考虑反向传播时的梯度累积。</p>
+<h3 id="3_1">3. 别名分析盲点</h3>
+<p><strong>陷阱</strong>：Reshape 后的连续性假设</p>
+<div class="codehilite"><pre><span></span><code># 错误：假设 reshape 总是返回视图
+view = tensor.T.reshape(...)  # T 破坏连续性，reshape 会复制！
+</code></pre></div>
+
+<p><strong>检查</strong>：使用 <code>is_contiguous()</code> 验证。</p>
+<h3 id="4">4. 活性分析的并行陷阱</h3>
+<p><strong>陷阱</strong>：串行假设下的生命周期</p>
+<div class="codehilite"><pre><span></span><code><span class="gh">#</span> 错误：假设严格的顺序执行
+lifetime = [def_point, last_use_point]
+</code></pre></div>
+
+<p><strong>正确</strong>：考虑算子的并行执行可能。</p>
+<h3 id="5">5. 动态形状的编译时假设</h3>
+<p><strong>陷阱</strong>：过度特化</p>
+<div class="codehilite"><pre><span></span><code><span class="gh">#</span> 错误：为每个见过的形状生成代码
+if shape == (32, 224, 224):
+    use_optimized_kernel_32_224_224()
+</code></pre></div>
+
+<p><strong>解决</strong>：使用形状类别和参数化核函数。</p>
+<h2 id="_6">最佳实践检查清单</h2>
+<h3 id="_7">图构建阶段</h3>
+<ul>
+<li>[ ] 所有算子的输入输出形状都已验证</li>
+<li>[ ] 隐式状态更新（如 BN 的 running stats）已建模</li>
+<li>[ ] 控制流依赖已正确表示</li>
+<li>[ ] 数据类型（dtype）和布局（layout）已标注</li>
+<li>[ ] 设备放置（device placement）已确定</li>
+</ul>
+<h3 id="_8">依赖分析阶段</h3>
+<ul>
+<li>[ ] 真依赖（RAW）完整识别</li>
+<li>[ ] 反依赖（WAR）和输出依赖（WAW）已处理</li>
+<li>[ ] 控制依赖已加入调度约束</li>
+<li>[ ] 跨设备依赖的通信开销已量化</li>
+</ul>
+<h3 id="_9">生命周期管理</h3>
+<ul>
+<li>[ ] 张量生命周期的起止点准确</li>
+<li>[ ] 考虑了并行执行对生命周期的影响</li>
+<li>[ ] 峰值内存估算包含所有临时缓冲区</li>
+<li>[ ] 梯度累积的内存开销已计入</li>
+<li>[ ] 设置了合理的重计算策略</li>
+</ul>
+<h3 id="_10">别名分析</h3>
+<ul>
+<li>[ ] 所有视图操作的别名关系已记录</li>
+<li>[ ] 原地操作的安全性已验证</li>
+<li>[ ] 跨函数的别名传播已处理</li>
+<li>[ ] 动态索引的别名可能性已分析</li>
+</ul>
+<h3 id="_11">性能优化检查</h3>
+<ul>
+<li>[ ] 识别了内存带宽瓶颈</li>
+<li>[ ] 标记了可融合的算子序列</li>
+<li>[ ] 评估了重计算 vs 存储的权衡</li>
+<li>[ ] 考虑了数据局部性优化机会</li>
+</ul>
+<h3 id="_12">正确性保证</h3>
+<ul>
+<li>[ ] 数值稳定性分析（特别是混合精度）</li>
+<li>[ ] 确定性要求已满足（如安全关键路径）</li>
+<li>[ ] 边界条件和特殊输入已测试</li>
+<li>[ ] 动态形状的运行时检查已插入</li>
+</ul>
+<h3 id="_13">可维护性</h3>
+<ul>
+<li>[ ] 图的可视化输出可用</li>
+<li>[ ] 关键决策有日志记录</li>
+<li>[ ] 性能统计数据可导出</li>
+<li>[ ] 调试模式可追踪中间结果</li>
+</ul>
+            </article>
+            
+            <nav class="page-nav"><a href="chapter2.html" class="nav-link prev">← 第 2 章：中间表示（IR）设计</a><a href="chapter4.html" class="nav-link next">第 4 章：统一缓冲区设计 →</a></nav>
+        </main>
+    </div>
+</body>
+</html>
