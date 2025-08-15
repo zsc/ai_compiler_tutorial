@@ -24,5 +24,3 @@ verteran programmer and AI scientists
    - 答案默认折叠，不包含代码
 5. **常见陷阱与错误** (Gotchas)：每章包含该主题的常见错误和调试技巧
 6. **最佳实践检查清单**：每章末尾提供设计审查要点
-
-now ask me questions
